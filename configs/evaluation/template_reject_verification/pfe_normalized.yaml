@@ -1,7 +1,7 @@
-checkpoint_path: "/gpfs/data/gpfs0/k.fedyanin/space/models/pfe/classic_normalized_pfe/sota.pth"
-dataset_path: "/gpfs/gpfs0/k.fedyanin/space/IJB/aligned_data_for_fusion/big"
+checkpoint_path: "/app/data/sota.pth"
+dataset_path: "/app/data/big"
 protocol: "ijbc"
-protocol_path: "/gpfs/gpfs0/k.fedyanin/space/IJB/IJB-C/protocols/test1"
+protocol_path: "/app/data/test1"
 config_path: "./configs/models/iresnet_ms1m_pfe_normalized.yaml"
 batch_size: 64
 distaces_batch_size: 8
@@ -9,9 +9,10 @@ uncertainty_strategy: "head"
 uncertainty_mode: "uncertainty"
 FARs: [0.0001, 0.001, 0.01, 0.05, ]
 rejected_portions: [0.0, 0.5, 250]
-fusion_distance_uncertainty_metrics: ["mean_cosine_mean", "PFE_cosine_mean", "PFE_MLS_mean", ]
+fusion_distance_uncertainty_metrics: ["mean_cosine_min", "PFE_cosine_min", ]
 device_id: 0
-save_fig_path: "/gpfs/gpfs0/k.fedyanin/space/figures/test"
+save_fig_path: "./runs/test"
 verbose: True
 cached_embeddings: True
 equal_uncertainty_enroll: True
+distance_based_uncertainty: ["softmax"]

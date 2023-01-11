@@ -101,6 +101,36 @@ def aggregate_templates(templates, method):
         else:
             raise ValueError(f"Wrong aggregate method {method}")
 
+def compute_softmax_scores(tester):
+    """
+    computes softmax scores for all verification_templates
+
+    take first emb from each verification template and computes distances to all enroll templates means
+    uncertanty for enroll templates is set to inf and is not use, as we choose min uncertanty agregation
+    """
+
+    ver_mus = []
+    enroll_mus = []
+
+    for t in tester.verification_templates():
+        ver_mus.append(t.mu)
+    
+    for t in tester.enroll_templates():
+        t.sigma_sq = np.array([np.inf])
+        enroll_mus.append(t.mu)
+
+    # compute cosine similarity matrix
+    ver_mus = np.array(ver_mus) # N_ver X embsize
+    enroll_mus = np.array(enroll_mus) # N_enroll X embsize
+
+    sim = ver_mus @ enroll_mus.T # N_ver X N_enroll
+
+    ver_uncertanty =  - np.max(softmax(sim, axis=1), axis=1)
+
+    for t, unc in zip(tester.verification_templates(), ver_uncertanty):
+        t.sigma_sq = np.array([unc])
+
+    
 
 def eval_template_reject_verification(
     backbone,
@@ -123,7 +153,8 @@ def eval_template_reject_verification(
     verbose=False,
     uncertainty_model=None,
     cached_embeddings=False,
-    equal_uncertainty_enroll=False
+    equal_uncertainty_enroll=False,
+    distance_based_uncertainty=None,
 ):
 
     # Setup the plots
@@ -190,6 +221,8 @@ def eval_template_reject_verification(
     tester = IJBCTemplates(image_paths, feature_dict, uncertainty_dict)
     tester.init_proto(protocol_path)
 
+
+
     prev_fusion_name = None
     for (fusion_name, distance_name, uncertainty_name), distance_ax, uncertainty_ax in \
             zip(fusions_distances_uncertainties, distance_axes, uncertainty_axes):
@@ -209,9 +242,18 @@ def eval_template_reject_verification(
                 aggregate_templates(tester.verification_templates(), 'first')
             else:
                 aggregate_templates(tester.all_templates(), fusion_name)
+        
+        # calculate softmax score for template classification and use it as uncertainty score
+        if distance_based_uncertainty is not None:
+            print('Computing softmax scores')
+            compute_softmax_scores(tester)
 
         feat_1, feat_2, unc_1, unc_2, label_vec = \
-            tester.get_features_uncertainties_labels()
+        tester.get_features_uncertainties_labels()
+
+
+
+
 
         print('shapes')
         print(feat_1.shape, feat_2.shape, unc_1.shape, unc_2.shape, label_vec.shape)
@@ -332,7 +374,8 @@ def main():
         verbose=args.verbose,
         uncertainty_model=uncertainty_model,
         cached_embeddings=args.cached_embeddings,
-        equal_uncertainty_enroll=args.equal_uncertainty_enroll
+        equal_uncertainty_enroll=args.equal_uncertainty_enroll,
+        distance_based_uncertainty=args.distance_based_uncertainty
     )
 
 
