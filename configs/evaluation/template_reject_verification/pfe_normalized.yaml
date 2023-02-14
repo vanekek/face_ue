@@ -15,4 +15,4 @@ save_fig_path: "./runs/test"
 verbose: True
 cached_embeddings: True
 equal_uncertainty_enroll: True
-distance_based_uncertainty: ["softmax"]
+distance_based_uncertainty: None #["softmax"]

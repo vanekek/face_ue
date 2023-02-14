@@ -244,9 +244,9 @@ def eval_template_reject_verification(
                 aggregate_templates(tester.all_templates(), fusion_name)
         
         # calculate softmax score for template classification and use it as uncertainty score
-        if distance_based_uncertainty is not None:
-            print('Computing softmax scores')
-            compute_softmax_scores(tester)
+        # if distance_based_uncertainty is not None:
+        #     print('Computing softmax scores')
+        #     compute_softmax_scores(tester)
 
         feat_1, feat_2, unc_1, unc_2, label_vec = \
         tester.get_features_uncertainties_labels()
