@@ -2,6 +2,8 @@ import numpy as np
 
 from .distance_uncertainty_funcs import l2_normalize
 
+from face_lib.evaluation import l2_normalize
+from scipy.special import softmax
 
 def aggregate_PFE(x, sigma_sq=None, normalize=True, concatenate=False):
     if sigma_sq is None:
@@ -58,4 +60,65 @@ def aggregate_softmax(x, sigma_sq, temperature=1.0, normalize=True, concatenate=
         mu_new = l2_normalize(mu_new)
 
     return mu_new
+
+
+def aggregate_templates(templates, method):
+    for t in templates:
+        if method == 'first':
+            t.mu = l2_normalize(t.features[0])
+            t.sigma_sq = t.sigmas[0]
+        elif method == 'PFE':
+            print(t.sigmas.shape)
+            exit()
+            t.mu, t.sigma_sq = aggregate_PFE(t.features, sigma_sq=t.sigmas)
+
+        elif method == 'mean':
+            t.mu = l2_normalize(np.mean(t.features, axis=0))
+            t.sigma_sq = np.mean(t.sigmas, axis=0)
+        elif method == 'stat-mean':
+            t.mu = l2_normalize(np.mean(t.features, axis=0))
+            t.sigma_sq = np.mean(t.sigmas, axis=0) * (len(t.sigmas))**0.5
+        elif method == 'argmax':
+            idx = np.argmax(t.sigmas)
+            t.mu = t.features[idx]
+            t.sigma_sq = t.sigmas[idx]
+        elif method == 'stat-softmax':
+            weights = softmax(t.sigmas[:, 0])
+            t.mu = l2_normalize(np.dot(weights, t.features))
+            t.sigma_sq = np.dot(weights, t.sigmas) * len(t.sigmas)**0.5
+        elif method.startswith('softmax'):
+            parts = method.split('-')
+            if len(parts) == 1:
+                temperature = 1.0
+            else:
+                temperature = float(parts[1])
+            weights = softmax(t.sigmas[:, 0] / temperature)
+            t.mu = l2_normalize(np.dot(weights, t.features))
+            t.sigma_sq = np.dot(weights, t.sigmas)
+        elif method == 'weighted':
+            mu = l2_normalize(t.features)
+            weights = t.sigmas[:, 0]
+            weights = weights / np.sum(weights)
+            t.mu = l2_normalize(np.dot(weights, mu))
+            t.sigma_sq = np.dot(weights, t.sigmas)
+        elif method.startswith('weighted-softmax'):
+            parts = method.split('-')
+            if len(parts) == 2:
+                temperature = 1.0
+            else:
+                temperature = float(parts[2])
+            weights = t.sigmas[:, 0]
+            weights = weights / np.sum(weights)
+            t.mu = l2_normalize(np.dot(weights, t.features))
+            weights = softmax(t.sigmas[:, 0] / temperature)
+            t.sigma_sq = np.dot(weights, t.sigmas)
+        elif method == 'weighted':
+            mu = l2_normalize(t.features)
+            weights = t.sigmas[:, 0]
+            weights = weights / np.sum(weights)
+            t.mu = l2_normalize(np.dot(weights, mu))
+            t.sigma_sq = np.dot(weights, t.sigmas)
+            pass
+        else:
+            raise ValueError(f"Wrong aggregate method {method}")
 

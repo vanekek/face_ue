@@ -1,1 +1,1 @@
-docker run -d --shm-size=8g --memory=40g --cpus=40 --user 1133:1134 --rm -it --init -v /home/l.erlygin/face-evaluation:/app --gpus all face-eval bash
+docker run -d --shm-size=8g --memory=40g --cpus=40 --user 1133:1134 --name erlygin_face_eval --rm -it --init -v /home/l.erlygin/face-evaluation:/app --gpus all face-eval bash

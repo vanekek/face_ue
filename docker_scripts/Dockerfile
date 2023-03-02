@@ -3,6 +3,7 @@ FROM nvidia/cuda:11.3.1-base-ubuntu20.04
 # Remove any third-party apt sources to avoid issues with expiring keys.
 RUN rm -f /etc/apt/sources.list.d/*.list
 
+ARG DEBIAN_FRONTEND=noninteractive
 # Install some basic utilities
 RUN apt-get update && apt-get install -y \
     curl \
@@ -16,6 +17,9 @@ RUN apt-get update && apt-get install -y \
     git \
     bzip2 \
     libx11-6 \
+    ffmpeg \
+    libsm6 \
+    libxext6 \
  && rm -rf /var/lib/apt/lists/*
 
 # Create a working directory
@@ -42,7 +46,7 @@ RUN mkdir $HOME/.cache $HOME/.config \
 ENV CONDA_AUTO_UPDATE_CONDA=false \
     PATH=$HOME/miniconda/bin:$PATH
 COPY environment.yml /app/environment.yml
-RUN curl -sLo ~/miniconda.sh https://repo.continuum.io/miniconda/Miniconda3-py39_4.10.3-Linux-x86_64.sh \
+RUN curl -sLo ~/miniconda.sh https://repo.anaconda.com/miniconda/Miniconda3-py39_23.1.0-1-Linux-x86_64.sh \
  && chmod +x ~/miniconda.sh \
  && ~/miniconda.sh -b -p ~/miniconda \
  && rm ~/miniconda.sh \

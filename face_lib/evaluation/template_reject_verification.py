@@ -39,74 +39,18 @@ from face_lib.evaluation.feature_extractors import get_features_uncertainties_la
 from face_lib.evaluation.feature_extractors import extract_features_uncertainties_from_list
 from face_lib.evaluation.reject_verification import get_rejected_tar_far
 
-from face_lib.evaluation import name_to_distance_func, l2_normalize
-from face_lib.evaluation.aggregation import aggregate_PFE, aggregate_min, aggregate_softmax
+
 from face_lib.evaluation.argument_parser import verify_arguments_template_reject_verification, parse_cli_arguments
+from face_lib.evaluation.aggregation import aggregate_templates
 
 
-def aggregate_templates(templates, method):
-    for t in templates:
-        if method == 'first':
-            t.mu = l2_normalize(t.features[0])
-            t.sigma_sq = t.sigmas[0]
-        elif method == 'PFE':
-            t.mu, t.sigma_sq = aggregate_PFE(t.features, sigma_sq=t.sigmas)
-        elif method == 'mean':
-            t.mu = l2_normalize(np.mean(t.features, axis=0))
-            t.sigma_sq = np.mean(t.sigmas, axis=0)
-        elif method == 'stat-mean':
-            t.mu = l2_normalize(np.mean(t.features, axis=0))
-            t.sigma_sq = np.mean(t.sigmas, axis=0) * (len(t.sigmas))**0.5
-        elif method == 'argmax':
-            idx = np.argmax(t.sigmas)
-            t.mu = t.features[idx]
-            t.sigma_sq = t.sigmas[idx]
-        elif method == 'stat-softmax':
-            weights = softmax(t.sigmas[:, 0])
-            t.mu = l2_normalize(np.dot(weights, t.features))
-            t.sigma_sq = np.dot(weights, t.sigmas) * len(t.sigmas)**0.5
-        elif method.startswith('softmax'):
-            parts = method.split('-')
-            if len(parts) == 1:
-                temperature = 1.0
-            else:
-                temperature = float(parts[1])
-            weights = softmax(t.sigmas[:, 0] / temperature)
-            t.mu = l2_normalize(np.dot(weights, t.features))
-            t.sigma_sq = np.dot(weights, t.sigmas)
-        elif method == 'weighted':
-            mu = l2_normalize(t.features)
-            weights = t.sigmas[:, 0]
-            weights = weights / np.sum(weights)
-            t.mu = l2_normalize(np.dot(weights, mu))
-            t.sigma_sq = np.dot(weights, t.sigmas)
-        elif method.startswith('weighted-softmax'):
-            parts = method.split('-')
-            if len(parts) == 2:
-                temperature = 1.0
-            else:
-                temperature = float(parts[2])
-            weights = t.sigmas[:, 0]
-            weights = weights / np.sum(weights)
-            t.mu = l2_normalize(np.dot(weights, t.features))
-            weights = softmax(t.sigmas[:, 0] / temperature)
-            t.sigma_sq = np.dot(weights, t.sigmas)
-        elif method == 'weighted':
-            mu = l2_normalize(t.features)
-            weights = t.sigmas[:, 0]
-            weights = weights / np.sum(weights)
-            t.mu = l2_normalize(np.dot(weights, mu))
-            t.sigma_sq = np.dot(weights, t.sigmas)
-            pass
-        else:
-            raise ValueError(f"Wrong aggregate method {method}")
 
 def compute_softmax_scores(tester):
     """
     computes softmax scores for all verification_templates
 
     take first emb from each verification template and computes distances to all enroll templates means
-    uncertanty for enroll templates is set to inf and is not use, as we choose min uncertanty agregation
+    uncertanty for enroll templates is set to inf and is not used, as we choose min uncertanty agregation
     """
 
     ver_mus = []
