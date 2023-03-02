@@ -44,7 +44,14 @@ from face_lib.evaluation.argument_parser import verify_arguments_template_reject
 from face_lib.evaluation.aggregation import aggregate_templates
 
 
+def compute_probality(tester):
+    """
+    Computes probability for belonging to each class for each query image 
 
+    result of procedure: sigma_sq of enroll is set to inf
+                         sigma_sq of each sample is set to 1 - max_class_prob
+                         
+    """
 def compute_softmax_scores(tester):
     """
     computes softmax scores for all verification_templates
@@ -118,6 +125,9 @@ def eval_template_reject_verification(
         uncertainty_fig, uncertainty_axes = plt.subplots(
             nrows=1, ncols=n_figures,
             figsize=(9 * n_figures, 8))
+        if n_figures == 1:
+            distance_axes = [distance_axes]
+            uncertainty_axes = [uncertainty_axes]
 
     # Setup the data
     if protocol != "ijbc":

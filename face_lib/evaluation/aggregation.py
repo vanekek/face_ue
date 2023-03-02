@@ -24,7 +24,11 @@ def aggregate_PFE(x, sigma_sq=None, normalize=True, concatenate=False):
         return np.concatenate([mu_new, sigma_sq_new])
     else:
         return mu_new, sigma_sq_new
-
+    
+def aggregate_PFE_properly(mu, sigma_sq):
+    sigma_sq_new = 1 / (np.sum(1 / sigma_sq, axis=0, keepdims=True))
+    mu_new = sigma_sq_new * np.sum(mu/sigma_sq, axis=0, keepdims=True)
+    return mu_new, sigma_sq_new
 
 def aggregate_min(x, sigma_sq, normalize=True, concatenate=False):
     if sigma_sq is None:
@@ -68,10 +72,8 @@ def aggregate_templates(templates, method):
             t.mu = l2_normalize(t.features[0])
             t.sigma_sq = t.sigmas[0]
         elif method == 'PFE':
-            print(t.sigmas.shape)
-            exit()
-            t.mu, t.sigma_sq = aggregate_PFE(t.features, sigma_sq=t.sigmas)
-
+            #t.mu, t.sigma_sq = aggregate_PFE(t.features, sigma_sq=t.sigmas)
+            t.mu, t.sigma_sq = aggregate_PFE_properly(t.features, sigma_sq=t.sigmas)
         elif method == 'mean':
             t.mu = l2_normalize(np.mean(t.features, axis=0))
             t.sigma_sq = np.mean(t.sigmas, axis=0)
