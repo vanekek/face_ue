@@ -11,8 +11,12 @@ datasets_uncertainties = {name: np.load(path) for name, path in datasaets_paths.
 
 
 def plot_distributions(
-    datasets_uncertainties, save_fig_path, n_bins=50,
-    fig_name="", xlabel_name="", ylabel_name="",
+    datasets_uncertainties,
+    save_fig_path,
+    n_bins=50,
+    fig_name="",
+    xlabel_name="",
+    ylabel_name="",
 ):
     fig, ax = plt.subplots(figsize=(10, 10))
     colors = ["b", "g", "y", "r"]
@@ -27,6 +31,7 @@ def plot_distributions(
 
     if save_fig_path:
         fig.savefig(save_fig_path, dpi=400)
+
 
 plot_distributions(
     datasets_uncertainties=datasets_uncertainties,

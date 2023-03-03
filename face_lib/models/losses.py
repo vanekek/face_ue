@@ -52,7 +52,6 @@ class AngleLoss(FaceModule):
         self.lamb = 1500.0
 
     def forward(self, **kwargs):
-
         target = kwargs.get("gty")
         input = kwargs.get("angle_x")
 

@@ -14,7 +14,6 @@ except ImportError:
 
 
 def ms1m_collate_fn(batch):
-
     imgs, gtys = [], []
     for pid_imgs, gty in batch:
         imgs.extend(pid_imgs)

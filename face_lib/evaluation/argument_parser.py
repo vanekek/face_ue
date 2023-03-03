@@ -3,9 +3,18 @@ from face_lib.utils import cfg
 
 
 uncertainty_methods = [
-    "head", "GAN", "classifier", "scale", "blurred_scale", "emb_norm",
-    "magface", "backbone+uncertainty_model", "magface_precalculated",
-    "backbone+magface", "perfect",]
+    "head",
+    "GAN",
+    "classifier",
+    "scale",
+    "blurred_scale",
+    "emb_norm",
+    "magface",
+    "backbone+uncertainty_model",
+    "magface_precalculated",
+    "backbone+magface",
+    "perfect",
+]
 
 uncertainty_modes = ["uncertainty", "confidence"]
 known_datasets = ["ijba", "ijbc"]
@@ -31,9 +40,7 @@ default_fusion_parameters = {
     "verbose": False,
 }
 
-choice_fusion_parameters = {
-    "uncertainty_strategy": uncertainty_methods
-}
+choice_fusion_parameters = {"uncertainty_strategy": uncertainty_methods}
 
 
 # Reject_verification
@@ -121,14 +128,16 @@ default_dataset_distribution_parameters = {
 
 choice_dataset_distribution_parameters = {
     "dataset_name": distribution_datasets,
-    "uncertainty_strategy": uncertainty_methods
+    "uncertainty_strategy": uncertainty_methods,
 }
 
 
 def parse_cli_arguments():
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "--config_path", type=str, required=True,
+        "--config_path",
+        type=str,
+        required=True,
         help="Path to .yaml file with the configuration for the test",
     )
     args = parser.parse_args()
@@ -147,7 +156,9 @@ def verify_arguments(args, required_params, default_params, choice_parameters=No
     if choice_parameters is not None:
         for param_name, choices in choice_parameters.items():
             if args[param_name] not in choices:
-                raise ValueError(f"Parameter {param_name} should be chosen from {choices}, you've chosen {args[param_name]}")
+                raise ValueError(
+                    f"Parameter {param_name} should be chosen from {choices}, you've chosen {args[param_name]}"
+                )
 
     return args
 
@@ -157,7 +168,8 @@ def verify_arguments_fusion(args):
         args,
         required_params=required_fusion_parameters,
         default_params=default_fusion_parameters,
-        choice_parameters=choice_fusion_parameters,)
+        choice_parameters=choice_fusion_parameters,
+    )
 
 
 def verify_arguments_reject_verification(args):
@@ -165,7 +177,8 @@ def verify_arguments_reject_verification(args):
         args,
         required_params=required_reject_verification_parameters,
         default_params=default_reject_verification_parameters,
-        choice_parameters=choice_reject_verification_parameters,)
+        choice_parameters=choice_reject_verification_parameters,
+    )
 
 
 def verify_arguments_template_reject_verification(args):
@@ -173,7 +186,8 @@ def verify_arguments_template_reject_verification(args):
         args,
         required_params=required_template_reject_verification_parameters,
         default_params=default_template_reject_verification_parameters,
-        choice_parameters=choice_template_reject_verification_parameters,)
+        choice_parameters=choice_template_reject_verification_parameters,
+    )
 
 
 def verify_arguments_dataset_distribution(args):
@@ -181,5 +195,5 @@ def verify_arguments_dataset_distribution(args):
         args,
         required_params=required_dataset_distribution_parameters,
         default_params=default_dataset_distribution_parameters,
-        choice_parameters=choice_dataset_distribution_parameters,)
-
+        choice_parameters=choice_dataset_distribution_parameters,
+    )

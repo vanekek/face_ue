@@ -6,12 +6,12 @@ def get_model(name, num_classes=4, checkpoint=None):
     """
     Builds a model from a predefined zoo
     """
-    if name == 'resnet9':
+    if name == "resnet9":
         model = ResNet9(num_classes)
-    elif name == 'resnet9_backbone':
+    elif name == "resnet9_backbone":
         model = Resnet9Backbone()
     else:
-        raise ValueError('Incorrect model name')
+        raise ValueError("Incorrect model name")
 
     if checkpoint is not None:
         model.load_state_dict(torch.load(checkpoint))
@@ -20,8 +20,8 @@ def get_model(name, num_classes=4, checkpoint=None):
 
 
 def get_confidence_model(name, num_classes, backbone_checkpoint=None):
-    if name == 'resnet9_scale':
-        backbone = get_model('resnet9', num_classes, checkpoint=backbone_checkpoint)
+    if name == "resnet9_scale":
+        backbone = get_model("resnet9", num_classes, checkpoint=backbone_checkpoint)
         ScaleFace(backbone, num_features=128)
 
     """
@@ -69,13 +69,13 @@ class PFEHead(nn.Module):
         return x
 
 
-
 class Residual(nn.Module):
     def __init__(self, module):
         super(Residual, self).__init__()
         self.module = module
 
-    def forward(self, x): return x + self.module(x)
+    def forward(self, x):
+        return x + self.module(x)
 
 
 class ResNet9(nn.Module):
@@ -84,7 +84,6 @@ class ResNet9(nn.Module):
         self.features = None
         self.backbone = Resnet9Backbone()
         self.head = nn.Linear(128, num_classes)
-
 
     def forward(self, x):
         self.features = self.backbone(x)
@@ -95,18 +94,28 @@ class ResNet9(nn.Module):
 class Resnet9Backbone(nn.Module):
     def __init__(self):
         super().__init__()
+
         def conv(in_size, out_size, kernel_size, stride, padding):
             return nn.Sequential(
-                nn.Conv2d(in_size, out_size, kernel_size=kernel_size, stride=stride, padding=padding, bias=False),
+                nn.Conv2d(
+                    in_size,
+                    out_size,
+                    kernel_size=kernel_size,
+                    stride=stride,
+                    padding=padding,
+                    bias=False,
+                ),
                 nn.BatchNorm2d(out_size),
-                nn.ELU()
+                nn.ELU(),
             )
 
         def residual(channels):
-            return Residual(nn.Sequential(
-                conv(channels, channels, kernel_size=3, stride=1, padding=1),
-                conv(channels, channels, kernel_size=3, stride=1, padding=1),
-            ))
+            return Residual(
+                nn.Sequential(
+                    conv(channels, channels, kernel_size=3, stride=1, padding=1),
+                    conv(channels, channels, kernel_size=3, stride=1, padding=1),
+                )
+            )
 
         self.backbone = nn.Sequential(
             conv(3, 64, kernel_size=3, stride=1, padding=1),
@@ -124,15 +133,22 @@ class Resnet9Backbone(nn.Module):
         return self.backbone(x)
 
 
-
 class SimpleCNN(nn.Module):
     def __init__(self, num_classes):
         super().__init__()
+
         def conv(in_size, out_size, kernel_size, stride, padding):
             return nn.Sequential(
-                nn.Conv2d(in_size, out_size, kernel_size=kernel_size, stride=stride, padding=padding, bias=False),
+                nn.Conv2d(
+                    in_size,
+                    out_size,
+                    kernel_size=kernel_size,
+                    stride=stride,
+                    padding=padding,
+                    bias=False,
+                ),
                 nn.BatchNorm2d(out_size),
-                nn.ELU()
+                nn.ELU(),
             )
 
         self.layers = nn.Sequential(
@@ -145,9 +161,8 @@ class SimpleCNN(nn.Module):
             nn.Flatten(),
             nn.Linear(512, 128),
             nn.ELU(),
-            nn.Linear(128, num_classes)
+            nn.Linear(128, num_classes),
         )
 
     def forward(self, x):
         return self.layers(x)
-

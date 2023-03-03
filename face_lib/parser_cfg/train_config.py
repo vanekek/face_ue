@@ -3,7 +3,6 @@ import exman
 
 
 def training_args():
-
     # TODO: don't like the path manipulation here
     parser = exman.ExParser(
         root=exman.simpleroot(__file__).parent.parent.parent / "exman"
@@ -25,7 +24,6 @@ def training_args():
 
 
 def parse_args_scale():
-
     parser = argparse.ArgumentParser(description="Parsing arguments for scale")
 
     parser.add_argument(

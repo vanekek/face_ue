@@ -16,14 +16,14 @@ import face_lib.utils.metrics as metrics
 import face_lib.evaluation.plots as plots
 from face_lib.evaluation.argument_parser import (
     parse_cli_arguments,
-    verify_arguments_reject_verification
+    verify_arguments_reject_verification,
 )
-from face_lib.evaluation.feature_extractors import (
-    get_features_uncertainties_labels)
+from face_lib.evaluation.feature_extractors import get_features_uncertainties_labels
 from face_lib.evaluation.utils import (
     get_required_models,
     get_distance_uncertainty_funcs,
-    extract_statistics)
+    extract_statistics,
+)
 
 
 def eval_reject_verification(
@@ -48,26 +48,43 @@ def eval_reject_verification(
     verbose=False,
     val_pairs_table_path=None,
 ):
-
     if rejected_portions is None:
-        rejected_portions = [0.0,]
+        rejected_portions = [
+            0.0,
+        ]
     if FARs is None:
-        FARs = [0.0,]
+        FARs = [
+            0.0,
+        ]
 
     mu_1, mu_2, sigma_sq_1, sigma_sq_2, label_vec = get_features_uncertainties_labels(
-        backbone, head, dataset_path, pairs_table_path,
-        uncertainty_strategy=uncertainty_strategy, batch_size=batch_size, verbose=verbose,
-        discriminator=discriminator, scale_predictor=scale_predictor,
-        uncertainty_model=uncertainty_model, precalculated_path=precalculated_path,
+        backbone,
+        head,
+        dataset_path,
+        pairs_table_path,
+        uncertainty_strategy=uncertainty_strategy,
+        batch_size=batch_size,
+        verbose=verbose,
+        discriminator=discriminator,
+        scale_predictor=scale_predictor,
+        uncertainty_model=uncertainty_model,
+        precalculated_path=precalculated_path,
     )
 
     val_statistics = None
     if val_pairs_table_path is not None:
         val_data = get_features_uncertainties_labels(
-            backbone, head, dataset_path, val_pairs_table_path,
-            uncertainty_strategy=uncertainty_strategy, batch_size=batch_size, verbose=verbose,
-            discriminator=discriminator, scale_predictor=scale_predictor,
-            uncertainty_model=uncertainty_model, precalculated_path=precalculated_path,
+            backbone,
+            head,
+            dataset_path,
+            val_pairs_table_path,
+            uncertainty_strategy=uncertainty_strategy,
+            batch_size=batch_size,
+            verbose=verbose,
+            discriminator=discriminator,
+            scale_predictor=scale_predictor,
+            uncertainty_model=uncertainty_model,
+            precalculated_path=precalculated_path,
         )
         val_statistics = extract_statistics(val_data)
 
@@ -81,19 +98,24 @@ def eval_reject_verification(
     uncertainty_fig, uncertainty_axes = None, [None] * len(distances_uncertainties)
     if save_fig_path is not None:
         distance_fig, distance_axes = plt.subplots(
-            nrows=1, ncols=len(distances_uncertainties),
-            figsize=(9 * len(distances_uncertainties), 8))
+            nrows=1,
+            ncols=len(distances_uncertainties),
+            figsize=(9 * len(distances_uncertainties), 8),
+        )
         uncertainty_fig, uncertainty_axes = plt.subplots(
-            nrows=1, ncols=len(distances_uncertainties),
-            figsize=(9 * len(distances_uncertainties), 8))
-    if not hasattr(distance_axes, '__iter__'):
-        distance_axes = (distance_axes, )
-        uncertainty_axes = (uncertainty_axes, )
+            nrows=1,
+            ncols=len(distances_uncertainties),
+            figsize=(9 * len(distances_uncertainties), 8),
+        )
+    if not hasattr(distance_axes, "__iter__"):
+        distance_axes = (distance_axes,)
+        uncertainty_axes = (uncertainty_axes,)
 
     all_results = OrderedDict()
 
-    for (distance_name, uncertainty_name), distance_ax, uncertainty_ax in \
-            zip(distances_uncertainties, distance_axes, uncertainty_axes):
+    for (distance_name, uncertainty_name), distance_ax, uncertainty_ax in zip(
+        distances_uncertainties, distance_axes, uncertainty_axes
+    ):
         print(f"=== {distance_name} {uncertainty_name} ===")
 
         distance_func, uncertainty_func = get_distance_uncertainty_funcs(
@@ -117,7 +139,7 @@ def eval_reject_verification(
             FARs=FARs,
             distance_ax=distance_ax,
             uncertainty_ax=uncertainty_ax,
-            rejected_portions=rejected_portions
+            rejected_portions=rejected_portions,
         )
 
         if save_fig_path is not None:
@@ -140,28 +162,32 @@ def eval_reject_verification(
     if save_fig_path:
         for (distance_name, uncertainty_name), result_table in all_results.items():
             title = (
-                    pairs_table_path.split("/")[-1][-4]
-                    + " "
-                    + distance_name
-                    + " "
-                    + uncertainty_name
+                pairs_table_path.split("/")[-1][-4]
+                + " "
+                + distance_name
+                + " "
+                + uncertainty_name
             )
-            save_to_path = (
-                os.path.join(save_fig_path, distance_name + "_" + uncertainty_name + ".jpg")
+            save_to_path = os.path.join(
+                save_fig_path, distance_name + "_" + uncertainty_name + ".jpg"
             )
             if save_fig_path:
-                plots.plot_rejected_TAR_FAR(result_table, rejected_portions, title, save_to_path)
+                plots.plot_rejected_TAR_FAR(
+                    result_table, rejected_portions, title, save_to_path
+                )
 
         plots.plot_TAR_FAR_different_methods(
             all_results,
             rejected_portions,
             res_AUCs,
             title=pairs_table_path.split("/")[-1][:-4],
-            save_figs_path=os.path.join(save_fig_path, "all_methods.jpg")
+            save_figs_path=os.path.join(save_fig_path, "all_methods.jpg"),
         )
 
         distance_fig.savefig(os.path.join(save_fig_path, "distance_dist.jpg"), dpi=400)
-        uncertainty_fig.savefig(os.path.join(save_fig_path, "uncertainry_dist.jpg"), dpi=400)
+        uncertainty_fig.savefig(
+            os.path.join(save_fig_path, "uncertainry_dist.jpg"), dpi=400
+        )
 
         torch.save(all_results, os.path.join(save_fig_path, "table.pt"))
 
@@ -179,7 +205,7 @@ def get_rejected_tar_far(
     distance_ax=None,
     uncertainty_ax=None,
     rejected_portions=None,
-    equal_uncertainty_enroll=False
+    equal_uncertainty_enroll=False,
 ):
     # If something's broken, uncomment the line below
 
@@ -200,7 +226,11 @@ def get_rejected_tar_far(
     if uncertainty_mode == "uncertainty":
         pass
     elif uncertainty_mode == "confidence":
-        score_vec, label_vec, uncertainty_vec = score_vec[::-1], label_vec[::-1], uncertainty_vec[::-1]
+        score_vec, label_vec, uncertainty_vec = (
+            score_vec[::-1],
+            label_vec[::-1],
+            uncertainty_vec[::-1],
+        )
     else:
         raise RuntimeError("Don't know this type uncertainty mode")
 
@@ -217,10 +247,20 @@ def get_rejected_tar_far(
             result_fars[wanted_far].append(real_far)
 
     plots.plot_distribution(
-        score_vec, label_vec, xlabel_name="Distances", ylabel_name="Amount", ax=distance_ax)
+        score_vec,
+        label_vec,
+        xlabel_name="Distances",
+        ylabel_name="Amount",
+        ax=distance_ax,
+    )
 
     plots.plot_distribution(
-        uncertainty_vec, label_vec, xlabel_name="Uncertainties", ylabel_name="Amount", ax=uncertainty_ax)
+        uncertainty_vec,
+        label_vec,
+        xlabel_name="Uncertainties",
+        ylabel_name="Amount",
+        ax=uncertainty_ax,
+    )
 
     return result_table
 
@@ -240,8 +280,16 @@ if __name__ == "__main__":
     model_args = cfg.load_config(args.config_path)
     checkpoint = torch.load(args.checkpoint_path, map_location=device)
 
-    backbone, head, discriminator, classifier, scale_predictor, uncertainty_model = \
-        get_required_models(checkpoint=checkpoint, args=args, model_args=model_args, device=device)
+    (
+        backbone,
+        head,
+        discriminator,
+        classifier,
+        scale_predictor,
+        uncertainty_model,
+    ) = get_required_models(
+        checkpoint=checkpoint, args=args, model_args=model_args, device=device
+    )
 
     rejected_portions = np.linspace(*args.rejected_portions)
     distances_uncertainties = list(

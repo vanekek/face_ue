@@ -9,7 +9,6 @@ queue_timeout = 600
 
 class IJBDataset(object):
     def __init__(self, path=None, prefix=None):
-
         if path is not None:
             self.init_from_path(path)
         else:
@@ -151,7 +150,6 @@ class IJBDataset(object):
         return indices_batch
 
     def get_batch(self, batch_format):
-
         indices = self.get_batch_indices(batch_format)
         batch = {}
         for column in self.data.columns:
@@ -162,7 +160,6 @@ class IJBDataset(object):
     # Multithreading preprocessing images
 
     def start_batch_queue(self, batch_format, proc_func=None, maxsize=1, num_threads=3):
-
         self.batch_queue = Queue(maxsize=maxsize)
 
         def batch_queue_worker(seed):

@@ -6,8 +6,10 @@ DIRECTORY = Path("/gpfs/gpfs0/k.fedyanin/space/IJB/IJB-C/protocols/test1")
 
 def main():
     pass
+
     def file_exists():
         pass
+
     enroll_df = pd.read_csv()
     # cleaned = "cleaned_templates.csv"
     # template_df = pd.read_csv(DIRECTORY/cleaned)
@@ -21,5 +23,5 @@ def main():
     # print(image_counts)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

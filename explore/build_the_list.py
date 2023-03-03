@@ -12,9 +12,11 @@ NEG_NUM = 100000
 
 def main():
     cleaned = "cleaned_templates.csv"
-    template_df = pd.read_csv(DIRECTORY/cleaned)
-    matches = pd.read_csv(DIRECTORY / 'match.csv')
-    subject_by_template = template_df[["TEMPLATE_ID", "SUBJECT_ID"]].groupby("TEMPLATE_ID").min()
+    template_df = pd.read_csv(DIRECTORY / cleaned)
+    matches = pd.read_csv(DIRECTORY / "match.csv")
+    subject_by_template = (
+        template_df[["TEMPLATE_ID", "SUBJECT_ID"]].groupby("TEMPLATE_ID").min()
+    )
 
     pos_counter = 0
     neg_counter = 0
@@ -23,8 +25,8 @@ def main():
 
     for index, row in tqdm(matches.iterrows(), total=len(matches)):
         try:
-            subject_1 = subject_by_template.loc[row['ENROLL_TEMPLATE_ID'], 'SUBJECT_ID']
-            subject_2 = subject_by_template.loc[row['VERIF_TEMPLATE_ID'], "SUBJECT_ID"]
+            subject_1 = subject_by_template.loc[row["ENROLL_TEMPLATE_ID"], "SUBJECT_ID"]
+            subject_2 = subject_by_template.loc[row["VERIF_TEMPLATE_ID"], "SUBJECT_ID"]
         except:
             continue
 
@@ -41,8 +43,8 @@ def main():
             break
 
     print(matches.loc[idx])
-    matches.loc[idx].to_csv(DIRECTORY / 'short_matches.csv', index=False, header=False)
+    matches.loc[idx].to_csv(DIRECTORY / "short_matches.csv", index=False, header=False)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

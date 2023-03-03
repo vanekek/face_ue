@@ -5,6 +5,7 @@ import torch.distributed as dist
 from face_lib.utils import cfg
 from torch.utils.tensorboard import SummaryWriter
 
+
 class TrainerBase(metaclass=abc.ABCMeta):
     _INF = 1e10
 
@@ -48,7 +49,7 @@ class TrainerBase(metaclass=abc.ABCMeta):
                 rank=self.rank,
                 world_size=self.world_size,
             )
-            self.local_rank = int(os.environ['LOCAL_RANK'])
+            self.local_rank = int(os.environ["LOCAL_RANK"])
             torch.cuda.set_device(self.local_rank)
         self.start_epoch = 0
         self.device = f"cuda:{self.local_rank}" if torch.cuda.is_available else "cpu"

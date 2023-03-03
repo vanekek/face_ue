@@ -16,11 +16,17 @@ from face_lib.utils import FACE_METRICS
 from face_lib.utils.utils_amp import MaxClipGradScaler
 from face_lib.utils.utils_logging import AverageMeter, init_logging
 from face_lib.utils.utils_callback import (
-    CallBackVerification, CallBackLogging, CallBackModelCheckpoint)
+    CallBackVerification,
+    CallBackLogging,
+    CallBackModelCheckpoint,
+)
 from face_lib.datasets import (
-    MXFaceDataset, MXFaceDatasetDistorted,
-    MXFaceDatasetGauss, SyntheticDataset,
-    DataLoaderX)
+    MXFaceDataset,
+    MXFaceDatasetDistorted,
+    MXFaceDatasetGauss,
+    SyntheticDataset,
+    DataLoaderX,
+)
 
 from torch.utils.tensorboard import SummaryWriter
 
@@ -37,40 +43,38 @@ def _set_evaluation_metric_yaml(config: dict):
 
 
 class Trainer(TrainerBase):
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         init_logging(
             log_root=logging.getLogger(),
             rank=self.local_rank,
-            models_root=self.model_args.output)
+            models_root=self.model_args.output,
+        )
 
     def _data_loader(self):
-
         if not "dataset" in self.model_args:
             raise KeyError("Do not have dataset name in config")
 
         if self.model_args.dataset == "synthetic":
-            self.train_set = SyntheticDataset(
-                local_rank=self.local_rank)
+            self.train_set = SyntheticDataset(local_rank=self.local_rank)
         elif self.model_args.dataset == "distortion":
             self.train_set = MXFaceDatasetDistorted(
-                root_dir=self.model_args.rec,
-                local_rank=self.local_rank)
+                root_dir=self.model_args.rec, local_rank=self.local_rank
+            )
         elif self.model_args.dataset == "gauss":
             self.train_set = MXFaceDatasetGauss(
-                root_dir=self.model_args.rec,
-                local_rank=self.local_rank)
+                root_dir=self.model_args.rec, local_rank=self.local_rank
+            )
         elif self.model_args.dataset == "ms1m":
             self.train_set = MXFaceDataset(
-                root_dir=self.model_args.rec,
-                local_rank=self.local_rank)
+                root_dir=self.model_args.rec, local_rank=self.local_rank
+            )
         else:
             raise KeyError("Don't know this name of dataset")
 
         self.train_sampler = torch.utils.data.distributed.DistributedSampler(
-            self.train_set,
-            shuffle=True)
+            self.train_set, shuffle=True
+        )
         self.train_loader = DataLoaderX(
             local_rank=self.local_rank,
             dataset=self.train_set,
@@ -78,16 +82,16 @@ class Trainer(TrainerBase):
             sampler=self.train_sampler,
             num_workers=2,
             pin_memory=True,
-            drop_last=True)
+            drop_last=True,
+        )
 
     def _model_loader(self):
-
         self.backbone = mlib.model_dict[self.model_args.backbone.name](
             **utils.pop_element(self.model_args.backbone, "name"),
         )
-        self.scale_predictor = mlib.scale_predictors[self.model_args.scale_predictor.name](
-            **utils.pop_element(self.model_args.scale_predictor, "name")
-        )
+        self.scale_predictor = mlib.scale_predictors[
+            self.model_args.scale_predictor.name
+        ](**utils.pop_element(self.model_args.scale_predictor, "name"))
         self.backbone = self.backbone.to(self.device)
         self.scale_predictor = self.scale_predictor.to(self.device)
 
@@ -95,16 +99,22 @@ class Trainer(TrainerBase):
             try:
                 backbone_pth = os.path.join(self.model_args.source, "backbone.pth")
                 self.backbone.load_state_dict(
-                    torch.load(backbone_pth, map_location=torch.device(self.local_rank)))
+                    torch.load(backbone_pth, map_location=torch.device(self.local_rank))
+                )
                 if self.local_rank == 0:
                     logging.info("backbone resume successfully!")
             except (FileNotFoundError, KeyError, IndexError, RuntimeError):
                 if self.local_rank == 0:
                     logging.info("resume fail, backbone init successfully!")
 
-            if "scale_source" in self.model_args and self.model_args.scale_source is not None:
+            if (
+                "scale_source" in self.model_args
+                and self.model_args.scale_source is not None
+            ):
                 scale_ckpt = torch.load(
-                    self.model_args.scale_source, map_location=torch.device(self.local_rank))
+                    self.model_args.scale_source,
+                    map_location=torch.device(self.local_rank),
+                )
                 self.scale_predictor.load_state_dict(scale_ckpt["scale_predictor"])
                 logging.info("Initialized scale_predictor with a pretrained model")
             else:
@@ -112,11 +122,17 @@ class Trainer(TrainerBase):
 
         if not self.model_args.freeze_backbone:
             self.backbone = torch.nn.parallel.DistributedDataParallel(
-                module=self.backbone, broadcast_buffers=False, device_ids=[self.local_rank])
+                module=self.backbone,
+                broadcast_buffers=False,
+                device_ids=[self.local_rank],
+            )
         for p in self.scale_predictor.parameters():
             dist.broadcast(p, 0)
         self.scale_predictor = torch.nn.parallel.DistributedDataParallel(
-            module=self.scale_predictor, broadcast_buffers=False, device_ids=[self.local_rank])
+            module=self.scale_predictor,
+            broadcast_buffers=False,
+            device_ids=[self.local_rank],
+        )
 
         if self.model_args.freeze_backbone:
             for p in self.backbone.parameters():
@@ -138,8 +154,8 @@ class Trainer(TrainerBase):
             sample_rate=self.model_args.sample_rate,
             embedding_size=self.model_args.embedding_size,
             prefix=os.path.join(self.model_args.output, "checkpoints"),
-            source=self.model_args.source)
-
+            source=self.model_args.source,
+        )
 
         self.learnable_parameters = []
         if not self.model_args.freeze_backbone:
@@ -149,19 +165,29 @@ class Trainer(TrainerBase):
 
         param_groups = []
         if not self.model_args.freeze_backbone:
-            param_groups.append({
-                "params": self.backbone.parameters(),
-                "lr": self.model_args.lr / 512 * self.model_args.batch_size * self.world_size,
-                "momentum": self.model_args.momentum,
-                "weight_decay": self.model_args.weight_decay
-            })
+            param_groups.append(
+                {
+                    "params": self.backbone.parameters(),
+                    "lr": self.model_args.lr
+                    / 512
+                    * self.model_args.batch_size
+                    * self.world_size,
+                    "momentum": self.model_args.momentum,
+                    "weight_decay": self.model_args.weight_decay,
+                }
+            )
         if self.model_args.loss == "arcface_scale":
-            param_groups.append({
-                "params": self.scale_predictor.parameters(),
-                "lr": self.model_args.scale_lr / 512 * self.model_args.batch_size * self.world_size,
-                "momentum": self.model_args.momentum,
-                "weight_decay": self.model_args.weight_decay
-            })
+            param_groups.append(
+                {
+                    "params": self.scale_predictor.parameters(),
+                    "lr": self.model_args.scale_lr
+                    / 512
+                    * self.model_args.batch_size
+                    * self.world_size,
+                    "momentum": self.model_args.momentum,
+                    "weight_decay": self.model_args.weight_decay,
+                }
+            )
 
         self.opt_backbone = torch.optim.SGD(param_groups)
 
@@ -169,10 +195,11 @@ class Trainer(TrainerBase):
             for p in self.module_partial_fc.parameters():
                 p.requires_grad = False
         self.opt_pfc = torch.optim.SGD(
-            params=[{'params': self.module_partial_fc.parameters()}],
+            params=[{"params": self.module_partial_fc.parameters()}],
             lr=self.model_args.lr / 512 * self.model_args.batch_size * self.world_size,
             momentum=self.model_args.momentum,
-            weight_decay=self.model_args.weight_decay)
+            weight_decay=self.model_args.weight_decay,
+        )
 
         num_image = len(self.train_set)
         total_batch_size = self.model_args.batch_size * self.world_size
@@ -180,27 +207,36 @@ class Trainer(TrainerBase):
         self.total_step = num_image // total_batch_size * self.model_args.num_epoch
 
         def lr_step_func(current_step):
-            decay_step = [x * num_image // total_batch_size for x in self.model_args.decay_epoch]
+            decay_step = [
+                x * num_image // total_batch_size for x in self.model_args.decay_epoch
+            ]
             if current_step < self.warmup_step:
                 return current_step / self.warmup_step
             else:
                 return 0.1 ** len([m for m in decay_step if m <= current_step])
 
         self.scheduler_backbone = torch.optim.lr_scheduler.LambdaLR(
-            optimizer=self.opt_backbone, lr_lambda=lr_step_func)
+            optimizer=self.opt_backbone, lr_lambda=lr_step_func
+        )
 
         if not self.model_args.freeze_backbone:
             self.scheduler_pfc = torch.optim.lr_scheduler.LambdaLR(
-                optimizer=self.opt_pfc, lr_lambda=lr_step_func)
+                optimizer=self.opt_pfc, lr_lambda=lr_step_func
+            )
 
-        self.grad_amp = MaxClipGradScaler(
-            self.model_args.batch_size,
-            128 * self.model_args.batch_size,
-            growth_interval=100
-        ) if self.model_args.fp16 else None
+        self.grad_amp = (
+            MaxClipGradScaler(
+                self.model_args.batch_size,
+                128 * self.model_args.batch_size,
+                growth_interval=100,
+            )
+            if self.model_args.fp16
+            else None
+        )
 
     def _model_evaluate(self, epoch=0):
         pass
+
     # @torch.no_grad()
     # def _model_evaluate(self, epoch=0):
     #     self.backbone.eval()
@@ -225,32 +261,27 @@ class Trainer(TrainerBase):
         pass
 
     def _main_loop(self):
-
         val_target = self.model_args.val_targets
         callback_verification = CallBackVerification(
-            2000,
-            self.rank,
-            val_target,
-            self.model_args.rec)
+            2000, self.rank, val_target, self.model_args.rec
+        )
         callback_logging = CallBackLogging(
             5,
             self.rank,
             self.total_step,
             self.model_args.batch_size,
             self.world_size,
-            None)
+            None,
+        )
         save_dir = os.path.join(self.model_args.output, "checkpoints")
         os.makedirs(save_dir, exist_ok=True)
-        callback_checkpoint = CallBackModelCheckpoint(
-            self.rank,
-            save_dir)
+        callback_checkpoint = CallBackModelCheckpoint(self.rank, save_dir)
 
         loss = AverageMeter()
         start_epoch = 0
         global_step = 0
 
         for epoch in range(start_epoch, self.model_args.num_epoch):
-
             self.train_sampler.set_epoch(epoch)
 
             for step, (img, label) in enumerate(self.train_loader):
@@ -263,11 +294,14 @@ class Trainer(TrainerBase):
                 scale = output["scale"]
 
                 x_grad, s_grad, loss_v = self.module_partial_fc.forward_backward(
-                    label, features, self.opt_pfc, scale=scale)
+                    label, features, self.opt_pfc, scale=scale
+                )
 
                 if self.model_args.fp16:
                     if not self.model_args.freeze_backbone:
-                        features.backward(self.grad_amp.scale(x_grad), retain_graph=True)
+                        features.backward(
+                            self.grad_amp.scale(x_grad), retain_graph=True
+                        )
                     scale.backward(self.grad_amp.scale(s_grad))
 
                     self.grad_amp.unscale_(self.opt_backbone)
@@ -292,7 +326,8 @@ class Trainer(TrainerBase):
                     epoch=epoch,
                     fp16=self.model_args.fp16,
                     learning_rate=self.scheduler_backbone.get_last_lr()[0],
-                    grad_scaler=self.grad_amp)
+                    grad_scaler=self.grad_amp,
+                )
                 callback_verification(global_step, self.backbone)
                 self.scheduler_backbone.step()
                 if not self.model_args.freeze_backbone:
@@ -302,7 +337,8 @@ class Trainer(TrainerBase):
                 global_step,
                 self.backbone,
                 self.module_partial_fc,
-                scale_predictor=self.scale_predictor)
+                scale_predictor=self.scale_predictor,
+            )
 
     def _report_settings(self):
         if self.local_rank == 0:

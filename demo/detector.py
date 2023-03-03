@@ -37,6 +37,7 @@ def draw_box(image, b):
     image = cv2.rectangle(image, (b[0], b[1]), (b[2], b[3]), color, 1)
     return image
 
+
 def align_face(full_image, landmarks):
     tform = trans.SimilarityTransform()
     tform.estimate(landmarks, src)
@@ -45,11 +46,13 @@ def align_face(full_image, landmarks):
     return face_aligned
 
 
-
 class Detector:
     def __init__(self):
         self.base = MTCNN(
-            thresholds=[0.8, 0.7, 0.7], device='cuda', post_process=False, min_face_size=30
+            thresholds=[0.8, 0.7, 0.7],
+            device="cuda",
+            post_process=False,
+            min_face_size=30,
         )
 
     def detect(self, frame):
@@ -73,7 +76,7 @@ class Barista:
         confidence = (confidence - start) / spread
         confidence = min(max(0, confidence), 1)
         alpha = 0.2
-        self.confidence = (1-alpha)*self.confidence + alpha*confidence
+        self.confidence = (1 - alpha) * self.confidence + alpha * confidence
 
     def __call__(self, image, confidence):
         self._update_confidence(confidence)
@@ -87,7 +90,7 @@ class Barista:
     def _color(self, confidence):
         """confidence should b"""
         assert confidence >= 0
-        assert  confidence < 1
+        assert confidence < 1
         green = 20 + 235 * confidence
         red = 255 - 235 * confidence
         return (36, green, red)
@@ -96,20 +99,35 @@ class Barista:
 class ScaleConfidence:
     def __init__(self):
         self.model = ScaleFace()
-        self.model.from_checkpoint('/home/kirill/data/faces/models/scaleface.pth')
+        self.model.from_checkpoint("/home/kirill/data/faces/models/scaleface.pth")
 
     def __call__(self, frame):
         frame = frame[None, :, :, :]
         batch = preprocess(frame, (112, 112))
-        batch = torch.from_numpy(batch).permute(0, 3, 1, 2).to('cuda')
+        batch = torch.from_numpy(batch).permute(0, 3, 1, 2).to("cuda")
         res = self.model(batch)
         return res[1].item()
 
 
 lineType = cv2.LINE_AA
 
-def putBText(img,text,text_offset_x=20,text_offset_y=20,vspace=10,hspace=10, font_scale=1.0,background_RGB=(228,225,222),text_RGB=(1,1,1),font = cv2.FONT_HERSHEY_DUPLEX,thickness = 2,alpha=0.6,gamma=0):
-    """"
+
+def putBText(
+    img,
+    text,
+    text_offset_x=20,
+    text_offset_y=20,
+    vspace=10,
+    hspace=10,
+    font_scale=1.0,
+    background_RGB=(228, 225, 222),
+    text_RGB=(1, 1, 1),
+    font=cv2.FONT_HERSHEY_DUPLEX,
+    thickness=2,
+    alpha=0.6,
+    gamma=0,
+):
+    """ "
     copied from pyshine library
 
     Inputs:
@@ -127,20 +145,28 @@ def putBText(img,text,text_offset_x=20,text_offset_y=20,vspace=10,hspace=10, fon
 
     Output:
     img: CV2 image with text and background
-	"""
-    R,G,B = background_RGB[0],background_RGB[1],background_RGB[2]
-    text_R,text_G,text_B = text_RGB[0],text_RGB[1],text_RGB[2]
-    (text_width, text_height) = cv2.getTextSize(text, font, fontScale=font_scale, thickness=thickness)[0]
-    x, y, w, h = text_offset_x, text_offset_y, text_width , text_height
-    crop = img[y-vspace:y+h+vspace, x-hspace:x+w+hspace]
+    """
+    R, G, B = background_RGB[0], background_RGB[1], background_RGB[2]
+    text_R, text_G, text_B = text_RGB[0], text_RGB[1], text_RGB[2]
+    (text_width, text_height) = cv2.getTextSize(
+        text, font, fontScale=font_scale, thickness=thickness
+    )[0]
+    x, y, w, h = text_offset_x, text_offset_y, text_width, text_height
+    crop = img[y - vspace : y + h + vspace, x - hspace : x + w + hspace]
     white_rect = np.ones(crop.shape, dtype=np.uint8)
-    b,g,r = cv2.split(white_rect)
-    rect_changed = cv2.merge((B*b,G*g,R*r))
-    res = cv2.addWeighted(crop, alpha, rect_changed, 1-alpha, gamma)
-    img[y-vspace:y+vspace+h, x-hspace:x+w+hspace] = res
+    b, g, r = cv2.split(white_rect)
+    rect_changed = cv2.merge((B * b, G * g, R * r))
+    res = cv2.addWeighted(crop, alpha, rect_changed, 1 - alpha, gamma)
+    img[y - vspace : y + vspace + h, x - hspace : x + w + hspace] = res
     cv2.putText(
-        img, text, (x, (y+h)), font, fontScale=font_scale, color=(text_B,text_G,text_R ), thickness=thickness,
-        lineType=cv2.LINE_AA
+        img,
+        text,
+        (x, (y + h)),
+        font,
+        fontScale=font_scale,
+        color=(text_B, text_G, text_R),
+        thickness=thickness,
+        lineType=cv2.LINE_AA,
     )
     return img
 
@@ -153,7 +179,9 @@ class ImageProcessor:
 
         if full_screen:
             cv2.namedWindow("ScaleFace", cv2.WND_PROP_FULLSCREEN)
-            cv2.setWindowProperty("ScaleFace", cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
+            cv2.setWindowProperty(
+                "ScaleFace", cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN
+            )
 
     def __call__(self, frame):
         try:
@@ -169,42 +197,62 @@ class ImageProcessor:
                 final_confidence = 0
             frame = self.barista(frame, final_confidence)
             frame = putBText(
-                frame, 'Face recognition confidence', text_offset_x=20,
-                text_offset_y=20, vspace=10, hspace=10, font_scale=1,
-                background_RGB=(240, 240, 240), text_RGB=(50, 50, 50), thickness=1,
-                alpha=0.3
+                frame,
+                "Face recognition confidence",
+                text_offset_x=20,
+                text_offset_y=20,
+                vspace=10,
+                hspace=10,
+                font_scale=1,
+                background_RGB=(240, 240, 240),
+                text_RGB=(50, 50, 50),
+                thickness=1,
+                alpha=0.3,
             )
 
             frame = putBText(
-                frame, 'Try hide part of the face, put your mask on,', text_offset_x=20,
-                text_offset_y=420, vspace=10, hspace=10, font_scale=0.7,
-                background_RGB=(240, 240, 240), text_RGB=(50, 50, 50), thickness=1,
-                alpha=0.3
+                frame,
+                "Try hide part of the face, put your mask on,",
+                text_offset_x=20,
+                text_offset_y=420,
+                vspace=10,
+                hspace=10,
+                font_scale=0.7,
+                background_RGB=(240, 240, 240),
+                text_RGB=(50, 50, 50),
+                thickness=1,
+                alpha=0.3,
             )
 
             frame = putBText(
-                frame, 'turn sideways or make faces', text_offset_x=20,
-                text_offset_y=456, vspace=10, hspace=10, font_scale=0.7,
-                background_RGB=(240, 240, 240), text_RGB=(50, 50, 50), thickness=1,
-                alpha=0.3
+                frame,
+                "turn sideways or make faces",
+                text_offset_x=20,
+                text_offset_y=456,
+                vspace=10,
+                hspace=10,
+                font_scale=0.7,
+                background_RGB=(240, 240, 240),
+                text_RGB=(50, 50, 50),
+                thickness=1,
+                alpha=0.3,
             )
 
-
-            cv2.imshow('ScaleFace', frame)
+            cv2.imshow("ScaleFace", frame)
             return frame
         except IndexError:
-            print('wtf')
+            print("wtf")
 
 
 def main():
     parser = ArgumentParser()
     parser.add_argument(
-        '--gif', default=False, action='store_true', help='record a gif in tmp folder'
+        "--gif", default=False, action="store_true", help="record a gif in tmp folder"
     )
-    parser.add_argument('--frame_rate', type=float, default=None)
-    parser.add_argument('--full_screen', default=False, action='store_true')
-    parser.add_argument('--verbose', default=False, action='store_true')
-    parser.add_argument('--camera', type=int, default=0)
+    parser.add_argument("--frame_rate", type=float, default=None)
+    parser.add_argument("--full_screen", default=False, action="store_true")
+    parser.add_argument("--verbose", default=False, action="store_true")
+    parser.add_argument("--camera", type=int, default=0)
     args = parser.parse_args()
 
     vid = cv2.VideoCapture(args.camera)
@@ -215,17 +263,17 @@ def main():
     frames = []
     fpses = []
 
-    while (True):
+    while True:
         time_elapsed = time() - prev
         # Capture the video frame by frame
         ret, frame = vid.read()
 
-        if args.frame_rate is not None and time_elapsed < 1. / args.frame_rate:
+        if args.frame_rate is not None and time_elapsed < 1.0 / args.frame_rate:
             continue
         # else:
         fpses.append(int(1 / time_elapsed))
         if args.verbose:
-            print('FPS', fpses[-1])
+            print("FPS", fpses[-1])
 
         prev = time()
         modified_frame = processor(frame)
@@ -235,21 +283,25 @@ def main():
         # the 'q' button is set as the
         # quitting button you may use any
         # desired button of your choice
-        if cv2.waitKey(1) & 0xFF == ord('q'):
+        if cv2.waitKey(1) & 0xFF == ord("q"):
             break
 
     # After the loop release the cap object
     vid.release()
     # Destroy all the windows
     cv2.destroyAllWindows()
-    print('Mean FPS', np.mean(fpses))
+    print("Mean FPS", np.mean(fpses))
 
     if args.gif and args.frame_rate is not None:
         frames = [
-            cv2.cvtColor(frame, cv2.COLOR_BGR2RGB) for frame in frames if frame is not None
+            cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+            for frame in frames
+            if frame is not None
         ]
-        imageio.mimsave(f'tmp/scale_demo_{time()}.gif', frames, fps=int(args.frame_rate*0.7))
+        imageio.mimsave(
+            f"tmp/scale_demo_{time()}.gif", frames, fps=int(args.frame_rate * 0.7)
+        )
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

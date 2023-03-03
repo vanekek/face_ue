@@ -28,30 +28,51 @@ from sklearn.metrics import auc
 from pathlib import Path
 import pickle
 from scipy.special import softmax
+from scipy.stats import multivariate_normal
 
 path = str(Path(__file__).parent.parent.parent.absolute())
 sys.path.insert(0, path)
 from face_lib.datasets import IJBDataset, IJBATest, IJBCTemplates
 from face_lib.utils import cfg
 import face_lib.evaluation.plots as plots
-from face_lib.evaluation.utils import get_required_models, get_distance_uncertainty_funcs
+from face_lib.evaluation.utils import (
+    get_required_models,
+    get_distance_uncertainty_funcs,
+)
 from face_lib.evaluation.feature_extractors import get_features_uncertainties_labels
-from face_lib.evaluation.feature_extractors import extract_features_uncertainties_from_list
+from face_lib.evaluation.feature_extractors import (
+    extract_features_uncertainties_from_list,
+)
 from face_lib.evaluation.reject_verification import get_rejected_tar_far
 
 
-from face_lib.evaluation.argument_parser import verify_arguments_template_reject_verification, parse_cli_arguments
+from face_lib.evaluation.argument_parser import (
+    verify_arguments_template_reject_verification,
+    parse_cli_arguments,
+)
 from face_lib.evaluation.aggregation import aggregate_templates
 
 
-def compute_probality(tester):
+def compute_probalities(tester, use_mean_z_estimate=True):
     """
-    Computes probability for belonging to each class for each query image 
+    Computes probability for belonging to each class for each query image
 
-    result of procedure: sigma_sq of enroll is set to inf
-                         sigma_sq of each sample is set to 1 - max_class_prob
-                         
+    result of procedure: matrix $P \in \mathbb{R}^{n\times K}$, where n - number of query templates
+    K - number of classes.
+    Elements are probabilities $p_{ij} = \mathbb{P}(class_{i} = j)$ that i-th query template belongs to j-th class
     """
+    for t in tester.verification_templates():
+        assert use_mean_z_estimate
+
+        if use_mean_z_estimate:
+            # compute likelihood for each class. At this point each enroll template c has proper distribution p(z|c)
+            for t in tester.enroll_templates():
+                pz = multivariate_normal(t.mu, np.diag(t.sigma_sq))
+
+        else:
+            raise NotImplementedError
+
+
 def compute_softmax_scores(tester):
     """
     computes softmax scores for all verification_templates
@@ -65,23 +86,22 @@ def compute_softmax_scores(tester):
 
     for t in tester.verification_templates():
         ver_mus.append(t.mu)
-    
+
     for t in tester.enroll_templates():
         t.sigma_sq = np.array([np.inf])
         enroll_mus.append(t.mu)
 
     # compute cosine similarity matrix
-    ver_mus = np.array(ver_mus) # N_ver X embsize
-    enroll_mus = np.array(enroll_mus) # N_enroll X embsize
+    ver_mus = np.array(ver_mus)  # N_ver X embsize
+    enroll_mus = np.array(enroll_mus)  # N_enroll X embsize
 
-    sim = ver_mus @ enroll_mus.T # N_ver X N_enroll
+    sim = ver_mus @ enroll_mus.T  # N_ver X N_enroll
 
-    ver_uncertanty =  - np.max(softmax(sim, axis=1), axis=1)
+    ver_uncertanty = -np.max(softmax(sim, axis=1), axis=1)
 
     for t, unc in zip(tester.verification_templates(), ver_uncertanty):
         t.sigma_sq = np.array([unc])
 
-    
 
 def eval_template_reject_verification(
     backbone,
@@ -107,12 +127,15 @@ def eval_template_reject_verification(
     equal_uncertainty_enroll=False,
     distance_based_uncertainty=None,
 ):
-
     # Setup the plots
     if rejected_portions is None:
-        rejected_portions = [0.0,]
+        rejected_portions = [
+            0.0,
+        ]
     if FARs is None:
-        FARs = [0.0,]
+        FARs = [
+            0.0,
+        ]
 
     all_results = OrderedDict()
     n_figures = len(fusions_distances_uncertainties)
@@ -120,11 +143,11 @@ def eval_template_reject_verification(
     uncertainty_fig, uncertainty_axes = None, [None] * n_figures
     if save_fig_path is not None:
         distance_fig, distance_axes = plt.subplots(
-            nrows=1, ncols=n_figures,
-            figsize=(9 * n_figures, 8))
+            nrows=1, ncols=n_figures, figsize=(9 * n_figures, 8)
+        )
         uncertainty_fig, uncertainty_axes = plt.subplots(
-            nrows=1, ncols=n_figures,
-            figsize=(9 * n_figures, 8))
+            nrows=1, ncols=n_figures, figsize=(9 * n_figures, 8)
+        )
         if n_figures == 1:
             distance_axes = [distance_axes]
             uncertainty_axes = [uncertainty_axes]
@@ -139,17 +162,21 @@ def eval_template_reject_verification(
 
     # returns features and uncertainties for a list of images
     if cached_embeddings:
-        with open(Path(save_fig_path) / f'{uncertainty_strategy}_features.pickle', 'rb') as f:
+        with open(
+            Path(save_fig_path) / f"{uncertainty_strategy}_features.pickle", "rb"
+        ) as f:
             feature_dict = pickle.load(f)
-        with open(Path(save_fig_path) / f'{uncertainty_strategy}_uncertainty.pickle', 'rb') as f:
+        with open(
+            Path(save_fig_path) / f"{uncertainty_strategy}_uncertainty.pickle", "rb"
+        ) as f:
             uncertainty_dict = pickle.load(f)
     else:
-        print('Calculating')
-        if uncertainty_strategy == 'magface':
+        print("Calculating")
+        if uncertainty_strategy == "magface":
             raise ValueError("Can't compute magface here")
 
-        if uncertainty_strategy == 'scale_finetuned':
-            strategy = 'scale'
+        if uncertainty_strategy == "scale_finetuned":
+            strategy = "scale"
         else:
             strategy = uncertainty_strategy
 
@@ -166,20 +193,25 @@ def eval_template_reject_verification(
             verbose=verbose,
         )
         feature_dict = {p: feature for p, feature in zip(short_paths, features)}
-        with open(Path(save_fig_path) / f'{uncertainty_strategy}_features.pickle', 'wb') as f:
+        with open(
+            Path(save_fig_path) / f"{uncertainty_strategy}_features.pickle", "wb"
+        ) as f:
             pickle.dump(feature_dict, f)
         uncertainty_dict = {p: scale for p, scale in zip(short_paths, uncertainties)}
-        with open(Path(save_fig_path) / f'{uncertainty_strategy}_uncertainty.pickle', 'wb') as f:
+        with open(
+            Path(save_fig_path) / f"{uncertainty_strategy}_uncertainty.pickle", "wb"
+        ) as f:
             pickle.dump(uncertainty_dict, f)
 
     tester = IJBCTemplates(image_paths, feature_dict, uncertainty_dict)
     tester.init_proto(protocol_path)
 
-
-
     prev_fusion_name = None
-    for (fusion_name, distance_name, uncertainty_name), distance_ax, uncertainty_ax in \
-            zip(fusions_distances_uncertainties, distance_axes, uncertainty_axes):
+    for (
+        (fusion_name, distance_name, uncertainty_name),
+        distance_ax,
+        uncertainty_ax,
+    ) in zip(fusions_distances_uncertainties, distance_axes, uncertainty_axes):
         print(f"==={fusion_name} {distance_name} {uncertainty_name} ===")
 
         distance_func, uncertainty_func = get_distance_uncertainty_funcs(
@@ -193,23 +225,32 @@ def eval_template_reject_verification(
         if fusion_name != prev_fusion_name:
             if equal_uncertainty_enroll:
                 aggregate_templates(tester.enroll_templates(), fusion_name)
-                aggregate_templates(tester.verification_templates(), 'first')
+                aggregate_templates(tester.verification_templates(), "first")
             else:
                 aggregate_templates(tester.all_templates(), fusion_name)
-        
+
+        if distance_name == "prob-distance" or uncertainty_name == "prob-unc":
+            probabilities = compute_probalities(tester)
+            if distance_name == "prob-distance":
+                # set probability distances
+                set_prob_mu(tester, probabilities)
+            if uncertainty_name == "prob-unc":
+                # set sigma_sq to be 1 - prob
+                set_prob_sigma_sq(tester, probabilities)
         # calculate softmax score for template classification and use it as uncertainty score
         # if distance_based_uncertainty is not None:
         #     print('Computing softmax scores')
         #     compute_softmax_scores(tester)
 
-        feat_1, feat_2, unc_1, unc_2, label_vec = \
-        tester.get_features_uncertainties_labels()
+        (
+            feat_1,
+            feat_2,
+            unc_1,
+            unc_2,
+            label_vec,
+        ) = tester.get_features_uncertainties_labels()
 
-
-
-
-
-        print('shapes')
+        print("shapes")
         print(feat_1.shape, feat_2.shape, unc_1.shape, unc_2.shape, label_vec.shape)
 
         result_table = get_rejected_tar_far(
@@ -225,15 +266,15 @@ def eval_template_reject_verification(
             distance_ax=distance_ax,
             uncertainty_ax=uncertainty_ax,
             rejected_portions=rejected_portions,
-            equal_uncertainty_enroll=equal_uncertainty_enroll
+            equal_uncertainty_enroll=equal_uncertainty_enroll,
         )
 
         # delete arrays to prevent memory leak
-        del(feat_1)
-        del(feat_2)
-        del(unc_1)
-        del(unc_2)
-        del(label_vec)
+        del feat_1
+        del feat_2
+        del unc_1
+        del unc_2
+        del label_vec
 
         if save_fig_path is not None:
             distance_ax.set_title(f"{distance_name} {uncertainty_name}")
@@ -254,13 +295,20 @@ def eval_template_reject_verification(
             print(f"\tFAR={round(FAR, 5)} TAR_AUC : {round(AUC, 5)}")
 
     if save_fig_path:
-        for (fusion_name, distance_name, uncertainty_name), result_table in all_results.items():
+        for (
+            fusion_name,
+            distance_name,
+            uncertainty_name,
+        ), result_table in all_results.items():
             title = "Template" + distance_name + " " + uncertainty_name
-            save_to_path = (
-                os.path.join(save_fig_path, fusion_name + '_' + distance_name + "_" + uncertainty_name + ".jpg")
+            save_to_path = os.path.join(
+                save_fig_path,
+                fusion_name + "_" + distance_name + "_" + uncertainty_name + ".jpg",
             )
             if save_fig_path:
-                plots.plot_rejected_TAR_FAR(result_table, rejected_portions, title, save_to_path)
+                plots.plot_rejected_TAR_FAR(
+                    result_table, rejected_portions, title, save_to_path
+                )
 
         timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
         plots.plot_TAR_FAR_different_methods(
@@ -268,18 +316,28 @@ def eval_template_reject_verification(
             rejected_portions,
             res_AUCs,
             title="Template reject verification",
-            save_figs_path=os.path.join(save_fig_path, f"all_methods_{uncertainty_strategy}_{timestamp}.jpg")
+            save_figs_path=os.path.join(
+                save_fig_path, f"all_methods_{uncertainty_strategy}_{timestamp}.jpg"
+            ),
         )
         # plt.show()
 
-        distance_fig.savefig(os.path.join(save_fig_path, f"distance_dist_{timestamp}.jpg"), dpi=400)
-        uncertainty_fig.savefig(os.path.join(save_fig_path, f"uncertainry_dist_{timestamp}.jpg"), dpi=400)
+        distance_fig.savefig(
+            os.path.join(save_fig_path, f"distance_dist_{timestamp}.jpg"), dpi=400
+        )
+        uncertainty_fig.savefig(
+            os.path.join(save_fig_path, f"uncertainry_dist_{timestamp}.jpg"), dpi=400
+        )
 
-        setup_name = {
-            True: 'single', False: 'full'
-        }[equal_uncertainty_enroll]
+        setup_name = {True: "single", False: "full"}[equal_uncertainty_enroll]
 
-        torch.save(all_results, os.path.join(save_fig_path, f"table_{uncertainty_strategy}_{timestamp}_{setup_name}.pt"))
+        torch.save(
+            all_results,
+            os.path.join(
+                save_fig_path,
+                f"table_{uncertainty_strategy}_{timestamp}_{setup_name}.pt",
+            ),
+        )
 
 
 def main():
@@ -298,8 +356,16 @@ def main():
     print(model_args)
     checkpoint = torch.load(args.checkpoint_path, map_location=device)
 
-    backbone, head, discriminator, classifier, scale_predictor, uncertainty_model = \
-        get_required_models(checkpoint=checkpoint, args=args, model_args=model_args, device=device)
+    (
+        backbone,
+        head,
+        discriminator,
+        classifier,
+        scale_predictor,
+        uncertainty_model,
+    ) = get_required_models(
+        checkpoint=checkpoint, args=args, model_args=model_args, device=device
+    )
 
     rejected_portions = np.linspace(*args.rejected_portions)
     FARs = list(map(float, args.FARs))
@@ -329,7 +395,7 @@ def main():
         uncertainty_model=uncertainty_model,
         cached_embeddings=args.cached_embeddings,
         equal_uncertainty_enroll=args.equal_uncertainty_enroll,
-        distance_based_uncertainty=args.distance_based_uncertainty
+        distance_based_uncertainty=args.distance_based_uncertainty,
     )
 
 

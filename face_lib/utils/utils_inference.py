@@ -6,7 +6,6 @@ from face_lib.utils import imageprocessing
 
 def inference_example(model):
     ims = [
-
         "/trinity/home/r.karimov/face-evaluation/inference/rasul1.jpg",
         "/trinity/home/r.karimov/face-evaluation/inference/rasul2.jpg",
         "/trinity/home/r.karimov/face-evaluation/inference/rasul3.jpg",

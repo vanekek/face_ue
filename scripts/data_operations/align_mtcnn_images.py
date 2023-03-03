@@ -80,7 +80,6 @@ def crop_align_face(args):
 
             detection = detector.detect_faces(img)
             if len(detection) > 0:
-
                 keypoints = detection[0]["keypoints"]
                 ref_points = np.array(
                     [keypoints[point_name] for point_name in face_parts]

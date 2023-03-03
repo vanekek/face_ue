@@ -140,7 +140,6 @@ class IJBCTest:
         self.init_verification_proto(protofolder)
 
     def test_verification(self, compare_func, FARs=None, verbose=True):
-
         FARs = [1e-5, 1e-4, 1e-3, 1e-2] if FARs is None else FARs
 
         # templates1 = self.verification_G1_templates
@@ -165,8 +164,13 @@ class IJBCTest:
         #
         # label_vec = labels1 == labels2
 
-        features1, features2, sigmas_sq1, sigmas_sq2, label_vec = \
-            self.get_features_uncertainties_labels(verbose=verbose)
+        (
+            features1,
+            features2,
+            sigmas_sq1,
+            sigmas_sq2,
+            label_vec,
+        ) = self.get_features_uncertainties_labels(verbose=verbose)
 
         score_vec = compare_func(features1, features2, sigmas_sq1, sigmas_sq2)
 
@@ -189,7 +193,9 @@ class IJBCTest:
         not_nan = not_nan_1 & not_nan_2
 
         if verbose:
-            print(f"Ignored {not_nan.shape[0] - not_nan.sum()} / {not_nan.shape[0]} # bad templates")
+            print(
+                f"Ignored {not_nan.shape[0] - not_nan.sum()} / {not_nan.shape[0]} # bad templates"
+            )
 
         templates1 = templates1[not_nan]
         templates2 = templates2[not_nan]

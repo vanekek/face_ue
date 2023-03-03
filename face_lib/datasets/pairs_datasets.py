@@ -18,7 +18,7 @@ class MS1MDatasetRandomPairs(MS1MDatasetPFE):
     def __init__(self, root_dir, in_size, p_same=0.5, hor_flip_prob=0.5, **kwargs):
         super(MS1MDatasetPFE, self).__init__()
 
-        self.p_same = p_same    # probability of pick the pair of same faces
+        self.p_same = p_same  # probability of pick the pair of same faces
 
         self.transform = transforms.Compose(
             [
@@ -55,20 +55,32 @@ class MS1MDatasetRandomPairs(MS1MDatasetPFE):
         first_face_img_idx = random.choice(range(left_idx, right_idx))
 
         is_face_same = int(np.random.random() < self.p_same)
-        if(is_face_same == 1):
+        if is_face_same == 1:
             list_range_idx = list(range(left_idx, right_idx))
             list_range_idx.remove(first_face_img_idx)
             second_face_img_idx = random.choice(list_range_idx)
         else:
-            list_range_first_class_idx = list(range(0, len(self.class_to_first_idx) - 1))
+            list_range_first_class_idx = list(
+                range(0, len(self.class_to_first_idx) - 1)
+            )
             list_range_first_class_idx.remove(idx)
             different_face_class_idx = random.choice(list_range_first_class_idx)
             second_left_idx = self.class_to_first_idx[different_face_class_idx]
             second_right_idx = self.class_to_first_idx[different_face_class_idx + 1]
-            second_face_img_idx = random.choice(range(second_left_idx, second_right_idx))
+            second_face_img_idx = random.choice(
+                range(second_left_idx, second_right_idx)
+            )
 
-        first_face_img, first_face_identity = self.__get_pic_by_idx__(first_face_img_idx)
-        second_face_img, second_face_identity = self.__get_pic_by_idx__(second_face_img_idx)
+        first_face_img, first_face_identity = self.__get_pic_by_idx__(
+            first_face_img_idx
+        )
+        second_face_img, second_face_identity = self.__get_pic_by_idx__(
+            second_face_img_idx
+        )
         label = is_face_same
 
-        return first_face_img, second_face_img, torch.tensor(label, dtype=torch.long)   # long for CroosEntropy, float for BCE?
+        return (
+            first_face_img,
+            second_face_img,
+            torch.tensor(label, dtype=torch.long),
+        )  # long for CroosEntropy, float for BCE?

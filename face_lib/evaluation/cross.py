@@ -28,7 +28,7 @@ def get_pairs(data_directory, dataset, short=False):
     generates a pandas dataset with photo_1, photo_2, label (0/1) columns
     with positive and negative pairs to benchmark on
     """
-    pairs = pd.read_csv(data_directory / dataset / 'pairs_test.csv')
+    pairs = pd.read_csv(data_directory / dataset / "pairs_test.csv")
     if short:
         cut = 300
         pairs = pd.concat([pairs.iloc[:cut], pairs.iloc[-cut:]])
@@ -45,16 +45,19 @@ class Inferencer:
         mus = {}
         sigmas = {}
         for idx in tqdm(range(0, len(image_paths), self.batch_size), disable=silence):
-            batch_paths = image_paths[idx: idx + self.batch_size]
+            batch_paths = image_paths[idx : idx + self.batch_size]
             batch = self.preprocessing(batch_paths)
             batch_mus, batch_sigmas = self.full_model(batch)
 
-            mus.update({
-                path: embeddings for path, embeddings in zip(batch_paths, batch_mus)
-            })
-            sigmas.update({
-                path: uncertainty.item() for path, uncertainty in zip(batch_paths, batch_sigmas)
-            })
+            mus.update(
+                {path: embeddings for path, embeddings in zip(batch_paths, batch_mus)}
+            )
+            sigmas.update(
+                {
+                    path: uncertainty.item()
+                    for path, uncertainty in zip(batch_paths, batch_sigmas)
+                }
+            )
         return mus, sigmas
 
 
@@ -62,12 +65,13 @@ class EmbeddingNorm:
     """
     Basic uncertainty model with embedding norm as confidence notion
     """
+
     def __init__(self):
         self.backbone = None
 
     def from_checkpoint(self, checkpoint_path):
         backbone = iresnet50()
-        checkpoint = torch.load(checkpoint_path, map_location='cuda')['backbone']
+        checkpoint = torch.load(checkpoint_path, map_location="cuda")["backbone"]
         backbone.load_state_dict(checkpoint)
         backbone.eval().cuda()
         self.backbone = backbone
@@ -76,7 +80,7 @@ class EmbeddingNorm:
     def __call__(self, batch):
         with torch.no_grad():
             output = self.backbone(batch)
-            predictions = output['feature']
+            predictions = output["feature"]
             uncertainties = self._uncertainty(predictions)
             predictions = torch.nn.functional.normalize(predictions, dim=-1).cpu()
         return predictions, uncertainties
@@ -98,18 +102,22 @@ class ScaleFace:
     def from_checkpoint(self, checkpoint_path):
         config_path = "./configs/scale/02_sigm_mul_coef_selection/64.yaml"
         model_args = load_config(config_path)
-        checkpoint = torch.load(checkpoint_path, map_location='cuda')
-        args = EasyDict({'uncertainty_strategy': 'scale'})
+        checkpoint = torch.load(checkpoint_path, map_location="cuda")
+        args = EasyDict({"uncertainty_strategy": "scale"})
 
-        self.backbone, _, _, _, self.scale, _ = \
-            get_required_models(checkpoint=checkpoint, args=args, model_args=model_args, device='cuda')
+        self.backbone, _, _, _, self.scale, _ = get_required_models(
+            checkpoint=checkpoint, args=args, model_args=model_args, device="cuda"
+        )
 
         return self
 
     def __call__(self, batch):
         with torch.no_grad():
             output = self.backbone(batch)
-            predictions, bottleneck = output['feature'].cpu(), output['bottleneck_feature']
+            predictions, bottleneck = (
+                output["feature"].cpu(),
+                output["bottleneck_feature"],
+            )
             uncertainties = self.scale.mlp(bottleneck).cpu()[:, 0]
             predictions = torch.nn.functional.normalize(predictions, dim=-1)
         return predictions, uncertainties
@@ -124,32 +132,33 @@ class PFE:
         with torch.no_grad():
             predictions = self.backbone(batch)
             # uncertainties = -torch.mean(self.head(**predictions)['log_sigma'], dim=-1).cpu()
-            log_sigma = self.head(**predictions)['log_sigma']
+            log_sigma = self.head(**predictions)["log_sigma"]
             n = log_sigma.shape[-1]
-            uncertainties = -(n / (log_sigma.exp()**2).reciprocal().sum(dim=-1)).cpu()
-            predictions = predictions['feature'].cpu()
+            uncertainties = -(n / (log_sigma.exp() ** 2).reciprocal().sum(dim=-1)).cpu()
+            predictions = predictions["feature"].cpu()
         return predictions, uncertainties
 
     def from_checkpoint(self, checkpoint_path):
         config_path = "./configs/models/iresnet_ms1m_pfe_normalized.yaml"
         model_args = load_config(config_path)
-        checkpoint = torch.load(checkpoint_path, map_location='cuda')
-        args = EasyDict({'uncertainty_strategy': 'head'})
+        checkpoint = torch.load(checkpoint_path, map_location="cuda")
+        args = EasyDict({"uncertainty_strategy": "head"})
 
-        self.backbone, self.head, _, _, _, _ = \
-            get_required_models(checkpoint=checkpoint, args=args, model_args=model_args, device='cuda')
+        self.backbone, self.head, _, _, _, _ = get_required_models(
+            checkpoint=checkpoint, args=args, model_args=model_args, device="cuda"
+        )
 
         return self
 
 
 def load_model(uncertainty_type, checkpoint_path):
-    if uncertainty_type == 'embedding_norm':
+    if uncertainty_type == "embedding_norm":
         model = EmbeddingNorm().from_checkpoint(checkpoint_path)
-    elif uncertainty_type == 'random':
+    elif uncertainty_type == "random":
         model = RandomModel().from_checkpoint(checkpoint_path)
-    elif uncertainty_type == 'scale':
+    elif uncertainty_type == "scale":
         model = ScaleFace().from_checkpoint(checkpoint_path)
-    elif uncertainty_type == 'pfe':
+    elif uncertainty_type == "pfe":
         model = PFE().from_checkpoint(checkpoint_path)
     else:
         raise ValueError()
@@ -160,19 +169,21 @@ class Preprocessor:
     """
     Converts the list of image paths to ready-to-use tensors
     """
+
     def __init__(self, base_directory, image_size=(112, 112), is_training=False):
         self.base_directory = Path(base_directory)
         self.image_size = image_size
         self.is_training = is_training
 
     def _full_paths(self, paths):
-        return [str(self.base_directory/p) for p in paths]
+        return [str(self.base_directory / p) for p in paths]
 
     def __call__(self, image_paths):
         full_paths = self._full_paths(image_paths)
         batch = preprocess(full_paths, self.image_size, is_training=self.is_training)
-        batch = torch.from_numpy(batch).permute(0, 3, 1, 2).to('cuda')
+        batch = torch.from_numpy(batch).permute(0, 3, 1, 2).to("cuda")
         return batch
+
 
 @dataclass
 class Score:
@@ -187,12 +198,12 @@ class Scorer:
 
     def __call__(self, pairs, mus, sigmas):
         def check(row):
-            x_0, x_1 = mus[row['photo_1']], mus[row['photo_2']]
+            x_0, x_1 = mus[row["photo_1"]], mus[row["photo_2"]]
             return (x_0 * x_1).sum().item()
 
         def basic_ue(row):
-            x_0, x_1 = sigmas[row['photo_1']], sigmas[row['photo_2']]
-            return x_0+x_1
+            x_0, x_1 = sigmas[row["photo_1"]], sigmas[row["photo_2"]]
+            return x_0 + x_1
 
         similarities = np.array(pairs.apply(check, axis=1))
         confidences = np.array(pairs.apply(basic_ue, axis=1))
@@ -242,6 +253,7 @@ def tar_far_rejected(confidences, similarities, labels, far):
 
     return splits, tars
 
+
 def plot_rejected_TAR_FAR(table, rejected_portions, title=None, save_fig_path=None):
     fig, ax = plt.subplots()
     for FAR, TARs in table.items():
@@ -278,16 +290,16 @@ def plot_tar_far(scores, fars):
 
             print_scores(far, name, splits, tars)
 
-        ax.set_title(f'TAR@FAR={far}')
+        ax.set_title(f"TAR@FAR={far}")
         ax.legend()
 
     # plt.legend()
-    plt.savefig('tmp/fig.png', dpi=150)
+    plt.savefig("tmp/fig.png", dpi=150)
     plt.show()
+
 
 def calculate_scores():
     pass
-
 
 
 def main():
@@ -299,17 +311,17 @@ def main():
     """
 
     parser = ArgumentParser()
-    parser.add_argument('--dataset', default='cplfw', choices=['cplfw', 'calfw'])
-    parser.add_argument('--cached', default=False, action='store_true')
+    parser.add_argument("--dataset", default="cplfw", choices=["cplfw", "calfw"])
+    parser.add_argument("--cached", default=False, action="store_true")
     cli_args = parser.parse_args()
     dataset = cli_args.dataset
 
-    cache_file = f'/tmp/scores_{dataset}.data'
+    cache_file = f"/tmp/scores_{dataset}.data"
     configs = {
-        'Random': './configs/cross/random.yml',
-        'Embedding norm': './configs/cross/norm.yaml',
-        'PFE': './configs/cross/pfe.yaml',
-        'ScaleFace': './configs/cross/scale.yaml',
+        "Random": "./configs/cross/random.yml",
+        "Embedding norm": "./configs/cross/norm.yaml",
+        "PFE": "./configs/cross/pfe.yaml",
+        "ScaleFace": "./configs/cross/scale.yaml",
     }
     scores = {}
 
@@ -320,7 +332,7 @@ def main():
     if not cli_args.cached:
         for name, config in configs.items():
             args = load_config(config)
-            args.images_path = f'{dataset}/aligned images'
+            args.images_path = f"{dataset}/aligned images"
             args.short = False
             data_directory = Path(args.data_directory)
             pairs = get_pairs(data_directory, dataset, short=args.short)
@@ -337,16 +349,15 @@ def main():
             scorer = Scorer()
             scores[name] = scorer(pairs, mus, sigmas)
 
-        with open(cache_file, 'wb') as f:
+        with open(cache_file, "wb") as f:
             pickle.dump(scores, f)
 
-
-    with open(cache_file, 'rb') as f:
+    with open(cache_file, "rb") as f:
         scores = pickle.load(f)
 
     fars = [1e-1, 1e-2, 5e-3]
     plot_tar_far(scores, fars)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

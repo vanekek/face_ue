@@ -10,11 +10,11 @@ def myphi(x, m):
     x = x * m
     return (
         1
-        - x ** 2 / math.factorial(2)
-        + x ** 4 / math.factorial(4)
-        - x ** 6 / math.factorial(6)
-        + x ** 8 / math.factorial(8)
-        - x ** 9 / math.factorial(9)
+        - x**2 / math.factorial(2)
+        + x**4 / math.factorial(4)
+        - x**6 / math.factorial(6)
+        + x**8 / math.factorial(8)
+        - x**9 / math.factorial(9)
     )
 
 
@@ -28,12 +28,12 @@ class AngleLinear(nn.Module):
         self.phiflag = phiflag
         self.m = m
         self.mlambda = [
-            lambda x: x ** 0,
-            lambda x: x ** 1,
-            lambda x: 2 * x ** 2 - 1,
-            lambda x: 4 * x ** 3 - 3 * x,
-            lambda x: 8 * x ** 4 - 8 * x ** 2 + 1,
-            lambda x: 16 * x ** 5 - 20 * x ** 3 + 5 * x,
+            lambda x: x**0,
+            lambda x: x**1,
+            lambda x: 2 * x**2 - 1,
+            lambda x: 4 * x**3 - 3 * x,
+            lambda x: 8 * x**4 - 8 * x**2 + 1,
+            lambda x: 16 * x**5 - 20 * x**3 + 5 * x,
         ]
 
     def forward(self, input):
@@ -53,7 +53,7 @@ class AngleLinear(nn.Module):
             theta = Variable(cos_theta.data.acos())
             k = (self.m * theta / 3.14159265).floor()
             n_one = k * 0.0 - 1
-            phi_theta = (n_one ** k) * cos_m_theta - 2 * k
+            phi_theta = (n_one**k) * cos_m_theta - 2 * k
         else:
             theta = cos_theta.acos()
             phi_theta = myphi(theta, self.m)

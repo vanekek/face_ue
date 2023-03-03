@@ -11,10 +11,13 @@ from face_lib.utils import cfg
 from face_lib.datasets import MXFaceDataset
 import face_lib.evaluation.plots as plots
 from face_lib.evaluation.utils import get_required_models
-from face_lib.evaluation.feature_extractors import extract_features_uncertainties_from_list, extract_uncertainties_from_dataset
+from face_lib.evaluation.feature_extractors import (
+    extract_features_uncertainties_from_list,
+    extract_uncertainties_from_dataset,
+)
 from face_lib.evaluation.argument_parser import (
     parse_cli_arguments,
-    verify_arguments_dataset_distribution
+    verify_arguments_dataset_distribution,
 )
 
 
@@ -29,8 +32,8 @@ def get_uncertainties_image_list(
     scale_predictor=None,
     blur_intensity=None,
     device=torch.device("cpu"),
-    verbose=False):
-
+    verbose=False,
+):
     with open(image_paths_table, "r") as f:
         relative_paths = f.readlines()
     relative_paths = list(map(lambda x: x.strip(), relative_paths))
@@ -58,16 +61,17 @@ def get_uncertainties_MS1MV2(
     batch_size=64,
     scale_predictor=None,
     device=torch.device("cpu"),
-    verbose=False
+    verbose=False,
 ):
-    dataset = MXFaceDataset(
-        root_dir=dataset_path,
-        local_rank=0
-    )
-    
+    dataset = MXFaceDataset(root_dir=dataset_path, local_rank=0)
+
     uncertainty = extract_uncertainties_from_dataset(
-        backbone=backbone, scale_predictor=scale_predictor, dataset=dataset,
-        batch_size=batch_size, verbose=verbose, device=device,
+        backbone=backbone,
+        scale_predictor=scale_predictor,
+        dataset=dataset,
+        batch_size=batch_size,
+        verbose=verbose,
+        device=device,
     )
 
     return uncertainty
@@ -100,7 +104,8 @@ def draw_figures(
             scale_predictor=scale_predictor,
             blur_intensity=blur_intensity,
             device=device,
-            verbose=verbose,)
+            verbose=verbose,
+        )
     elif dataset_name == "MS1MV2":
         if blur_intensity is not None:
             raise NotImplementedError("Gaussian blur for MS1MV2 is not implemented yet")
@@ -112,7 +117,8 @@ def draw_figures(
             batch_size=batch_size,
             scale_predictor=scale_predictor,
             device=device,
-            verbose=verbose, )
+            verbose=verbose,
+        )
     else:
         raise KeyError("Don't know this type of dataset")
 
@@ -120,9 +126,12 @@ def draw_figures(
 
     if save_fig_path:
         plots.plot_uncertainty_distribution(
-            uncertainties, os.path.join(save_fig_path, "uncertainty_distribution.pdf"),
-            n_bins=50, fig_name="Uncertainties distribution",
-            xlabel_name="Uncertainty", ylabel_name="Probability",
+            uncertainties,
+            os.path.join(save_fig_path, "uncertainty_distribution.pdf"),
+            n_bins=50,
+            fig_name="Uncertainties distribution",
+            xlabel_name="Uncertainty",
+            ylabel_name="Probability",
         )
 
 
@@ -139,8 +148,16 @@ if __name__ == "__main__":
     model_args = cfg.load_config(args.config_path)
     checkpoint = torch.load(args.checkpoint_path, map_location=device)
 
-    backbone, head, discriminator, classifier, scale_predictor, uncertainty_model = \
-        get_required_models(checkpoint=checkpoint, args=args, model_args=model_args, device=device)
+    (
+        backbone,
+        head,
+        discriminator,
+        classifier,
+        scale_predictor,
+        uncertainty_model,
+    ) = get_required_models(
+        checkpoint=checkpoint, args=args, model_args=model_args, device=device
+    )
 
     draw_figures(
         backbone,

@@ -28,7 +28,7 @@ class CrossEntropyTrainer:
                 loss = criterion(preds, y)
                 loss.backward()
                 optimizer.step()
-                writer.add_scalar('Loss/train', loss.item(), train_iter)
+                writer.add_scalar("Loss/train", loss.item(), train_iter)
                 train_iter += 1
 
             with torch.no_grad():
@@ -41,10 +41,12 @@ class CrossEntropyTrainer:
                     preds = model(x)
                     loss = criterion(preds, y)
                     epoch_losses.append(loss.item())
-                    correct.extend(list((torch.argmax(preds, dim=-1) == y).detach().cpu()))
+                    correct.extend(
+                        list((torch.argmax(preds, dim=-1) == y).detach().cpu())
+                    )
 
-                writer.add_scalar('Loss/val', np.mean(epoch_losses), train_iter)
-                writer.add_scalar('Accuracy/val', np.mean(correct), train_iter)
+                writer.add_scalar("Loss/val", np.mean(epoch_losses), train_iter)
+                writer.add_scalar("Accuracy/val", np.mean(correct), train_iter)
 
         writer.close()
         return model
@@ -62,17 +64,15 @@ def knn_eval(model, loader, k=5, n_iter=0):
 
     index = faiss.IndexFlatL2(embeddings.shape[-1])
     index.add(embeddings.astype(np.float32))
-    _, idx = index.search(embeddings, k+1)
+    _, idx = index.search(embeddings, k + 1)
     idx = torch.tensor(np.array(labels)[idx[:, 1:]])
     predictions = torch.mode(idx, dim=-1).values
     accuracy = (predictions == torch.tensor(labels)).to(torch.float).mean()
     return accuracy
 
 
-class ScaleTrainer():
+class ScaleTrainer:
     pass
-
-
 
 
 class PFETrainer:
@@ -81,7 +81,6 @@ class PFETrainer:
 
     def train(self, train_loader, val_loader):
         pass
-
 
 
 class TripletsTrainer(CrossEntropyTrainer):
@@ -105,7 +104,7 @@ class TripletsTrainer(CrossEntropyTrainer):
                 loss = criterion(embeddings, y, hard_pairs)
                 loss.backward()
                 optimizer.step()
-                writer.add_scalar('Loss/train', loss.item(), train_iter)
+                writer.add_scalar("Loss/train", loss.item(), train_iter)
                 train_iter += 1
 
             with torch.no_grad():
@@ -118,15 +117,15 @@ class TripletsTrainer(CrossEntropyTrainer):
                     loss = criterion(model.features, y)
                     epoch_losses.append(loss.item())
 
-                writer.add_scalar('Loss/val', np.mean(epoch_losses), train_iter)
+                writer.add_scalar("Loss/val", np.mean(epoch_losses), train_iter)
                 accuracy = knn_eval(model, val_loader, k=1, n_iter=train_iter)
-                writer.add_scalar('Accuracy/val', accuracy, train_iter)
+                writer.add_scalar("Accuracy/val", accuracy, train_iter)
 
         writer.close()
         return model
 
 
-class ArcFaceTrainer():
+class ArcFaceTrainer:
     def __init__(self, model, epochs, embedding_size, num_classes):
         self.model = model
         self.epochs = epochs
@@ -150,7 +149,7 @@ class ArcFaceTrainer():
                 loss = criterion(embeddings, y)
                 loss.backward()
                 optimizer.step()
-                writer.add_scalar('Loss/train', loss.item(), train_iter)
+                writer.add_scalar("Loss/train", loss.item(), train_iter)
                 train_iter += 1
 
             with torch.no_grad():
@@ -163,17 +162,15 @@ class ArcFaceTrainer():
                     loss = criterion(embeddings, y)
                     epoch_losses.append(loss.item())
 
-                writer.add_scalar('Loss/val', np.mean(epoch_losses), train_iter)
+                writer.add_scalar("Loss/val", np.mean(epoch_losses), train_iter)
                 accuracy = knn_eval(model, val_loader, k=1, n_iter=train_iter)
-                writer.add_scalar('Accuracy/val', accuracy, train_iter)
+                writer.add_scalar("Accuracy/val", accuracy, train_iter)
 
         writer.close()
         return model
 
 
-
-
-class ScaleFaceTrainer():
+class ScaleFaceTrainer:
     def __init__(self, model, epochs, embedding_size, num_classes):
         self.model = model
         self.epochs = epochs
@@ -197,7 +194,7 @@ class ScaleFaceTrainer():
                 loss = criterion(embeddings, y)
                 loss.backward()
                 optimizer.step()
-                writer.add_scalar('Loss/train', loss.item(), train_iter)
+                writer.add_scalar("Loss/train", loss.item(), train_iter)
                 train_iter += 1
 
             with torch.no_grad():
@@ -210,9 +207,9 @@ class ScaleFaceTrainer():
                     loss = criterion(embeddings, y)
                     epoch_losses.append(loss.item())
 
-                writer.add_scalar('Loss/val', np.mean(epoch_losses), train_iter)
+                writer.add_scalar("Loss/val", np.mean(epoch_losses), train_iter)
                 accuracy = knn_eval(model, val_loader, k=1, n_iter=train_iter)
-                writer.add_scalar('Accuracy/val', accuracy, train_iter)
+                writer.add_scalar("Accuracy/val", accuracy, train_iter)
 
         writer.close()
         return model

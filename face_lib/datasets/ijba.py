@@ -186,7 +186,6 @@ class IJBATest:
     def test_verification_fold(
         self, compare_func, fold_idx, FARs=None, get_false_indices=False
     ):
-
         FARs = [0.001, 0.01] if FARs is None else FARs
 
         fold = self.verification_folds[fold_idx]
@@ -209,7 +208,6 @@ class IJBATest:
         )
 
     def test_verification(self, compare_func, FARs=None):
-
         TARs_all = []
         FARs_all = []
         for i in range(10):

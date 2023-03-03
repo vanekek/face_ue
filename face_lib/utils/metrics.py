@@ -37,7 +37,13 @@ def find_thresholds_by_FAR(score_vec, label_vec, FARs=None, epsilon=1e-8):
     return thresholds
 
 
-def ROC(score_vec: np.ndarray, label_vec, thresholds=None, FARs=None, get_false_indices=False):
+def ROC(
+    score_vec: np.ndarray,
+    label_vec,
+    thresholds=None,
+    FARs=None,
+    get_false_indices=False,
+):
     """
     Compute Receiver operating characteristic (ROC) with a score and label vector.
     """

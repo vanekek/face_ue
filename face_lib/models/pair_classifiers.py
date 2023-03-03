@@ -5,7 +5,9 @@ import torch.nn as nn
 # MLP - multilayer perceptron. Architecture: len(hidden_layers_size), [linear layers] -> linear(x, 2) -> log_softmax.
 # hidden_layers_size - tuple with layers size.
 class MLP(torch.nn.Module):
-    def __init__(self, in_feat=1024, hidden_layers_size=[512, 126], out_feat=2, **kwargs):
+    def __init__(
+        self, in_feat=1024, hidden_layers_size=[512, 126], out_feat=2, **kwargs
+    ):
         super(MLP, self).__init__()
         print(kwargs)
         self.in_feat = in_feat
@@ -20,7 +22,9 @@ class MLP(torch.nn.Module):
             self.hidden.append(nn.Linear(self.in_feat, hidden_layers_size[0]))
 
         for k in range(len(hidden_layers_size) - 1):
-            self.hidden.append(nn.Linear(hidden_layers_size[k], hidden_layers_size[k+1]))
+            self.hidden.append(
+                nn.Linear(hidden_layers_size[k], hidden_layers_size[k + 1])
+            )
             self.relu.append(nn.ReLU())
 
         self.relu.append(nn.ReLU())
@@ -54,13 +58,13 @@ class SmartCosine(torch.nn.Module):
 
     def forward(self, **kwargs):
         x: torch.Tensor = kwargs["feature"]
-        x1, x2 = x[:, :self.input_size // 2], x[:, self.input_size // 2:]
+        x1, x2 = x[:, : self.input_size // 2], x[:, self.input_size // 2 :]
         output = self.log_softmax(self.fc1(x1 * x2))
         return {"pair_classifiers_output": output}
 
     def _smart_init(self):
-        torch.nn.init.constant_(self.fc1.weight[0, :], -1.)
-        torch.nn.init.constant_(self.fc1.weight[1, :], 1.)
+        torch.nn.init.constant_(self.fc1.weight[0, :], -1.0)
+        torch.nn.init.constant_(self.fc1.weight[1, :], 1.0)
 
 
 class Bilinear(torch.nn.Module):
@@ -72,6 +76,6 @@ class Bilinear(torch.nn.Module):
 
     def forward(self, **kwargs):
         x: torch.Tensor = kwargs["feature"]
-        x1, x2 = x[:, :self.input_size // 2], x[:, self.input_size // 2:]
+        x1, x2 = x[:, : self.input_size // 2], x[:, self.input_size // 2 :]
         output = self.log_softmax(self.fc(x1, x2))
         return {"pair_classifiers_output": output}

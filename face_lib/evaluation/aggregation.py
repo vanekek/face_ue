@@ -5,6 +5,7 @@ from .distance_uncertainty_funcs import l2_normalize
 from face_lib.evaluation import l2_normalize
 from scipy.special import softmax
 
+
 def aggregate_PFE(x, sigma_sq=None, normalize=True, concatenate=False):
     if sigma_sq is None:
         D = int(x.shape[1] / 2)
@@ -24,11 +25,13 @@ def aggregate_PFE(x, sigma_sq=None, normalize=True, concatenate=False):
         return np.concatenate([mu_new, sigma_sq_new])
     else:
         return mu_new, sigma_sq_new
-    
+
+
 def aggregate_PFE_properly(mu, sigma_sq):
     sigma_sq_new = 1 / (np.sum(1 / sigma_sq, axis=0, keepdims=True))
-    mu_new = sigma_sq_new * np.sum(mu/sigma_sq, axis=0, keepdims=True)
-    return mu_new, sigma_sq_new
+    mu_new = sigma_sq_new * np.sum(mu / sigma_sq, axis=0, keepdims=True)
+    return mu_new[0], sigma_sq_new[0]
+
 
 def aggregate_min(x, sigma_sq, normalize=True, concatenate=False):
     if sigma_sq is None:
@@ -68,28 +71,28 @@ def aggregate_softmax(x, sigma_sq, temperature=1.0, normalize=True, concatenate=
 
 def aggregate_templates(templates, method):
     for t in templates:
-        if method == 'first':
+        if method == "first":
             t.mu = l2_normalize(t.features[0])
             t.sigma_sq = t.sigmas[0]
-        elif method == 'PFE':
-            #t.mu, t.sigma_sq = aggregate_PFE(t.features, sigma_sq=t.sigmas)
+        elif method == "PFE":
+            # t.mu, t.sigma_sq = aggregate_PFE(t.features, sigma_sq=t.sigmas)
             t.mu, t.sigma_sq = aggregate_PFE_properly(t.features, sigma_sq=t.sigmas)
-        elif method == 'mean':
+        elif method == "mean":
             t.mu = l2_normalize(np.mean(t.features, axis=0))
             t.sigma_sq = np.mean(t.sigmas, axis=0)
-        elif method == 'stat-mean':
+        elif method == "stat-mean":
             t.mu = l2_normalize(np.mean(t.features, axis=0))
-            t.sigma_sq = np.mean(t.sigmas, axis=0) * (len(t.sigmas))**0.5
-        elif method == 'argmax':
+            t.sigma_sq = np.mean(t.sigmas, axis=0) * (len(t.sigmas)) ** 0.5
+        elif method == "argmax":
             idx = np.argmax(t.sigmas)
             t.mu = t.features[idx]
             t.sigma_sq = t.sigmas[idx]
-        elif method == 'stat-softmax':
+        elif method == "stat-softmax":
             weights = softmax(t.sigmas[:, 0])
             t.mu = l2_normalize(np.dot(weights, t.features))
-            t.sigma_sq = np.dot(weights, t.sigmas) * len(t.sigmas)**0.5
-        elif method.startswith('softmax'):
-            parts = method.split('-')
+            t.sigma_sq = np.dot(weights, t.sigmas) * len(t.sigmas) ** 0.5
+        elif method.startswith("softmax"):
+            parts = method.split("-")
             if len(parts) == 1:
                 temperature = 1.0
             else:
@@ -97,14 +100,14 @@ def aggregate_templates(templates, method):
             weights = softmax(t.sigmas[:, 0] / temperature)
             t.mu = l2_normalize(np.dot(weights, t.features))
             t.sigma_sq = np.dot(weights, t.sigmas)
-        elif method == 'weighted':
+        elif method == "weighted":
             mu = l2_normalize(t.features)
             weights = t.sigmas[:, 0]
             weights = weights / np.sum(weights)
             t.mu = l2_normalize(np.dot(weights, mu))
             t.sigma_sq = np.dot(weights, t.sigmas)
-        elif method.startswith('weighted-softmax'):
-            parts = method.split('-')
+        elif method.startswith("weighted-softmax"):
+            parts = method.split("-")
             if len(parts) == 2:
                 temperature = 1.0
             else:
@@ -114,7 +117,7 @@ def aggregate_templates(templates, method):
             t.mu = l2_normalize(np.dot(weights, t.features))
             weights = softmax(t.sigmas[:, 0] / temperature)
             t.sigma_sq = np.dot(weights, t.sigmas)
-        elif method == 'weighted':
+        elif method == "weighted":
             mu = l2_normalize(t.features)
             weights = t.sigmas[:, 0]
             weights = weights / np.sum(weights)
@@ -123,4 +126,3 @@ def aggregate_templates(templates, method):
             pass
         else:
             raise ValueError(f"Wrong aggregate method {method}")
-

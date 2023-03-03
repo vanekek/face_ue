@@ -9,10 +9,11 @@ __all__ = ["iresnet18", "iresnet34", "iresnet50", "iresnet100"]
 
 def add_sn(m, n_power_iterations=3):
     if isinstance(m, (nn.Conv2d, nn.Linear)):
-         # print(dir(m))
+        # print(dir(m))
         return spectral_norm(m, n_power_iterations=n_power_iterations)
     else:
         return m
+
 
 def conv3x3(in_planes, out_planes, stride=1, groups=1, dilation=1):
     """3x3 convolution with padding"""

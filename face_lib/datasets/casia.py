@@ -10,7 +10,6 @@ from IPython import embed
 
 class CASIAWebFace(data.Dataset):
     def __init__(self, args, mode="train"):
-
         super(CASIAWebFace, self).__init__()
         self.args = args
         self.mode = mode
@@ -30,7 +29,6 @@ class CASIAWebFace(data.Dataset):
             print("debug version for casia ...")
 
     def _load_imginfo(self, img_name):
-
         img_path = os.path.join(self.args.casia_dir, img_name)
         img = None
         try:
@@ -42,7 +40,6 @@ class CASIAWebFace(data.Dataset):
         return img
 
     def __getitem__(self, index):
-
         # info  = self.lines[index].strip().split('\t')
         info = self.lines[index].strip().split(" ")
         img = self._load_imginfo(info[0])

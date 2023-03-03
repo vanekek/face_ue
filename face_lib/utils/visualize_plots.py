@@ -14,7 +14,7 @@ from tqdm import tqdm
 # TODO: remove from here and move to the utils submodule
 # after that we can expose this
 def _gaussian_blur(image: np.array, k: int):
-    kernel = np.ones((k, k), np.float32) / (k ** 2)
+    kernel = np.ones((k, k), np.float32) / (k**2)
     dst = cv2.filter2D(image, -1, kernel)
     return dst
 
@@ -62,7 +62,6 @@ def visualize_ambiguity_dilemma_lfw(
     device=None,
     **kwargs,  # TODO: can we get rid of this dict?
 ):
-
     if device is None:
         device = "cpu"
 
@@ -209,7 +208,6 @@ def visualize_low_high_similarity_pairs(
     device=None,
     **kwargs,  # TODO: can we get rid of this dict?
 ):
-
     if device is None:
         device = torch.device("cpu")
     N = 6000

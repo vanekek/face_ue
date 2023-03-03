@@ -234,15 +234,15 @@ def accuracy_lfw_6000_pairs(
 @_register_board
 @_register_metric
 def accuracy_lfw_6000_pairs_binary_classification(
-        backbone: nn.Module,
-        pair_classifier: nn.Module,
-        lfw_path: str,
-        lfw_pairs_txt_path: str,
-        *,
-        N=6000,
-        n_folds=10,
-        device=torch.device("cpu"),
-        **kwargs,
+    backbone: nn.Module,
+    pair_classifier: nn.Module,
+    lfw_path: str,
+    lfw_pairs_txt_path: str,
+    *,
+    N=6000,
+    n_folds=10,
+    device=torch.device("cpu"),
+    **kwargs,
 ):
     """
     #TODO: need to understand this protocol
@@ -257,7 +257,7 @@ def accuracy_lfw_6000_pairs_binary_classification(
         folds = []
         base = list(range(n))
         for i in range(n_folds):
-            test = base[i * n // n_folds: (i + 1) * n // n_folds]
+            test = base[i * n // n_folds : (i + 1) * n // n_folds]
             train = list(set(base) - set(test))
             folds.append([train, test])
         return folds
@@ -320,8 +320,8 @@ def accuracy_lfw_6000_pairs_binary_classification(
 
         img_batch = (
             torch.from_numpy(np.concatenate((img1[None], img2[None]), axis=0))
-                .permute(0, 3, 1, 2)
-                .to(device)
+            .permute(0, 3, 1, 2)
+            .to(device)
         )
 
         # TODO: for some reason spherenet is good on BGR??
@@ -335,18 +335,22 @@ def accuracy_lfw_6000_pairs_binary_classification(
         feature_stacked = torch.cat((f1, f2)).unsqueeze(0)
         output.update({"feature": feature_stacked})
 
-        #print("stacked_shape", feature_stacked.shape)
+        # print("stacked_shape", feature_stacked.shape)
 
         cosdistance = f1.dot(f2) / (f1.norm() * f2.norm() + 1e-5)
 
         if pair_classifier:
             output.update(pair_classifier(**output))
-            #print("head_output", output["head_output"])
+            # print("head_output", output["head_output"])
             pair_classifier_output = output["pair_classifiers_output"]  # need fix
 
             predicts.append(
                 "{}\t{}\t{}\t{}\t{}\n".format(
-                    name1, name2, cosdistance.cpu(), torch.argmax(torch.exp(pair_classifier_output)).item(), sameflag
+                    name1,
+                    name2,
+                    cosdistance.cpu(),
+                    torch.argmax(torch.exp(pair_classifier_output)).item(),
+                    sameflag,
                 )
             )
             mls_values.append(torch.argmax(torch.exp(pair_classifier_output)).item())
@@ -361,8 +365,8 @@ def accuracy_lfw_6000_pairs_binary_classification(
         predicts_ = np.array(list(map(lambda line: line.strip("\n").split(), predicts)))
         for idx, (train, test) in enumerate(folds):
             best_thresh = find_best_threshold(thresholds, predicts_[train], indx)
-            #print("best_tresh:", best_thresh)
-            #print("preds_test:", predicts_)
+            # print("best_tresh:", best_thresh)
+            # print("preds_test:", predicts_)
             accuracy.append(eval_acc(best_thresh, predicts_[test], indx))
         return accuracy
 
@@ -376,7 +380,9 @@ def accuracy_lfw_6000_pairs_binary_classification(
     result = {}
     result["accuracy_backbone"] = np.mean(accuracy_backbone)
     if pair_classifier:
-        result["accuracy_pair_classifier"] = np.mean(accuracy_pair_classifier)   # FIX THIS
+        result["accuracy_pair_classifier"] = np.mean(
+            accuracy_pair_classifier
+        )  # FIX THIS
 
     return result
 

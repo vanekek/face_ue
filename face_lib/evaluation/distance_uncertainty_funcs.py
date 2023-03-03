@@ -52,7 +52,7 @@ def pair_MLS_score(x1, x2, sigma_sq1=None, sigma_sq2=None):
     if sigma_sq1 is None:
         x1, x2 = np.array(x1), np.array(x2)
         assert (
-                sigma_sq2 is None
+            sigma_sq2 is None
         ), "either pass in concated features, or mu, sigma_sq for both!"
         D = int(x1.shape[1] / 2)
         mu1, sigma_sq1 = x1[:, :D], x1[:, D:]
@@ -132,21 +132,27 @@ def pair_scale_mul_biased_cosine_score(x1, x2, scale1=None, scale2=None, bias=No
     return dist
 
 
-def pair_scale_harmonic_biased_cosine_score(x1, x2, scale1=None, scale2=None, bias=None):
+def pair_scale_harmonic_biased_cosine_score(
+    x1, x2, scale1=None, scale2=None, bias=None
+):
     scale1, scale2 = scale1.squeeze(axis=1), scale2.squeeze(axis=1)
     dist = biased_cosine_similarity(x1, x2, bias=bias)
     dist = dist * scale1 * scale2 / (scale1 + scale2)
     return dist
 
 
-def pair_sqrt_scale_mul_biased_cosine_score(x1, x2, scale1=None, scale2=None, bias=None):
+def pair_sqrt_scale_mul_biased_cosine_score(
+    x1, x2, scale1=None, scale2=None, bias=None
+):
     scale1, scale2 = np.sqrt(scale1.squeeze(axis=1)), np.sqrt(scale2.squeeze(axis=1))
     dist = biased_cosine_similarity(x1, x2, bias=bias)
     dist = dist * scale1 * scale2
     return dist
 
 
-def pair_sqrt_scale_harmonic_biased_cosine_score(x1, x2, scale1=None, scale2=None, bias=None):
+def pair_sqrt_scale_harmonic_biased_cosine_score(
+    x1, x2, scale1=None, scale2=None, bias=None
+):
     scale1, scale2 = np.sqrt(scale1.squeeze(axis=1)), np.sqrt(scale2.squeeze(axis=1))
     dist = biased_cosine_similarity(x1, x2, bias=bias)
     dist = dist * scale1 * scale2 / (scale1 + scale2)
@@ -175,7 +181,9 @@ def pair_sqrt_pfe_mul_biased_cosine_score(x1, x2, scale1=None, scale2=None, bias
     return dist
 
 
-def pair_sqrt_pfe_harmonic_biased_cosine_score(x1, x2, scale1=None, scale2=None, bias=None):
+def pair_sqrt_pfe_harmonic_biased_cosine_score(
+    x1, x2, scale1=None, scale2=None, bias=None
+):
     scale1, scale2 = 1 / harmonic_mean(scale1), 1 / harmonic_mean(scale2)
     scale1, scale2 = np.sqrt(scale1), np.sqrt(scale2)
     dist = biased_cosine_similarity(x1, x2, bias=bias)
@@ -219,13 +227,20 @@ def pair_uncertainty_concatenated_harmonic(mu_1, mu_2, sigma_sq_1, sigma_sq_2):
 def pair_uncertainty_squared_harmonic(mu_1, mu_2, uncertainty_1, uncertainty_2):
     return harmonic_mean(
         np.concatenate(
-            (uncertainty_1 ** 2, uncertainty_2 ** 2,),
-            axis=1,),
-        axis=1)
+            (
+                uncertainty_1**2,
+                uncertainty_2**2,
+            ),
+            axis=1,
+        ),
+        axis=1,
+    )
 
 
 def pair_uncertainty_cosine_analytic(mu_1, mu_2, sigma_sq_1, sigma_sq_2):
-    return (sigma_sq_1 * sigma_sq_2 + (mu_1 ** 2) * sigma_sq_2 + (mu_2 ** 2) * sigma_sq_1).sum(axis=1)
+    return (
+        sigma_sq_1 * sigma_sq_2 + (mu_1**2) * sigma_sq_2 + (mu_2**2) * sigma_sq_1
+    ).sum(axis=1)
 
 
 def pair_uncertainty_min(mu_1, mu_2, sigma_sq_1, sigma_sq_2):
@@ -264,4 +279,3 @@ def pair_uncertainty_perfect(mu_1, mu_2, label_1, label_2):
 # }
 #
 # def create_distance_function(sqrt=False, confidences="norm", )
-

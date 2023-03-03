@@ -43,13 +43,15 @@ class Trainer(TrainerBase):
             )
 
         if self.model_args.pair_classifier:
-            self.pair_classifier = mlib.pair_classifiers[self.model_args.pair_classifier.name](
+            self.pair_classifier = mlib.pair_classifiers[
+                self.model_args.pair_classifier.name
+            ](
                 **utils.pop_element(self.model_args.pair_classifier, "name"),
             )
             self.pair_classifier_criterion = mlib.criterions_dict[
                 self.model_args.pair_classifier.criterion.name
             ](
-               **utils.pop_element(self.model_args.pair_classifier.criterion, "name"),
+                **utils.pop_element(self.model_args.pair_classifier.criterion, "name"),
             )
 
         self.start_epoch = 0
@@ -82,7 +84,10 @@ class Trainer(TrainerBase):
                 p.requires_grad = False
             self.head.eval()
 
-        if self.model_args.pair_classifier and self.model_args.pair_classifier.learnable is False:
+        if (
+            self.model_args.pair_classifier
+            and self.model_args.pair_classifier.learnable is False
+        ):
             for p in self.head.parameters():
                 p.requires_grad = False
             self.pair_classifier.eval()
@@ -92,7 +97,10 @@ class Trainer(TrainerBase):
             learnable_parameters += list(self.backbone.parameters())
         if self.model_args.head and self.model_args.head.learnable is True:
             learnable_parameters += list(self.head.parameters())
-        if self.model_args.pair_classifier and self.model_args.pair_classifier.learnable is True:
+        if (
+            self.model_args.pair_classifier
+            and self.model_args.pair_classifier.learnable is True
+        ):
             learnable_parameters += list(self.pair_classifier.parameters())
 
         self.optimizer = utils.optimizers_map[self.model_args.optimizer.name](
@@ -112,8 +120,12 @@ class Trainer(TrainerBase):
         if self.model_args.is_distributed:
             for p in self.pair_classifier.parameters():
                 dist.broadcast(p, 0)
-            self.pair_classifier = self.pair_classifier = torch.nn.parallel.DistributedDataParallel(
-                module=self.pair_classifier, broadcast_buffers=False, device_ids=[self.local_rank]
+            self.pair_classifier = (
+                self.pair_classifier
+            ) = torch.nn.parallel.DistributedDataParallel(
+                module=self.pair_classifier,
+                broadcast_buffers=False,
+                device_ids=[self.local_rank],
             )
             self.pair_classifier.train()
 
@@ -186,7 +198,6 @@ class Trainer(TrainerBase):
 
         loss_recorder, batch_acc = [], []
         for idx, (first_img, second_img, label) in enumerate(self.trainloader):
-
             _global_iteration = epoch * self.model_args.iterations + idx
 
             first_img.requires_grad = False
@@ -200,13 +211,17 @@ class Trainer(TrainerBase):
             first_outputs = self.backbone(first_img)
             second_outputs = self.backbone(second_img)
 
-            feature_stacked = torch.cat((first_outputs["feature"], second_outputs["feature"]), dim=1)
+            feature_stacked = torch.cat(
+                (first_outputs["feature"], second_outputs["feature"]), dim=1
+            )
 
             outputs = {"feature": feature_stacked}
             outputs.update(self.pair_classifier(**outputs))
             outputs.update({"label": label})
 
-            loss = self.pair_classifier_criterion(outputs["pair_classifiers_output"], label)
+            loss = self.pair_classifier_criterion(
+                outputs["pair_classifiers_output"], label
+            )
 
             self.optimizer.zero_grad()
             loss.backward()
@@ -259,10 +274,11 @@ class Trainer(TrainerBase):
             "epoch": epoch,
             "backbone": self.backbone.state_dict(),
             "train_loss": train_loss,
-            "pair_classifier": self.pair_classifier.module.state_dict() \
-                if self.model_args.is_distributed \
-                else self.pair_classifier.state_dict(),
-            "head": self.head.state_dict() if self.head else None}
+            "pair_classifier": self.pair_classifier.module.state_dict()
+            if self.model_args.is_distributed
+            else self.pair_classifier.state_dict(),
+            "head": self.head.state_dict() if self.head else None,
+        }
         torch.save(ckpt, savename)
 
     def _report_settings(self):
@@ -276,7 +292,9 @@ class Trainer(TrainerBase):
         print("- Backbone   : {}".format(self.backbone.__class__))
         print("- Pair_classifier   : {}".format(self.pair_classifier))
         print("- Backbone Criterion   : {}".format(self.backbone_criterion))
-        print("- Pair_classifier Criterion   : {}".format(self.pair_classifier_criterion))
+        print(
+            "- Pair_classifier Criterion   : {}".format(self.pair_classifier_criterion)
+        )
         print("-" * 52)
 
 

@@ -4,18 +4,24 @@ import numpy as np
 import torch
 import matplotlib.pyplot as plt
 
-sys.path.append('.')
-from face_lib.evaluation.cross import load_config, get_pairs, Preprocessor, load_model, Inferencer
+sys.path.append(".")
+from face_lib.evaluation.cross import (
+    load_config,
+    get_pairs,
+    Preprocessor,
+    load_model,
+    Inferencer,
+)
 
 
 def main():
     configs = {
-        'ScaleFace': './configs/cross/scale.yaml',
+        "ScaleFace": "./configs/cross/scale.yaml",
     }
-    dataset = 'cplfw'
+    dataset = "cplfw"
 
-    args = load_config(configs['ScaleFace'])
-    args.images_path = f'{dataset}/aligned images'
+    args = load_config(configs["ScaleFace"])
+    args.images_path = f"{dataset}/aligned images"
     args.short = False
     data_directory = Path(args.data_directory)
     pairs = get_pairs(data_directory, dataset, short=args.short)
@@ -46,7 +52,5 @@ def main():
     plt.show()
 
 
-
-
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

@@ -15,7 +15,6 @@ import contextlib
 import warnings
 
 
-
 # class UpFirDn2dBackward(Function):
 #     @staticmethod
 #     def forward(
@@ -85,7 +84,6 @@ import warnings
 #         return gradgrad_out, None, None, None, None, None, None, None, None
 
 
-
 # class UpFirDn2d(Function):
 #     @staticmethod
 #     def forward(ctx, input, kernel, up, down, pad):
@@ -144,7 +142,6 @@ import warnings
 #             )
 #
 #         return grad_input, None, None, None, None
-
 
 
 def upfirdn2d(input, kernel, up=1, down=1, pad=(0, 0)):
@@ -214,6 +211,7 @@ def upfirdn2d_native(
 
 # ======================================================================================================================
 
+
 def conv2d(input, weight, bias=None, stride=1, padding=0, dilation=1, groups=1):
     # if could_use_op(input):
     #     return conv2d_gradfix(
@@ -238,9 +236,8 @@ def conv2d(input, weight, bias=None, stride=1, padding=0, dilation=1, groups=1):
     )
 
 
-
 class FusedLeakyReLU(nn.Module):
-    def __init__(self, channel, bias=True, negative_slope=0.2, scale=2 ** 0.5):
+    def __init__(self, channel, bias=True, negative_slope=0.2, scale=2**0.5):
         super().__init__()
 
         if bias:
@@ -256,7 +253,7 @@ class FusedLeakyReLU(nn.Module):
         return fused_leaky_relu(input, self.bias, self.negative_slope, self.scale)
 
 
-def fused_leaky_relu(input, bias=None, negative_slope=0.2, scale=2 ** 0.5):
+def fused_leaky_relu(input, bias=None, negative_slope=0.2, scale=2**0.5):
     if bias is not None:
         rest_dim = [1] * (input.ndim - bias.ndim - 1)
         return (
@@ -291,7 +288,7 @@ class Blur(nn.Module):
         kernel = make_kernel(kernel)
 
         if upsample_factor > 1:
-            kernel = kernel * (upsample_factor ** 2)
+            kernel = kernel * (upsample_factor**2)
 
         self.register_buffer("kernel", kernel)
 
@@ -349,7 +346,7 @@ class EqualConv2d(nn.Module):
         self.weight = nn.Parameter(
             torch.randn(out_channel, in_channel, kernel_size, kernel_size)
         )
-        self.scale = 1 / math.sqrt(in_channel * kernel_size ** 2)
+        self.scale = 1 / math.sqrt(in_channel * kernel_size**2)
 
         self.stride = stride
         self.padding = padding
@@ -503,4 +500,6 @@ class StyleGanDiscriminator(nn.Module):
         out = out.view(batch, -1)
         out = self.final_linear(out)
 
-        return - out # Originally there's no minus here but it is neede for reject verification
+        return (
+            -out
+        )  # Originally there's no minus here but it is neede for reject verification

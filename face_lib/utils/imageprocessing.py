@@ -11,7 +11,7 @@ def noisy(image, noise_type):
         row, col, ch = image.shape
         mean = 0
         var = 0.1
-        sigma = var ** 0.5
+        sigma = var**0.5
         gauss = np.random.normal(mean, sigma, (row, col, ch))
         gauss = gauss.reshape(row, col, ch)
         noisy = image + gauss

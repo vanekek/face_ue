@@ -9,7 +9,7 @@ uncertainty_strategy: "head"
 uncertainty_mode: "uncertainty"
 FARs: [0.0001, 0.001, 0.01, 0.05, ]
 rejected_portions: [0.0, 0.5, 250]
-fusion_distance_uncertainty_metrics: ["PFE_prob_min", ]
+fusion_distance_uncertainty_metrics: ["PFE_prob-distance_prob-unc", ]
 device_id: 0
 save_fig_path: "./runs/test"
 verbose: True

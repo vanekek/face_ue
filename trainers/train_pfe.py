@@ -168,7 +168,6 @@ class Trainer(TrainerBase):
 
         loss_recorder, batch_acc = [], []
         for idx, (img, gty) in enumerate(self.trainloader):
-
             _global_iteration = epoch * self.model_args.iterations + idx
 
             img.requires_grad = False

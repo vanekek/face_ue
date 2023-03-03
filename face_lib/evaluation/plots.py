@@ -2,8 +2,13 @@ import matplotlib.pyplot as plt
 
 
 def plot_distribution(
-    values, labels,
-    fig_name="", xlabel_name="", ylabel_name="", n_bins=40, ax=None,
+    values,
+    labels,
+    fig_name="",
+    xlabel_name="",
+    ylabel_name="",
+    n_bins=40,
+    ax=None,
 ):
     if ax is None:
         return None
@@ -18,8 +23,12 @@ def plot_distribution(
 
 
 def plot_uncertainty_distribution(
-    values, save_fig_path, n_bins=50,
-    fig_name="", xlabel_name="", ylabel_name="",
+    values,
+    save_fig_path,
+    n_bins=50,
+    fig_name="",
+    xlabel_name="",
+    ylabel_name="",
 ):
     fig, ax = plt.subplots(figsize=(10, 10))
 
@@ -60,17 +69,15 @@ def plot_TAR_FAR_different_methods(
         for FAR, TARs in table.items():
             auc = AUCs[key][FAR]
             if type(key) != str:
-                label = '_'.join(key)
+                label = "_".join(key)
             else:
                 label = key
             axes[plots_indices[FAR]].plot(
                 rejected_portions,
                 TARs,
-                label=label
-                + "_AUC="
-                + str(round(auc, 5)),
+                label=label + "_AUC=" + str(round(auc, 5)),
                 marker=" ",
-                alpha=0.8
+                alpha=0.8,
             )
             axes[plots_indices[FAR]].set_title(f"TAR@FAR={FAR}")
             axes[plots_indices[FAR]].set_xlabel("Rejected portion")

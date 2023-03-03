@@ -99,13 +99,17 @@ class CallBackLogging(object):
                     self.writer.add_scalar("time_for_end", time_for_end, global_step)
                     self.writer.add_scalar("loss", loss.avg, global_step)
                 if fp16:
-                    msg = "Speed %.2f samples/sec   Loss %.4f   Epoch: %d   Global Step: %d   " "Fp16 Grad Scale: %2.f   Required: %1.f hours" % (
-                        speed_total,
-                        loss.avg,
-                        epoch,
-                        global_step,
-                        grad_scaler.get_scale(),
-                        time_for_end,
+                    msg = (
+                        "Speed %.2f samples/sec   Loss %.4f   Epoch: %d   Global Step: %d   "
+                        "Fp16 Grad Scale: %2.f   Required: %1.f hours"
+                        % (
+                            speed_total,
+                            loss.avg,
+                            epoch,
+                            global_step,
+                            grad_scaler.get_scale(),
+                            time_for_end,
+                        )
                     )
                     if learning_rate is not None:
                         msg += f" {learning_rate=}"
@@ -135,25 +139,34 @@ class CallBackModelCheckpoint(object):
             logging.info(colored("Saving model", "red"))
             path_module = os.path.join(self.output, "backbone.pth")
             torch.save(
-                backbone.module.state_dict() \
-                    if isinstance(backbone, torch.nn.parallel.DistributedDataParallel) \
-                    else backbone.state_dict(),
-                path_module)
+                backbone.module.state_dict()
+                if isinstance(backbone, torch.nn.parallel.DistributedDataParallel)
+                else backbone.state_dict(),
+                path_module,
+            )
             logging.info("Pytorch Model Saved in '{}'".format(path_module))
 
             if scale_predictor:
                 ckpt_path = os.path.join(self.output, "checkpoint.pth")
                 logging.info(colored(f"Backbone : {type(backbone)}", "blue"))
-                logging.info(colored(f"Scale_predictor : {type(scale_predictor)}", "blue"))
-                torch.save({
-                    "backbone": backbone.module.state_dict() \
-                        if isinstance(backbone, torch.nn.parallel.DistributedDataParallel) \
+                logging.info(
+                    colored(f"Scale_predictor : {type(scale_predictor)}", "blue")
+                )
+                torch.save(
+                    {
+                        "backbone": backbone.module.state_dict()
+                        if isinstance(
+                            backbone, torch.nn.parallel.DistributedDataParallel
+                        )
                         else backbone.state_dict(),
-                    "scale_predictor":  scale_predictor.module.state_dict() \
-                        if isinstance(scale_predictor, torch.nn.parallel.DistributedDataParallel) \
+                        "scale_predictor": scale_predictor.module.state_dict()
+                        if isinstance(
+                            scale_predictor, torch.nn.parallel.DistributedDataParallel
+                        )
                         else scale_predictor.state_dict(),
-                },
-                ckpt_path)
+                    },
+                    ckpt_path,
+                )
 
             if partial_fc is not None:
                 partial_fc.save_params()

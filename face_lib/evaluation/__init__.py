@@ -71,4 +71,3 @@ name_to_uncertainty_func = {
     "similarity": pair_uncertainty_similarity,
     "perfect": pair_uncertainty_perfect,
 }
-
