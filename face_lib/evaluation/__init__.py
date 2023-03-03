@@ -32,6 +32,8 @@ from .distance_uncertainty_funcs import (
     pair_sqrt_pfe_mul_biased_cosine_score,
     pair_sqrt_pfe_harmonic_biased_cosine_score,
     pair_uncertainty_perfect,
+    prob_distance,
+    prob_unc,
 )
 
 name_to_distance_func = {
@@ -56,6 +58,7 @@ name_to_distance_func = {
     "pfe-harmonic-biased-cosine": pair_pfe_harmonic_biased_cosine_score,
     "pfe-sqrt-mul-biased-cosine": pair_sqrt_pfe_mul_biased_cosine_score,
     "pfe-sqrt-harmonic-biased-cosine": pair_sqrt_pfe_harmonic_biased_cosine_score,
+    "prob-distance": prob_distance,
 }
 
 name_to_uncertainty_func = {
@@ -70,4 +73,5 @@ name_to_uncertainty_func = {
     "min": pair_uncertainty_min,
     "similarity": pair_uncertainty_similarity,
     "perfect": pair_uncertainty_perfect,
+    "prob-unc": prob_unc,
 }

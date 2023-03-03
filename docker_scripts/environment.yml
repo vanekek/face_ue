@@ -13,6 +13,7 @@ dependencies:
   - conda-forge::scikit-image
   - conda-forge::termcolor
   - conda-forge::tensorboard
+  - conda-forge::black
   - anaconda::ipython
   - anaconda::path
   - pip

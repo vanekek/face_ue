@@ -127,15 +127,12 @@ class IJBCTemplates:
         returns features, uncertainties and labels for pairs
         if verify_only_ue flag set, ignores the uncertainty from enroll templates
         """
-        features1 = np.array(
-            [
-                self.templates_dict[t].mu
-                for t in tqdm(self._pairs[:, 0], desc="Features")
-            ]
-        )
-        features2 = np.array(
-            [self.templates_dict[t].mu for t in tqdm(self._pairs[:, 1])]
-        )
+        features1 = [
+            self.templates_dict[t].mu for t in tqdm(self._pairs[:, 0], desc="Features")
+        ]
+
+        features2 = [self.templates_dict[t].mu for t in tqdm(self._pairs[:, 1])]
+
         sigmas_sq1 = np.array(
             [
                 self.templates_dict[t].sigma_sq

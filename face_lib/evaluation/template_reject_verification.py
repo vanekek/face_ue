@@ -29,6 +29,7 @@ from pathlib import Path
 import pickle
 from scipy.special import softmax
 from scipy.stats import multivariate_normal
+from tqdm import tqdm
 
 path = str(Path(__file__).parent.parent.parent.absolute())
 sys.path.insert(0, path)
@@ -53,7 +54,7 @@ from face_lib.evaluation.argument_parser import (
 from face_lib.evaluation.aggregation import aggregate_templates
 
 
-def compute_probalities(tester, use_mean_z_estimate=True):
+def compute_probalities(tester, use_mean_z_estimate=True, num_samples=5):
     """
     Computes probability for belonging to each class for each query image
 
@@ -61,16 +62,76 @@ def compute_probalities(tester, use_mean_z_estimate=True):
     K - number of classes.
     Elements are probabilities $p_{ij} = \mathbb{P}(class_{i} = j)$ that i-th query template belongs to j-th class
     """
-    for t in tester.verification_templates():
-        assert use_mean_z_estimate
 
+    z = []  # n x num_samples x 512
+    sigma = []  # K x 512
+    mu = []  # K x 512
+    for query_template in tester.verification_templates():
+        z_samples = []
         if use_mean_z_estimate:
-            # compute likelihood for each class. At this point each enroll template c has proper distribution p(z|c)
-            for t in tester.enroll_templates():
-                pz = multivariate_normal(t.mu, np.diag(t.sigma_sq))
-
+            z_samples.append(query_template.mu)
         else:
-            raise NotImplementedError
+            pz = multivariate_normal(
+                query_template.mu, np.diag(query_template.sigma_sq)
+            )
+            z_samples.extend(pz.rvs(size=num_samples))
+        z.append(z_samples)
+    z = np.array(z)
+    for enroll_template in tester.enroll_templates():
+        sigma.append(enroll_template.sigma_sq)
+        mu.append(enroll_template.mu)
+    sigma = np.array(sigma)
+    mu = np.array(mu)
+
+    # sigma = np.tile(sigma, (z.shape[0], z.shape[1], 1, 1))  # n x num_samples x K x 512
+    # mu = np.tile(mu, (z.shape[0], z.shape[1], 1, 1))  # n x num_samples x K x 512
+    # z = np.tile(z, (1, 1, mu.shape[2], 1))  # n x num_samples x K x 512
+    a_ilj_final = np.zeros(shape=z.shape[:-1] + mu.shape[:-1])  # placeholder
+    num_dims = mu.shape[1]
+    for k in tqdm(range(num_dims)):
+        a_ilj = (
+            z[:, :, np.newaxis, k] - mu[np.newaxis, np.newaxis, :, k]
+        ) ** 2 / sigma[np.newaxis, np.newaxis, :, k] + np.log(sigma)[
+            np.newaxis, np.newaxis, :, k
+        ]
+        # a_ilj = (
+        #     z[:, :, np.newaxis, k] - mu[np.newaxis, np.newaxis, :, k]
+        # ) ** 2 / sigma[np.newaxis, np.newaxis, :, k] + np.log(sigma)[
+        #     np.newaxis, np.newaxis, :, k
+        # ]
+        np.add(a_ilj_final, a_ilj, out=a_ilj_final)
+
+    a_ilj_final = -0.5 * a_ilj_final
+    p_ij = np.mean(
+        softmax(
+            a_ilj_final,
+            axis=2,
+        ),
+        axis=1,
+    )
+    return p_ij
+
+
+def set_prob_mu(tester, probabilities):
+    """
+    sets query image mu's to equal to probalitilies to all classes
+    """
+    for i, query_template in tqdm(enumerate(tester.verification_templates())):
+        new_mu = {}
+        for j, enroll_template in enumerate(tester.enroll_templates()):
+            new_mu[enroll_template.template_id] = probabilities[i, j]
+        query_template.mu = new_mu
+    for t in tester.enroll_templates():
+        t.mu = t.template_id
+
+
+def set_prob_sigma_sq(tester, probabilities):
+    """
+    sets query image uncertanties to equal to probalitilies to most likely class
+    """
+
+    for i, query_template in enumerate(tester.verification_templates()):
+        query_template.sigma_sq = np.max(probabilities[i, :])
 
 
 def compute_softmax_scores(tester):
@@ -230,11 +291,23 @@ def eval_template_reject_verification(
                 aggregate_templates(tester.all_templates(), fusion_name)
 
         if distance_name == "prob-distance" or uncertainty_name == "prob-unc":
-            probabilities = compute_probalities(tester)
+
+            # cache probability matrix
+            prob_cache_path = Path(save_fig_path) / f"{fusion_name}_probabilities.npy"
+            if prob_cache_path.is_file():
+                print("Using cached probabily matrix")
+                probabilities = np.load(prob_cache_path)
+            else:
+                print("Computing probabilities")
+                probabilities = compute_probalities(tester)
+                np.save(prob_cache_path, probabilities)
+
             if distance_name == "prob-distance":
                 # set probability distances
+                print("Setting prob distance")
                 set_prob_mu(tester, probabilities)
             if uncertainty_name == "prob-unc":
+                print("Setting prob uncertainty")
                 # set sigma_sq to be 1 - prob
                 set_prob_sigma_sq(tester, probabilities)
         # calculate softmax score for template classification and use it as uncertainty score
@@ -250,8 +323,8 @@ def eval_template_reject_verification(
             label_vec,
         ) = tester.get_features_uncertainties_labels()
 
-        print("shapes")
-        print(feat_1.shape, feat_2.shape, unc_1.shape, unc_2.shape, label_vec.shape)
+        # print("shapes")
+        # print(feat_1.shape, feat_2.shape, unc_1.shape, unc_2.shape, label_vec.shape)
 
         result_table = get_rejected_tar_far(
             feat_1,

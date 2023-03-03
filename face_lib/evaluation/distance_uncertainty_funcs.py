@@ -1,6 +1,16 @@
 import numpy as np
 
 
+def prob_distance(mu_1, mu_2, sigma_sq_1, sigma_sq_2):
+    # mu_1 - enroll templates
+    return [mu_2[i][mu_1[i]] for i in range(len(mu_1))]
+
+
+def prob_unc(mu_1, mu_2, sigma_sq_1, sigma_sq_2):
+    # sigma_sq_2 - verif templates
+    return sigma_sq_2
+
+
 def harmonic_mean(x, axis: int = -1):
     x_sum = ((x ** (-1)).mean(axis=axis)) ** (-1)
     return x_sum
