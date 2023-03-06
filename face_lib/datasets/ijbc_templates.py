@@ -111,7 +111,7 @@ class IJBCTemplates:
         self._pairs = self._clean_pairs(self._pairs, self.templates_dict)
 
     def _clean_pairs(self, pairs, templates_dict):
-        print("len before", len(pairs))
+        # print("len before", len(pairs))
         pairs = np.array(
             [
                 p
@@ -119,7 +119,7 @@ class IJBCTemplates:
                 if (p[0] in self.templates_dict and p[1] in templates_dict)
             ]
         )
-        print("len after", len(pairs))
+        # print("len after", len(pairs))
         return pairs
 
     def get_features_uncertainties_labels(self):

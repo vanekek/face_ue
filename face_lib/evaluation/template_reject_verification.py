@@ -47,7 +47,7 @@ from face_lib.evaluation.feature_extractors import (
     extract_features_uncertainties_from_list,
 )
 from face_lib.evaluation.reject_verification import get_rejected_tar_far
-
+import face_lib.probability.likelihoods as likelihoods
 
 from face_lib.evaluation.argument_parser import (
     verify_arguments_template_reject_verification,
@@ -56,7 +56,134 @@ from face_lib.evaluation.argument_parser import (
 from face_lib.evaluation.aggregation import aggregate_templates
 
 
-def compute_probalities(tester, use_mean_z_estimate=True, num_samples=5):
+@hydra.main(
+    config_path=str(Path(".").resolve() / "configs/hydra"),
+    config_name=Path(__file__).stem + "_pfe",
+    version_base="1.2",
+)
+def eval_template_reject_verification(cfg):
+    rejected_portions = np.linspace(*cfg.rejected_portions)
+    FARs = list(map(float, cfg.FARs))
+    fusions_distances_uncertainties = list(
+        map(lambda x: x.split("_"), cfg.fusion_distance_uncertainty_metrics)
+    )
+
+    # Setup the plots
+    if rejected_portions is None:
+        rejected_portions = [
+            0.0,
+        ]
+    if FARs is None:
+        FARs = [
+            0.0,
+        ]
+
+    all_results = OrderedDict()
+    n_figures = len(fusions_distances_uncertainties)
+    distance_fig, distance_axes = None, [None] * n_figures
+    uncertainty_fig, uncertainty_axes = None, [None] * n_figures
+
+    distance_fig, distance_axes = plt.subplots(
+        nrows=1, ncols=n_figures, figsize=(9 * n_figures, 8)
+    )
+    uncertainty_fig, uncertainty_axes = plt.subplots(
+        nrows=1, ncols=n_figures, figsize=(9 * n_figures, 8)
+    )
+    if n_figures == 1:
+        distance_axes = [distance_axes]
+        uncertainty_axes = [uncertainty_axes]
+
+    # returns features and uncertainties for a list of images
+    (
+        image_paths,
+        feature_dict,
+        uncertainty_dict,
+        classifier,
+        device,
+    ) = get_image_embeddings(cfg)
+
+    tester = IJBCTemplates(image_paths, feature_dict, uncertainty_dict)
+    tester.init_proto(cfg.protocol_path)
+
+    prev_fusion_name = None
+    for (
+        (fusion_name, distance_name, uncertainty_name),
+        distance_ax,
+        uncertainty_ax,
+    ) in zip(fusions_distances_uncertainties, distance_axes, uncertainty_axes):
+        print(f"==={fusion_name} {distance_name} {uncertainty_name} ===")
+
+        distance_func, uncertainty_func = get_distance_uncertainty_funcs(
+            distance_name=distance_name,
+            uncertainty_name=uncertainty_name,
+            classifier=classifier,
+            device=device,
+            distaces_batch_size=cfg.distaces_batch_size,
+        )
+
+        if fusion_name != prev_fusion_name:
+            if cfg.equal_uncertainty_enroll:
+                aggregate_templates(tester.enroll_templates(), fusion_name)
+                aggregate_templates(tester.verification_templates(), "first")
+            else:
+                aggregate_templates(tester.all_templates(), fusion_name)
+
+        if distance_name == "prob-distance" or uncertainty_name == "prob-unc":
+            set_probability_based_uncertainty(
+                tester, cfg, fusion_name, distance_name, uncertainty_name
+            )
+
+        (
+            feat_1,
+            feat_2,
+            unc_1,
+            unc_2,
+            label_vec,
+        ) = tester.get_features_uncertainties_labels()
+
+        result_table = get_rejected_tar_far(
+            feat_1,
+            feat_2,
+            unc_1,
+            unc_2,
+            label_vec,
+            distance_func=distance_func,
+            pair_uncertainty_func=uncertainty_func,
+            uncertainty_mode=cfg.uncertainty_mode,
+            FARs=FARs,
+            distance_ax=distance_ax,
+            uncertainty_ax=uncertainty_ax,
+            rejected_portions=rejected_portions,
+            equal_uncertainty_enroll=cfg.equal_uncertainty_enroll,
+        )
+
+        # delete arrays to prevent memory leak
+        del feat_1
+        del feat_2
+        del unc_1
+        del unc_2
+        del label_vec
+
+        distance_ax.set_title(f"{distance_name} {uncertainty_name}")
+        uncertainty_ax.set_title(f"{distance_name} {uncertainty_name}")
+
+        all_results[(fusion_name, distance_name, uncertainty_name)] = result_table
+        prev_fusion_name = fusion_name
+
+    res_AUCs = OrderedDict()
+    for method, table in all_results.items():
+        res_AUCs[method] = {
+            far: auc(rejected_portions, TARs) for far, TARs in table.items()
+        }
+
+    save_plots(
+        cfg, all_results, res_AUCs, rejected_portions, distance_fig, uncertainty_fig
+    )
+
+
+def compute_probalities(
+    tester, likelihood_function, use_mean_z_estimate, num_z_samples
+):
     """
     Computes probability for belonging to each class for each query image
 
@@ -65,9 +192,11 @@ def compute_probalities(tester, use_mean_z_estimate=True, num_samples=5):
     Elements are probabilities $p_{ij} = \mathbb{P}(class_{i} = j)$ that i-th query template belongs to j-th class
     """
 
-    z = []  # n x num_samples x 512
+    z = []  # n x num_z_samples x 512
     sigma = []  # K x 512
     mu = []  # K x 512
+
+    # sample z's for each query image
     for query_template in tester.verification_templates():
         z_samples = []
         if use_mean_z_estimate:
@@ -76,7 +205,7 @@ def compute_probalities(tester, use_mean_z_estimate=True, num_samples=5):
             pz = multivariate_normal(
                 query_template.mu, np.diag(query_template.sigma_sq)
             )
-            z_samples.extend(pz.rvs(size=num_samples))
+            z_samples.extend(pz.rvs(size=num_z_samples))
         z.append(z_samples)
     z = np.array(z)
     for enroll_template in tester.enroll_templates():
@@ -85,25 +214,8 @@ def compute_probalities(tester, use_mean_z_estimate=True, num_samples=5):
     sigma = np.array(sigma)
     mu = np.array(mu)
 
-    # sigma = np.tile(sigma, (z.shape[0], z.shape[1], 1, 1))  # n x num_samples x K x 512
-    # mu = np.tile(mu, (z.shape[0], z.shape[1], 1, 1))  # n x num_samples x K x 512
-    # z = np.tile(z, (1, 1, mu.shape[2], 1))  # n x num_samples x K x 512
-    a_ilj_final = np.zeros(shape=z.shape[:-1] + mu.shape[:-1])  # placeholder
-    num_dims = mu.shape[1]
-    for k in tqdm(range(num_dims)):
-        a_ilj = (
-            z[:, :, np.newaxis, k] - mu[np.newaxis, np.newaxis, :, k]
-        ) ** 2 / sigma[np.newaxis, np.newaxis, :, k] + np.log(sigma)[
-            np.newaxis, np.newaxis, :, k
-        ]
-        # a_ilj = (
-        #     z[:, :, np.newaxis, k] - mu[np.newaxis, np.newaxis, :, k]
-        # ) ** 2 / sigma[np.newaxis, np.newaxis, :, k] + np.log(sigma)[
-        #     np.newaxis, np.newaxis, :, k
-        # ]
-        np.add(a_ilj_final, a_ilj, out=a_ilj_final)
+    a_ilj_final = likelihood_function(mu, sigma, z)
 
-    a_ilj_final = -0.5 * a_ilj_final
     p_ij = np.mean(
         softmax(
             a_ilj_final,
@@ -112,28 +224,6 @@ def compute_probalities(tester, use_mean_z_estimate=True, num_samples=5):
         axis=1,
     )
     return p_ij
-
-
-def set_prob_mu(tester, probabilities):
-    """
-    sets query image mu's to equal to probalitilies to all classes
-    """
-    for i, query_template in tqdm(enumerate(tester.verification_templates())):
-        new_mu = {}
-        for j, enroll_template in enumerate(tester.enroll_templates()):
-            new_mu[enroll_template.template_id] = probabilities[i, j]
-        query_template.mu = new_mu
-    for t in tester.enroll_templates():
-        t.mu = t.template_id
-
-
-def set_prob_sigma_sq(tester, probabilities):
-    """
-    sets query image uncertanties to equal to probalitilies to most likely class
-    """
-
-    for i, query_template in enumerate(tester.verification_templates()):
-        query_template.sigma_sq = np.max(probabilities[i, :])
 
 
 def compute_softmax_scores(tester):
@@ -160,7 +250,7 @@ def compute_softmax_scores(tester):
 
     sim = ver_mus @ enroll_mus.T  # N_ver X N_enroll
 
-    ver_uncertanty = -np.max(softmax(sim, axis=1), axis=1)
+    ver_uncertanty = np.max(softmax(sim, axis=1), axis=1)
 
     for t, unc in zip(tester.verification_templates(), ver_uncertanty):
         t.sigma_sq = np.array([unc])
@@ -232,26 +322,40 @@ def get_image_embeddings(cfg):
 
 
 def set_probability_based_uncertainty(
-    tester, cache_path, fusion_name, distance_name, uncertainty_name
+    tester, cfg, fusion_name, distance_name, uncertainty_name
 ):
     # cache probability matrix
-    prob_cache_path = Path(cache_path) / f"{fusion_name}_probabilities.npy"
-    if prob_cache_path.is_file():
+    prob_cache_path = (
+        Path(cfg.cache_dir)
+        / f"{fusion_name}_{cfg.likelihood_function.replace('_','-')}_probabilities.npy"
+    )
+    if prob_cache_path.is_file() and cfg.debug is False:
         print("Using cached probabily matrix")
         probabilities = np.load(prob_cache_path)
     else:
         print("Computing probabilities")
-        probabilities = compute_probalities(tester)
+
+        likelihood_function = getattr(likelihoods, cfg.likelihood_function)
+        probabilities = compute_probalities(
+            tester, likelihood_function, cfg.use_mean_z_estimate, cfg.num_z_samples
+        )
         np.save(prob_cache_path, probabilities)
 
     if distance_name == "prob-distance":
         # set probability distances
         print("Setting prob distance")
-        set_prob_mu(tester, probabilities)
+        for i, query_template in tqdm(enumerate(tester.verification_templates())):
+            new_mu = {}
+            for j, enroll_template in enumerate(tester.enroll_templates()):
+                new_mu[enroll_template.template_id] = probabilities[i, j]
+            query_template.mu = new_mu
+        for t in tester.enroll_templates():
+            t.mu = t.template_id
     if uncertainty_name == "prob-unc":
         print("Setting prob uncertainty")
         # set sigma_sq to be 1 - prob
-        set_prob_sigma_sq(tester, probabilities)
+        for i, query_template in enumerate(tester.verification_templates()):
+            query_template.sigma_sq = np.max(probabilities[i, :])
 
 
 def save_plots(
@@ -270,7 +374,7 @@ def save_plots(
     ), result_table in all_results.items():
         title = "Template" + distance_name + " " + uncertainty_name
         save_to_path = os.path.join(
-            ".",
+            cfg.exp_dir,
             fusion_name + "_" + distance_name + "_" + uncertainty_name + ".jpg",
         )
 
@@ -285,13 +389,15 @@ def save_plots(
         res_AUCs,
         title="Template reject verification",
         save_figs_path=os.path.join(
-            ".", f"all_methods_{cfg.uncertainty_strategy}_{timestamp}.jpg"
+            cfg.exp_dir, f"all_methods_{cfg.uncertainty_strategy}_{timestamp}.jpg"
         ),
     )
 
-    distance_fig.savefig(os.path.join(".", f"distance_dist_{timestamp}.jpg"), dpi=400)
+    distance_fig.savefig(
+        os.path.join(cfg.exp_dir, f"distance_dist_{timestamp}.jpg"), dpi=400
+    )
     uncertainty_fig.savefig(
-        os.path.join(".", f"uncertainry_dist_{timestamp}.jpg"), dpi=400
+        os.path.join(cfg.exp_dir, f"uncertainry_dist_{timestamp}.jpg"), dpi=400
     )
 
     setup_name = {True: "single", False: "full"}[cfg.equal_uncertainty_enroll]
@@ -299,134 +405,9 @@ def save_plots(
     torch.save(
         all_results,
         os.path.join(
-            ".",
+            cfg.exp_dir,
             f"table_{cfg.uncertainty_strategy}_{timestamp}_{setup_name}.pt",
         ),
-    )
-
-
-@hydra.main(
-    config_path=str(Path(".").resolve() / "configs/hydra"),
-    config_name=Path(__file__).stem + "_pfe",
-)
-def eval_template_reject_verification(cfg):
-
-    rejected_portions = np.linspace(*cfg.rejected_portions)
-    FARs = list(map(float, cfg.FARs))
-    fusions_distances_uncertainties = list(
-        map(lambda x: x.split("_"), cfg.fusion_distance_uncertainty_metrics)
-    )
-
-    # Setup the plots
-    if rejected_portions is None:
-        rejected_portions = [
-            0.0,
-        ]
-    if FARs is None:
-        FARs = [
-            0.0,
-        ]
-
-    all_results = OrderedDict()
-    n_figures = len(fusions_distances_uncertainties)
-    distance_fig, distance_axes = None, [None] * n_figures
-    uncertainty_fig, uncertainty_axes = None, [None] * n_figures
-
-    distance_fig, distance_axes = plt.subplots(
-        nrows=1, ncols=n_figures, figsize=(9 * n_figures, 8)
-    )
-    uncertainty_fig, uncertainty_axes = plt.subplots(
-        nrows=1, ncols=n_figures, figsize=(9 * n_figures, 8)
-    )
-    if n_figures == 1:
-        distance_axes = [distance_axes]
-        uncertainty_axes = [uncertainty_axes]
-
-    # returns features and uncertainties for a list of images
-    (
-        image_paths,
-        feature_dict,
-        uncertainty_dict,
-        classifier,
-        device,
-    ) = get_image_embeddings(cfg)
-
-    tester = IJBCTemplates(image_paths, feature_dict, uncertainty_dict)
-    tester.init_proto(cfg.protocol_path)
-
-    prev_fusion_name = None
-    for (
-        (fusion_name, distance_name, uncertainty_name),
-        distance_ax,
-        uncertainty_ax,
-    ) in zip(fusions_distances_uncertainties, distance_axes, uncertainty_axes):
-        print(f"==={fusion_name} {distance_name} {uncertainty_name} ===")
-
-        distance_func, uncertainty_func = get_distance_uncertainty_funcs(
-            distance_name=distance_name,
-            uncertainty_name=uncertainty_name,
-            classifier=classifier,
-            device=device,
-            distaces_batch_size=cfg.distaces_batch_size,
-        )
-
-        if fusion_name != prev_fusion_name:
-            if cfg.equal_uncertainty_enroll:
-                aggregate_templates(tester.enroll_templates(), fusion_name)
-                aggregate_templates(tester.verification_templates(), "first")
-            else:
-                aggregate_templates(tester.all_templates(), fusion_name)
-
-        if distance_name == "prob-distance" or uncertainty_name == "prob-unc":
-            set_probability_based_uncertainty(
-                tester, cfg.cache_path, fusion_name, distance_name, uncertainty_name
-            )
-
-        (
-            feat_1,
-            feat_2,
-            unc_1,
-            unc_2,
-            label_vec,
-        ) = tester.get_features_uncertainties_labels()
-
-        result_table = get_rejected_tar_far(
-            feat_1,
-            feat_2,
-            unc_1,
-            unc_2,
-            label_vec,
-            distance_func=distance_func,
-            pair_uncertainty_func=uncertainty_func,
-            uncertainty_mode=cfg.uncertainty_mode,
-            FARs=FARs,
-            distance_ax=distance_ax,
-            uncertainty_ax=uncertainty_ax,
-            rejected_portions=rejected_portions,
-            equal_uncertainty_enroll=cfg.equal_uncertainty_enroll,
-        )
-
-        # delete arrays to prevent memory leak
-        del feat_1
-        del feat_2
-        del unc_1
-        del unc_2
-        del label_vec
-
-        distance_ax.set_title(f"{distance_name} {uncertainty_name}")
-        uncertainty_ax.set_title(f"{distance_name} {uncertainty_name}")
-
-        all_results[(fusion_name, distance_name, uncertainty_name)] = result_table
-        prev_fusion_name = fusion_name
-
-    res_AUCs = OrderedDict()
-    for method, table in all_results.items():
-        res_AUCs[method] = {
-            far: auc(rejected_portions, TARs) for far, TARs in table.items()
-        }
-
-    save_plots(
-        cfg, all_results, res_AUCs, rejected_portions, distance_fig, uncertainty_fig
     )
 
 
