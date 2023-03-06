@@ -42,17 +42,13 @@ from face_lib.evaluation.utils import (
     get_required_models,
     get_distance_uncertainty_funcs,
 )
-from face_lib.evaluation.feature_extractors import get_features_uncertainties_labels
 from face_lib.evaluation.feature_extractors import (
     extract_features_uncertainties_from_list,
 )
 from face_lib.evaluation.reject_verification import get_rejected_tar_far
 import face_lib.probability.likelihoods as likelihoods
 
-from face_lib.evaluation.argument_parser import (
-    verify_arguments_template_reject_verification,
-    parse_cli_arguments,
-)
+
 from face_lib.evaluation.aggregation import aggregate_templates
 
 
@@ -64,9 +60,6 @@ from face_lib.evaluation.aggregation import aggregate_templates
 def eval_template_reject_verification(cfg):
     rejected_portions = np.linspace(*cfg.rejected_portions)
     FARs = list(map(float, cfg.FARs))
-    fusions_distances_uncertainties = list(
-        map(lambda x: x.split("_"), cfg.fusion_distance_uncertainty_metrics)
-    )
 
     # Setup the plots
     if rejected_portions is None:
@@ -79,7 +72,7 @@ def eval_template_reject_verification(cfg):
         ]
 
     all_results = OrderedDict()
-    n_figures = len(fusions_distances_uncertainties)
+    n_figures = len(cfg.methods)
     distance_fig, distance_axes = None, [None] * n_figures
     uncertainty_fig, uncertainty_axes = None, [None] * n_figures
 
@@ -107,10 +100,13 @@ def eval_template_reject_verification(cfg):
 
     prev_fusion_name = None
     for (
-        (fusion_name, distance_name, uncertainty_name),
+        method,
         distance_ax,
         uncertainty_ax,
-    ) in zip(fusions_distances_uncertainties, distance_axes, uncertainty_axes):
+    ) in zip(cfg.methods, distance_axes, uncertainty_axes):
+        fusion_name = method.fusion_name
+        distance_name = method.distance_name
+        uncertainty_name = method.uncertainty_name
         print(f"==={fusion_name} {distance_name} {uncertainty_name} ===")
 
         distance_func, uncertainty_func = get_distance_uncertainty_funcs(
@@ -121,16 +117,16 @@ def eval_template_reject_verification(cfg):
             distaces_batch_size=cfg.distaces_batch_size,
         )
 
-        if fusion_name != prev_fusion_name:
-            if cfg.equal_uncertainty_enroll:
-                aggregate_templates(tester.enroll_templates(), fusion_name)
-                aggregate_templates(tester.verification_templates(), "first")
-            else:
-                aggregate_templates(tester.all_templates(), fusion_name)
+        
+        if cfg.equal_uncertainty_enroll:
+            aggregate_templates(tester.enroll_templates(), fusion_name)
+            aggregate_templates(tester.verification_templates(), "first")
+        else:
+            aggregate_templates(tester.all_templates(), fusion_name)
 
         if distance_name == "prob-distance" or uncertainty_name == "prob-unc":
             set_probability_based_uncertainty(
-                tester, cfg, fusion_name, distance_name, uncertainty_name
+                tester, cfg, method, fusion_name, distance_name, uncertainty_name
             )
 
         (
@@ -149,7 +145,7 @@ def eval_template_reject_verification(cfg):
             label_vec,
             distance_func=distance_func,
             pair_uncertainty_func=uncertainty_func,
-            uncertainty_mode=cfg.uncertainty_mode,
+            uncertainty_mode=method.uncertainty_mode,
             FARs=FARs,
             distance_ax=distance_ax,
             uncertainty_ax=uncertainty_ax,
@@ -167,7 +163,11 @@ def eval_template_reject_verification(cfg):
         distance_ax.set_title(f"{distance_name} {uncertainty_name}")
         uncertainty_ax.set_title(f"{distance_name} {uncertainty_name}")
 
-        all_results[(fusion_name, distance_name, uncertainty_name)] = result_table
+        if 'likelihood_function' in method.keys():
+            likelihood_function = method.likelihood_function.replace('_','-')
+        else:
+            likelihood_function = ''
+        all_results[(fusion_name, distance_name, uncertainty_name, likelihood_function)] = result_table
         prev_fusion_name = fusion_name
 
     res_AUCs = OrderedDict()
@@ -322,12 +322,12 @@ def get_image_embeddings(cfg):
 
 
 def set_probability_based_uncertainty(
-    tester, cfg, fusion_name, distance_name, uncertainty_name
+    tester,cfg, method, fusion_name, distance_name, uncertainty_name
 ):
     # cache probability matrix
     prob_cache_path = (
         Path(cfg.cache_dir)
-        / f"{fusion_name}_{cfg.likelihood_function.replace('_','-')}_probabilities.npy"
+        / f"{fusion_name}_{method.likelihood_function.replace('_','-')}_probabilities.npy"
     )
     if prob_cache_path.is_file() and cfg.debug is False:
         print("Using cached probabily matrix")
@@ -335,9 +335,9 @@ def set_probability_based_uncertainty(
     else:
         print("Computing probabilities")
 
-        likelihood_function = getattr(likelihoods, cfg.likelihood_function)
+        likelihood_function = getattr(likelihoods, method.likelihood_function)
         probabilities = compute_probalities(
-            tester, likelihood_function, cfg.use_mean_z_estimate, cfg.num_z_samples
+            tester, likelihood_function, method.use_mean_z_estimate, method.num_z_samples
         )
         np.save(prob_cache_path, probabilities)
 
@@ -362,20 +362,20 @@ def save_plots(
     cfg, all_results, res_AUCs, rejected_portions, distance_fig, uncertainty_fig
 ):
 
-    for (fusion_name, distance_name, uncertainty_name), aucs in res_AUCs.items():
-        print(fusion_name, distance_name, uncertainty_name)
+    for (fusion_name, distance_name, uncertainty_name, likelihood_function), aucs in res_AUCs.items():
+        print(fusion_name, distance_name, uncertainty_name, likelihood_function)
         for FAR, AUC in aucs.items():
             print(f"\tFAR={round(FAR, 5)} TAR_AUC : {round(AUC, 5)}")
 
     for (
         fusion_name,
         distance_name,
-        uncertainty_name,
+        uncertainty_name,likelihood_function,
     ), result_table in all_results.items():
-        title = "Template" + distance_name + " " + uncertainty_name
+        title = "Template" + distance_name + " " + uncertainty_name + " " + likelihood_function
         save_to_path = os.path.join(
             cfg.exp_dir,
-            fusion_name + "_" + distance_name + "_" + uncertainty_name + ".jpg",
+            fusion_name + "_" + distance_name + "_" + uncertainty_name + " " + likelihood_function + ".jpg",
         )
 
         plots.plot_rejected_TAR_FAR(

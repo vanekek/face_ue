@@ -76,7 +76,7 @@ def aggregate_templates(templates, method):
             t.mu = l2_normalize(t.features[0])
             t.sigma_sq = t.sigmas[0]
         elif method == "PFE":
-            # t.mu, t.sigma_sq = aggregate_PFE(t.features, sigma_sq=t.sigmas)
+            #t.mu, t.sigma_sq = aggregate_PFE(t.features, sigma_sq=t.sigmas)
             t.mu, t.sigma_sq = aggregate_PFE_properly(t.features, sigma_sq=t.sigmas)
         elif method == "mean":
             t.mu = l2_normalize(np.mean(t.features, axis=0))

@@ -65,6 +65,8 @@ def plot_TAR_FAR_different_methods(
     fig, axes = plt.subplots(
         ncols=len(plots_indices), nrows=1, figsize=(9 * len(plots_indices), 8)
     )
+    if len(plots_indices) == 1:
+        axes = [axes]
     for key, table in results.items():
         for FAR, TARs in table.items():
             auc = AUCs[key][FAR]

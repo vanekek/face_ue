@@ -13,8 +13,8 @@ batch_size: 64
 distaces_batch_size: 8
 uncertainty_strategy: "head"
 uncertainty_mode: "confidence"
-FARs: [0.0001, 0.001, 0.01, 0.05, ]
-rejected_portions: [0.0, 0.5, 250]
+FARs: [0.0001] #, 0.001, 0.01, 0.05, ]
+rejected_portions: [0.0, 0.5, 20]
 device_id: 0
 equal_uncertainty_enroll: True
 verbose: True
@@ -23,11 +23,46 @@ verbose: True
 # CHANGE THESE PARAMETERS
 debug: False
 
-likelihood_function: "cos_pfe_likelihood"
+
+likelihood_function: "default_pfe_likelihood"
 checkpoint_path: "/app/data/pfe.pth"
 config_path: "/app/configs/models/iresnet_ms1m_pfe_normalized.yaml"
 
-fusion_distance_uncertainty_metrics: ["PFE_cosine_prob-unc", ]
+methods:
+  # - fusion_name: PFE
+  #   distance_name: cosine
+  #   uncertainty_name: prob-unc
+  #   uncertainty_mode: confidence
+  #   likelihood_function: cos_pfe_likelihood
+  #   use_mean_z_estimate: True
+  #   num_z_samples: 0
+  - fusion_name: PFE
+    distance_name: cosine
+    uncertainty_name: prob-unc
+    uncertainty_mode: confidence
+    likelihood_function: default_pfe_likelihood
+    use_mean_z_estimate: False
+    num_z_samples: 5
+  - fusion_name: PFE
+    distance_name: cosine
+    uncertainty_name: prob-unc
+    uncertainty_mode: confidence
+    likelihood_function: default_pfe_likelihood
+    use_mean_z_estimate: True
+    num_z_samples: 0
+
+  # - fusion_name: PFE
+  #   distance_name: cosine
+  #   uncertainty_name: prob-unc
+  #   uncertainty_mode: confidence
+  #   likelihood_function: cosine_distance_likelihood
+  #   use_mean_z_estimate: True
+  #   num_z_samples: 0
+  # - fusion_name: PFE
+  #   distance_name: cosine
+  #   uncertainty_name: mean
+  #   uncertainty_mode: uncertainty
+#["PFE_cosine_prob-unc", "PFE_cosine_mean"]
 cache_dir: "/app/cache"
 
 
