@@ -13,6 +13,6 @@ fusion_distance_uncertainty_metrics: ["PFE_cosine_prob-unc", ]
 device_id: 0
 save_fig_path: "./runs/test"
 verbose: True
-cached_embeddings: True
+cached_embeddings: False
 equal_uncertainty_enroll: True
 distance_based_uncertainty: None #["softmax"]

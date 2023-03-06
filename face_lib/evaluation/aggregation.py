@@ -30,7 +30,7 @@ def aggregate_PFE(x, sigma_sq=None, normalize=True, concatenate=False):
 def aggregate_PFE_properly(mu, sigma_sq):
     sigma_sq_new = 1 / (np.sum(1 / sigma_sq, axis=0, keepdims=True))
     mu_new = sigma_sq_new * np.sum(mu / sigma_sq, axis=0, keepdims=True)
-    # mu_new = l2_normalize(mu_new)
+    mu_new = l2_normalize(mu_new)
     return mu_new[0], sigma_sq_new[0]
 
 

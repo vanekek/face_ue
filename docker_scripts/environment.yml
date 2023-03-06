@@ -14,6 +14,7 @@ dependencies:
   - conda-forge::termcolor
   - conda-forge::tensorboard
   - conda-forge::black
+  - conda-forge::hydra-core
   - anaconda::ipython
   - anaconda::path
   - pip
