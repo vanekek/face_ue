@@ -41,7 +41,7 @@ def cos_pfe_likelihood(mu, sigma, z):
     for k in tqdm(range(num_dims)):
         a_ilj = (z[:, :, np.newaxis, k] * mu[np.newaxis, np.newaxis, :, k]) / sigma[
             np.newaxis, np.newaxis, :, k
-        ] - np.log(sigma)[np.newaxis, np.newaxis, :, k]
+        ] #- np.log(sigma)[np.newaxis, np.newaxis, :, k]
         np.add(a_ilj_final, a_ilj, out=a_ilj_final)
 
     a_ilj_final = 0.5 * a_ilj_final

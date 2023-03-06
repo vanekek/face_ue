@@ -165,9 +165,11 @@ def eval_template_reject_verification(cfg):
 
         if 'likelihood_function' in method.keys():
             likelihood_function = method.likelihood_function.replace('_','-')
+            num_z_samples = f'z-samples-{method.num_z_samples}'
         else:
             likelihood_function = ''
-        all_results[(fusion_name, distance_name, uncertainty_name, likelihood_function)] = result_table
+            num_z_samples = ''
+        all_results[(fusion_name, distance_name, uncertainty_name, likelihood_function, num_z_samples)] = result_table
         prev_fusion_name = fusion_name
 
     res_AUCs = OrderedDict()
@@ -197,7 +199,7 @@ def compute_probalities(
     mu = []  # K x 512
 
     # sample z's for each query image
-    for query_template in tester.verification_templates():
+    for query_template in tqdm(tester.verification_templates()):
         z_samples = []
         if use_mean_z_estimate:
             z_samples.append(query_template.mu)
@@ -327,7 +329,7 @@ def set_probability_based_uncertainty(
     # cache probability matrix
     prob_cache_path = (
         Path(cfg.cache_dir)
-        / f"{fusion_name}_{method.likelihood_function.replace('_','-')}_probabilities.npy"
+        / f"{fusion_name}_{method.likelihood_function.replace('_','-')}_num-z-samples-{method.num_z_samples}_probabilities.npy"
     )
     if prob_cache_path.is_file() and cfg.debug is False:
         print("Using cached probabily matrix")
@@ -362,20 +364,16 @@ def save_plots(
     cfg, all_results, res_AUCs, rejected_portions, distance_fig, uncertainty_fig
 ):
 
-    for (fusion_name, distance_name, uncertainty_name, likelihood_function), aucs in res_AUCs.items():
-        print(fusion_name, distance_name, uncertainty_name, likelihood_function)
+    for name, aucs in res_AUCs.items():
+        print(name)
         for FAR, AUC in aucs.items():
             print(f"\tFAR={round(FAR, 5)} TAR_AUC : {round(AUC, 5)}")
 
-    for (
-        fusion_name,
-        distance_name,
-        uncertainty_name,likelihood_function,
-    ), result_table in all_results.items():
-        title = "Template" + distance_name + " " + uncertainty_name + " " + likelihood_function
+    for name, result_table in all_results.items():
+        title = "Template" + " ".join(name)
         save_to_path = os.path.join(
             cfg.exp_dir,
-            fusion_name + "_" + distance_name + "_" + uncertainty_name + " " + likelihood_function + ".jpg",
+            "_".join(name) + ".jpg",
         )
 
         plots.plot_rejected_TAR_FAR(
