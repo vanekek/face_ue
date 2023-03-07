@@ -228,36 +228,6 @@ def compute_probalities(
     return p_ij
 
 
-def compute_softmax_scores(tester):
-    """
-    computes softmax scores for all verification_templates
-
-    take first emb from each verification template and computes distances to all enroll templates means
-    uncertanty for enroll templates is set to inf and is not used, as we choose min uncertanty agregation
-    """
-
-    ver_mus = []
-    enroll_mus = []
-
-    for t in tester.verification_templates():
-        ver_mus.append(t.mu)
-
-    for t in tester.enroll_templates():
-        t.sigma_sq = np.array([np.inf])
-        enroll_mus.append(t.mu)
-
-    # compute cosine similarity matrix
-    ver_mus = np.array(ver_mus)  # N_ver X embsize
-    enroll_mus = np.array(enroll_mus)  # N_enroll X embsize
-
-    sim = ver_mus @ enroll_mus.T  # N_ver X N_enroll
-
-    ver_uncertanty = np.max(softmax(sim, axis=1), axis=1)
-
-    for t, unc in zip(tester.verification_templates(), ver_uncertanty):
-        t.sigma_sq = np.array([unc])
-
-
 def get_image_embeddings(cfg):
     device = torch.device("cuda:" + str(cfg.device_id))
 

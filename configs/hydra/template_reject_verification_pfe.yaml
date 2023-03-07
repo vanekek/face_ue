@@ -21,7 +21,7 @@ verbose: True
 
 
 # CHANGE THESE PARAMETERS
-debug: False
+debug: True
 
 
 likelihood_function: "default_pfe_likelihood"
