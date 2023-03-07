@@ -117,7 +117,6 @@ def eval_template_reject_verification(cfg):
             distaces_batch_size=cfg.distaces_batch_size,
         )
 
-        
         if cfg.equal_uncertainty_enroll:
             aggregate_templates(tester.enroll_templates(), fusion_name)
             aggregate_templates(tester.verification_templates(), "first")
@@ -163,13 +162,21 @@ def eval_template_reject_verification(cfg):
         distance_ax.set_title(f"{distance_name} {uncertainty_name}")
         uncertainty_ax.set_title(f"{distance_name} {uncertainty_name}")
 
-        if 'likelihood_function' in method.keys():
-            likelihood_function = method.likelihood_function.replace('_','-')
-            num_z_samples = f'z-samples-{method.num_z_samples}'
+        if "likelihood_function" in method.keys():
+            likelihood_function = method.likelihood_function.replace("_", "-")
+            num_z_samples = f"z-samples-{method.num_z_samples}"
         else:
-            likelihood_function = ''
-            num_z_samples = ''
-        all_results[(fusion_name, distance_name, uncertainty_name, likelihood_function, num_z_samples)] = result_table
+            likelihood_function = ""
+            num_z_samples = ""
+        all_results[
+            (
+                fusion_name,
+                distance_name,
+                uncertainty_name,
+                likelihood_function,
+                num_z_samples,
+            )
+        ] = result_table
         prev_fusion_name = fusion_name
 
     res_AUCs = OrderedDict()
@@ -199,7 +206,7 @@ def compute_probalities(
     mu = []  # K x 512
 
     # sample z's for each query image
-    for query_template in tqdm(tester.verification_templates()):
+    for query_template in tester.verification_templates():
         z_samples = []
         if use_mean_z_estimate:
             z_samples.append(query_template.mu)
@@ -294,7 +301,7 @@ def get_image_embeddings(cfg):
 
 
 def set_probability_based_uncertainty(
-    tester,cfg, method, fusion_name, distance_name, uncertainty_name
+    tester, cfg, method, fusion_name, distance_name, uncertainty_name
 ):
     # cache probability matrix
     prob_cache_path = (
@@ -309,7 +316,10 @@ def set_probability_based_uncertainty(
 
         likelihood_function = getattr(likelihoods, method.likelihood_function)
         probabilities = compute_probalities(
-            tester, likelihood_function, method.use_mean_z_estimate, method.num_z_samples
+            tester,
+            likelihood_function,
+            method.use_mean_z_estimate,
+            method.num_z_samples,
         )
         np.save(prob_cache_path, probabilities)
 
