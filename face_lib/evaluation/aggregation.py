@@ -70,13 +70,17 @@ def aggregate_softmax(x, sigma_sq, temperature=1.0, normalize=True, concatenate=
     return mu_new
 
 
-def aggregate_templates(templates, method):
+def aggregate_templates(templates, method, normalize=True):
     for t in templates:
         if method == "first":
-            t.mu = l2_normalize(t.features[0])
+            t.mu = t.features[0]
+            if normalize:
+                t.mu = l2_normalize(t.mu)
             t.sigma_sq = t.sigmas[0]
         elif method == "PFE":
-            t.mu, t.sigma_sq = aggregate_PFE(t.features, sigma_sq=t.sigmas, normalize=False)
+            t.mu, t.sigma_sq = aggregate_PFE(
+                t.features, sigma_sq=t.sigmas, normalize=normalize
+            )
             # t.mu, t.sigma_sq = aggregate_PFE_properly(t.features, sigma_sq=t.sigmas) # bad aggregation
         elif method == "mean":
             t.mu = l2_normalize(np.mean(t.features, axis=0))

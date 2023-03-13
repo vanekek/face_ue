@@ -21,7 +21,7 @@ verbose: True
 
 
 # CHANGE THESE PARAMETERS
-debug: True
+debug: False
 
 
 likelihood_function: "default_pfe_likelihood"
@@ -34,33 +34,30 @@ methods:
   #   uncertainty_name: prob-unc
   #   uncertainty_mode: confidence
   #   likelihood_function: cos_pfe_likelihood
+  #   norm_mean: True
   #   use_mean_z_estimate: True
   #   num_z_samples: 0
   - fusion_name: PFE
-    distance_name: prob-distance # cosine
+    distance_name: cosine
     uncertainty_name: prob-unc
     uncertainty_mode: confidence
-    likelihood_function: default_pfe_likelihood
+    likelihood_function: default_pfe_likelihood_slow
+    norm_mean: False
     use_mean_z_estimate: True
     num_z_samples: 0
-  # - fusion_name: PFE
-  #   distance_name: cosine
-  #   uncertainty_name: prob-unc
-  #   uncertainty_mode: confidence
-  #   likelihood_function: cosine_distance_likelihood
-  #   use_mean_z_estimate: True
-  #   num_z_samples: 0
-  # - fusion_name: PFE
-  #   distance_name: cosine
-  #   uncertainty_name: mean
-  #   uncertainty_mode: uncertainty
-  # - fusion_name: PFE
-  #   distance_name: cosine
-  #   uncertainty_name: prob-unc
-  #   uncertainty_mode: confidence
-  #   likelihood_function: default_pfe_likelihood
-  #   use_mean_z_estimate: False
-  #   num_z_samples: 3
+  - fusion_name: PFE
+    distance_name: cosine
+    uncertainty_name: prob-unc
+    uncertainty_mode: confidence
+    likelihood_function: cosine_distance_likelihood
+    norm_mean: True
+    use_mean_z_estimate: True
+    num_z_samples: 0
+  - fusion_name: PFE
+    distance_name: cosine
+    uncertainty_name: mean
+    uncertainty_mode: uncertainty
+    norm_mean: True
 #["PFE_cosine_prob-unc", "PFE_cosine_mean"]
 cache_dir: "/app/cache"
 

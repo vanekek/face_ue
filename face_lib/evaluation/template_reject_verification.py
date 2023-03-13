@@ -118,8 +118,12 @@ def eval_template_reject_verification(cfg):
         )
 
         if cfg.equal_uncertainty_enroll:
-            aggregate_templates(tester.enroll_templates(), fusion_name)
-            aggregate_templates(tester.verification_templates(), "first")
+            aggregate_templates(
+                tester.enroll_templates(), fusion_name, method.norm_mean
+            )
+            aggregate_templates(
+                tester.verification_templates(), "first", method.norm_mean
+            )
         else:
             aggregate_templates(tester.all_templates(), fusion_name)
 

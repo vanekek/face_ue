@@ -9,6 +9,7 @@ def cosine_distance_likelihood(mu, sigma, z):
     a_ilj_final = np.moveaxis(a_ilj_final, 2, 1)  # n x num_z_samples x K
     return a_ilj_final
 
+
 # work's, but has error issues, so predictions are a bit different from default_pfe_likelihood_slow()
 def default_pfe_likelihood(mu, sigma, z):
     """
@@ -26,6 +27,7 @@ def default_pfe_likelihood(mu, sigma, z):
     a_ilj_final = b[np.newaxis, :, np.newaxis] + t + m + n[np.newaxis, :, np.newaxis]
     a_ilj_final = -0.5 * np.moveaxis(a_ilj_final, 2, 1)
     return a_ilj_final
+
 
 def default_pfe_likelihood_slow(mu, sigma, z):
     a_ilj_final = np.zeros(shape=z.shape[:-1] + mu.shape[:-1])  # placeholder
