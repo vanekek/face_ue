@@ -10,7 +10,7 @@ dataset_path: "/app/data/big"
 protocol: "ijbc"
 protocol_path: "/app/data/test1"
 batch_size: 64
-distaces_batch_size: 8
+distaces_batch_size: False
 uncertainty_strategy: "head"
 uncertainty_mode: "confidence"
 FARs: [0.0001] #, 0.001, 0.01, 0.05, ]
@@ -24,40 +24,32 @@ verbose: True
 debug: False
 
 
-likelihood_function: "default_pfe_likelihood"
+cache_dir: "/app/cache"
 checkpoint_path: "/app/data/pfe.pth"
 config_path: "/app/configs/models/iresnet_ms1m_pfe_normalized.yaml"
 
 methods:
+  # - fusion_name: PFE
+  #   distance_name: cosine
+  #   uncertainty_name: prob-unc
+  #   uncertainty_mode: confidence
+  #   likelihood_function: default_pfe_likelihood_slow
+  #   norm_mean: True
+  #   use_mean_z_estimate: True
+  #   num_z_samples: 0
+  # - fusion_name: PFE
+  #   distance_name: cosine
+  #   uncertainty_name: prob-unc-pair
+  #   uncertainty_mode: confidence
+  #   likelihood_function: default_pfe_likelihood_slow
+  #   norm_mean: True
+  #   use_mean_z_estimate: True
+  #   num_z_samples: 0
   - fusion_name: PFE
     distance_name: cosine
-    uncertainty_name: prob-unc
+    uncertainty_name: prob-unc-pair
     uncertainty_mode: confidence
-    likelihood_function: no_denominator_pfe_likelihood_slow
-    norm_mean: True
-    use_mean_z_estimate: True
-    num_z_samples: 0
-  - fusion_name: PFE
-    distance_name: cosine
-    uncertainty_name: prob-unc
-    uncertainty_mode: confidence
-    likelihood_function: no_log_pfe_likelihood_slow
-    norm_mean: True
-    use_mean_z_estimate: True
-    num_z_samples: 0
-  - fusion_name: PFE
-    distance_name: cosine
-    uncertainty_name: prob-unc
-    uncertainty_mode: confidence
-    likelihood_function: euclidean_slow
-    norm_mean: True
-    use_mean_z_estimate: True
-    num_z_samples: 0
-  - fusion_name: PFE
-    distance_name: cosine
-    uncertainty_name: prob-unc
-    uncertainty_mode: confidence
-    likelihood_function: default_pfe_likelihood_slow
+    likelihood_function: cosine_distance_likelihood
     norm_mean: True
     use_mean_z_estimate: True
     num_z_samples: 0
@@ -69,12 +61,13 @@ methods:
     norm_mean: True
     use_mean_z_estimate: True
     num_z_samples: 0
+
   - fusion_name: PFE
     distance_name: cosine
     uncertainty_name: mean
     uncertainty_mode: uncertainty
     norm_mean: True
 #["PFE_cosine_prob-unc", "PFE_cosine_mean"]
-cache_dir: "/app/cache"
+
 
 

@@ -23,12 +23,10 @@ import numpy as np
 from datetime import datetime
 import torch
 import matplotlib.pyplot as plt
-from collections import defaultdict, OrderedDict
+from collections import OrderedDict
 from sklearn.metrics import auc
 from pathlib import Path
 import pickle
-from scipy.special import softmax
-from scipy.stats import multivariate_normal
 from tqdm import tqdm
 
 import hydra
@@ -47,7 +45,7 @@ from face_lib.evaluation.feature_extractors import (
 )
 from face_lib.evaluation.reject_verification import get_rejected_tar_far
 import face_lib.probability.likelihoods as likelihoods
-
+from face_lib.probability.utils import compute_probalities
 
 from face_lib.evaluation.aggregation import aggregate_templates
 
@@ -98,7 +96,6 @@ def eval_template_reject_verification(cfg):
     tester = IJBCTemplates(image_paths, feature_dict, uncertainty_dict)
     tester.init_proto(cfg.protocol_path)
 
-    prev_fusion_name = None
     for (
         method,
         distance_ax,
@@ -127,7 +124,11 @@ def eval_template_reject_verification(cfg):
         else:
             aggregate_templates(tester.all_templates(), fusion_name)
 
-        if distance_name == "prob-distance" or uncertainty_name == "prob-unc":
+        if (
+            distance_name == "prob-distance"
+            or uncertainty_name == "prob-unc-pair"
+            or uncertainty_name == "prob-unc"
+        ):
             set_probability_based_uncertainty(
                 tester, cfg, method, fusion_name, distance_name, uncertainty_name
             )
@@ -139,6 +140,7 @@ def eval_template_reject_verification(cfg):
             unc_2,
             label_vec,
         ) = tester.get_features_uncertainties_labels()
+        print('get_rejected_tar_far')
 
         result_table = get_rejected_tar_far(
             feat_1,
@@ -181,7 +183,6 @@ def eval_template_reject_verification(cfg):
                 num_z_samples,
             )
         ] = result_table
-        prev_fusion_name = fusion_name
 
     res_AUCs = OrderedDict()
     for method, table in all_results.items():
@@ -194,49 +195,51 @@ def eval_template_reject_verification(cfg):
     )
 
 
-def compute_probalities(
-    tester, likelihood_function, use_mean_z_estimate, num_z_samples
+def set_probability_based_uncertainty(
+    tester, cfg, method, fusion_name, distance_name, uncertainty_name
 ):
-    """
-    Computes probability for belonging to each class for each query image
-
-    result of procedure: matrix $P \in \mathbb{R}^{n\times K}$, where n - number of query templates
-    K - number of classes.
-    Elements are probabilities $p_{ij} = \mathbb{P}(class_{i} = j)$ that i-th query template belongs to j-th class
-    """
-
-    z = []  # n x num_z_samples x 512
-    sigma = []  # K x 512
-    mu = []  # K x 512
-
-    # sample z's for each query image
-    for query_template in tester.verification_templates():
-        z_samples = []
-        if use_mean_z_estimate:
-            z_samples.append(query_template.mu)
-        else:
-            pz = multivariate_normal(
-                query_template.mu, np.diag(query_template.sigma_sq)
-            )
-            z_samples.extend(pz.rvs(size=num_z_samples))
-        z.append(z_samples)
-    z = np.array(z)
-    for enroll_template in tester.enroll_templates():
-        sigma.append(enroll_template.sigma_sq)
-        mu.append(enroll_template.mu)
-    sigma = np.array(sigma)
-    mu = np.array(mu)
-
-    a_ilj_final = likelihood_function(mu, sigma, z)
-
-    p_ij = np.mean(
-        softmax(
-            a_ilj_final,
-            axis=2,
-        ),
-        axis=1,
+    # cache probability matrix
+    prob_cache_path = (
+        Path(cfg.cache_dir)
+        / f"{fusion_name}_{method.likelihood_function.replace('_','-')}_num-z-samples-{method.num_z_samples}_probabilities.npy"
     )
-    return p_ij
+    if prob_cache_path.is_file() and cfg.debug is False:
+        print("Using cached probabily matrix")
+        probabilities = np.load(prob_cache_path)
+    else:
+        print("Computing probabilities")
+
+        likelihood_function = getattr(likelihoods, method.likelihood_function)
+        probabilities = compute_probalities(
+            tester,
+            likelihood_function,
+            method.use_mean_z_estimate,
+            method.num_z_samples,
+        )
+        np.save(prob_cache_path, probabilities)
+
+    if distance_name == "prob-distance":
+        # set probability distances
+        print("Setting prob distance")
+        for i, verif_template in tqdm(enumerate(tester.verification_templates())):
+            new_mu = {}
+            for j, enroll_template in enumerate(tester.enroll_templates()):
+                new_mu[enroll_template.template_id] = probabilities[i, j]
+            verif_template.mu = new_mu
+        for t in tester.enroll_templates():
+            t.mu = t.template_id
+    if uncertainty_name == "prob-unc-pair":
+        print("Setting pair prob uncertainty")
+        enroll_templates_ids = []
+        for t in tester.enroll_templates():
+            t.sigma_sq = t.template_id
+            enroll_templates_ids.append(t.template_id)
+        for i, verif_template in tqdm(enumerate(tester.verification_templates())):
+            verif_template.sigma_sq = np.array([enroll_templates_ids, probabilities[i, :]])
+    if uncertainty_name == "prob-unc":
+        print("Setting prob uncertainty")
+        for i, verif_template in enumerate(tester.verification_templates()):
+            verif_template.sigma_sq = np.max(probabilities[i, :])
 
 
 def get_image_embeddings(cfg):
@@ -302,46 +305,6 @@ def get_image_embeddings(cfg):
         with open(uncertainty_path, "wb") as f:
             pickle.dump(uncertainty_dict, f)
     return image_paths, feature_dict, uncertainty_dict, classifier, device
-
-
-def set_probability_based_uncertainty(
-    tester, cfg, method, fusion_name, distance_name, uncertainty_name
-):
-    # cache probability matrix
-    prob_cache_path = (
-        Path(cfg.cache_dir)
-        / f"{fusion_name}_{method.likelihood_function.replace('_','-')}_num-z-samples-{method.num_z_samples}_probabilities.npy"
-    )
-    if prob_cache_path.is_file() and cfg.debug is False:
-        print("Using cached probabily matrix")
-        probabilities = np.load(prob_cache_path)
-    else:
-        print("Computing probabilities")
-
-        likelihood_function = getattr(likelihoods, method.likelihood_function)
-        probabilities = compute_probalities(
-            tester,
-            likelihood_function,
-            method.use_mean_z_estimate,
-            method.num_z_samples,
-        )
-        np.save(prob_cache_path, probabilities)
-
-    if distance_name == "prob-distance":
-        # set probability distances
-        print("Setting prob distance")
-        for i, query_template in tqdm(enumerate(tester.verification_templates())):
-            new_mu = {}
-            for j, enroll_template in enumerate(tester.enroll_templates()):
-                new_mu[enroll_template.template_id] = probabilities[i, j]
-            query_template.mu = new_mu
-        for t in tester.enroll_templates():
-            t.mu = t.template_id
-    if uncertainty_name == "prob-unc":
-        print("Setting prob uncertainty")
-        # set sigma_sq to be 1 - prob
-        for i, query_template in enumerate(tester.verification_templates()):
-            query_template.sigma_sq = np.max(probabilities[i, :])
 
 
 def save_plots(

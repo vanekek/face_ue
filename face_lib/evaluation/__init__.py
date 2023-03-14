@@ -34,6 +34,7 @@ from .distance_uncertainty_funcs import (
     pair_uncertainty_perfect,
     prob_distance,
     prob_unc,
+    prob_unc_pair,
 )
 
 name_to_distance_func = {
@@ -74,4 +75,5 @@ name_to_uncertainty_func = {
     "similarity": pair_uncertainty_similarity,
     "perfect": pair_uncertainty_perfect,
     "prob-unc": prob_unc,
+    "prob-unc-pair": prob_unc_pair,
 }

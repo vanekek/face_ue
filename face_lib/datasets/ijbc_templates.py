@@ -133,15 +133,13 @@ class IJBCTemplates:
 
         features2 = [self.templates_dict[t].mu for t in tqdm(self._pairs[:, 1])]
 
-        sigmas_sq1 = np.array(
-            [
+        sigmas_sq1 = [
                 self.templates_dict[t].sigma_sq
                 for t in tqdm(self._pairs[:, 0], desc="Sigmas")
             ]
-        )
-        sigmas_sq2 = np.array(
-            [self.templates_dict[t].sigma_sq for t in self._pairs[:, 1]]
-        )
+        
+        sigmas_sq2 = [self.templates_dict[t].sigma_sq for t in self._pairs[:, 1]]
+        
         labels1 = np.array(
             [
                 self.templates_dict[t].subject_id
