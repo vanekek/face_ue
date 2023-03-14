@@ -28,6 +28,47 @@ def default_pfe_likelihood(mu, sigma, z):
     a_ilj_final = -0.5 * np.moveaxis(a_ilj_final, 2, 1)
     return a_ilj_final
 
+def cosine_distance_likelihood_slow(mu, sigma, z): # same predictions as in cosine_distance_likelihood()
+    a_ilj_final = np.zeros(shape=z.shape[:-1] + mu.shape[:-1])  # placeholder
+    num_dims = mu.shape[1]
+    for k in tqdm(range(num_dims)):
+        a_ilj = (
+            z[:, :, np.newaxis, k]*mu[np.newaxis, np.newaxis, :, k]
+        )
+        np.add(a_ilj_final, a_ilj, out=a_ilj_final)
+    return a_ilj_final
+
+def euclidean_slow(mu, sigma, z): # same predictions as in cosine_distance_likelihood()
+    a_ilj_final = np.zeros(shape=z.shape[:-1] + mu.shape[:-1])  # placeholder
+    num_dims = mu.shape[1]
+    for k in tqdm(range(num_dims)):
+        a_ilj = (
+            z[:, :, np.newaxis, k] - mu[np.newaxis, np.newaxis, :, k]
+        ) ** 2
+        np.add(a_ilj_final, a_ilj, out=a_ilj_final)
+    return -0.5 * a_ilj_final
+
+def no_log_pfe_likelihood_slow(mu, sigma, z):
+    a_ilj_final = np.zeros(shape=z.shape[:-1] + mu.shape[:-1])  # placeholder
+    num_dims = mu.shape[1]
+    for k in tqdm(range(num_dims)):
+        a_ilj = (
+            z[:, :, np.newaxis, k] - mu[np.newaxis, np.newaxis, :, k]
+        ) ** 2 / sigma[np.newaxis, np.newaxis, :, k]
+        np.add(a_ilj_final, a_ilj, out=a_ilj_final)
+    return -0.5 * a_ilj_final
+
+def no_denominator_pfe_likelihood_slow(mu, sigma, z):
+    a_ilj_final = np.zeros(shape=z.shape[:-1] + mu.shape[:-1])  # placeholder
+    num_dims = mu.shape[1]
+    for k in tqdm(range(num_dims)):
+        a_ilj = (
+            z[:, :, np.newaxis, k] - mu[np.newaxis, np.newaxis, :, k]
+        ) ** 2  + np.log(sigma)[
+            np.newaxis, np.newaxis, :, k
+        ]
+        np.add(a_ilj_final, a_ilj, out=a_ilj_final)
+    return -0.5 * a_ilj_final
 
 def default_pfe_likelihood_slow(mu, sigma, z):
     a_ilj_final = np.zeros(shape=z.shape[:-1] + mu.shape[:-1])  # placeholder

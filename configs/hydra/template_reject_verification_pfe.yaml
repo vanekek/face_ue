@@ -29,20 +29,36 @@ checkpoint_path: "/app/data/pfe.pth"
 config_path: "/app/configs/models/iresnet_ms1m_pfe_normalized.yaml"
 
 methods:
-  # - fusion_name: PFE
-  #   distance_name: cosine
-  #   uncertainty_name: prob-unc
-  #   uncertainty_mode: confidence
-  #   likelihood_function: cos_pfe_likelihood
-  #   norm_mean: True
-  #   use_mean_z_estimate: True
-  #   num_z_samples: 0
+  - fusion_name: PFE
+    distance_name: cosine
+    uncertainty_name: prob-unc
+    uncertainty_mode: confidence
+    likelihood_function: no_denominator_pfe_likelihood_slow
+    norm_mean: True
+    use_mean_z_estimate: True
+    num_z_samples: 0
+  - fusion_name: PFE
+    distance_name: cosine
+    uncertainty_name: prob-unc
+    uncertainty_mode: confidence
+    likelihood_function: no_log_pfe_likelihood_slow
+    norm_mean: True
+    use_mean_z_estimate: True
+    num_z_samples: 0
+  - fusion_name: PFE
+    distance_name: cosine
+    uncertainty_name: prob-unc
+    uncertainty_mode: confidence
+    likelihood_function: euclidean_slow
+    norm_mean: True
+    use_mean_z_estimate: True
+    num_z_samples: 0
   - fusion_name: PFE
     distance_name: cosine
     uncertainty_name: prob-unc
     uncertainty_mode: confidence
     likelihood_function: default_pfe_likelihood_slow
-    norm_mean: False
+    norm_mean: True
     use_mean_z_estimate: True
     num_z_samples: 0
   - fusion_name: PFE
