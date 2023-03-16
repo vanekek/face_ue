@@ -14,7 +14,7 @@ distaces_batch_size: False
 uncertainty_strategy: "head"
 uncertainty_mode: "confidence"
 FARs: [0.0001] #, 0.001, 0.01, 0.05, ]
-rejected_portions: [0.0, 0.5, 100]
+rejected_portions: [0.0, 0.5, 50]
 device_id: 0
 equal_uncertainty_enroll: True
 verbose: True
@@ -27,47 +27,55 @@ debug: False
 cache_dir: "/app/cache"
 checkpoint_path: "/app/data/pfe.pth"
 config_path: "/app/configs/models/iresnet_ms1m_pfe_normalized.yaml"
-
+norm_mean: True
 methods:
-  # - fusion_name: PFE
-  #   distance_name: cosine
-  #   uncertainty_name: prob-unc
-  #   uncertainty_mode: confidence
-  #   likelihood_function: default_pfe_likelihood_slow
-  #   norm_mean: True
-  #   use_mean_z_estimate: True
-  #   num_z_samples: 0
-  - fusion_name: PFE
-    distance_name: cosine
-    uncertainty_name: prob-unc-pair
-    uncertainty_mode: confidence
-    likelihood_function: default_pfe_likelihood_slow
-    norm_mean: True
-    use_mean_z_estimate: True
-    num_z_samples: 0
-  - fusion_name: PFE
-    distance_name: cosine
-    uncertainty_name: prob-unc-pair
-    uncertainty_mode: confidence
-    likelihood_function: cosine_distance_likelihood
-    norm_mean: True
-    use_mean_z_estimate: True
-    num_z_samples: 0
+
   - fusion_name: PFE
     distance_name: cosine
     uncertainty_name: prob-unc
     uncertainty_mode: confidence
-    likelihood_function: cosine_distance_likelihood
-    norm_mean: True
-    use_mean_z_estimate: True
-    num_z_samples: 0
-
+    likelihood:
+      name: DefaultPfeFast
+      args:
+        T: 1
+        sigma_shift: 0
   - fusion_name: PFE
     distance_name: cosine
-    uncertainty_name: mean
-    uncertainty_mode: uncertainty
-    norm_mean: True
-#["PFE_cosine_prob-unc", "PFE_cosine_mean"]
+    uncertainty_name: prob-unc
+    uncertainty_mode: confidence
+    likelihood:
+      name: DefaultPfeFast
+      args:
+        T: 1
+        sigma_shift: 0.001
+  - fusion_name: PFE
+    distance_name: cosine
+    uncertainty_name: prob-unc
+    uncertainty_mode: confidence
+    likelihood:
+      name: DefaultPfeFast
+      args:
+        T: 1
+        sigma_shift: 0.01
+  - fusion_name: PFE
+    distance_name: cosine
+    uncertainty_name: prob-unc
+    uncertainty_mode: confidence
+    likelihood:
+      name: DefaultPfeFast
+      args:
+        T: 1
+        sigma_shift: 0.1
+  - fusion_name: PFE
+    distance_name: cosine
+    uncertainty_name: prob-unc
+    uncertainty_mode: confidence
+    likelihood: 
+      name: CosineDistance
+      args:
+        T: 1
+
+
 
 
 

@@ -116,10 +116,10 @@ def eval_template_reject_verification(cfg):
 
         if cfg.equal_uncertainty_enroll:
             aggregate_templates(
-                tester.enroll_templates(), fusion_name, method.norm_mean
+                tester.enroll_templates(), fusion_name, cfg.norm_mean
             )
             aggregate_templates(
-                tester.verification_templates(), "first", method.norm_mean
+                tester.verification_templates(), "first", cfg.norm_mean
             )
         else:
             aggregate_templates(tester.all_templates(), fusion_name)
@@ -140,7 +140,7 @@ def eval_template_reject_verification(cfg):
             unc_2,
             label_vec,
         ) = tester.get_features_uncertainties_labels()
-        print('get_rejected_tar_far')
+
 
         result_table = get_rejected_tar_far(
             feat_1,
@@ -168,19 +168,15 @@ def eval_template_reject_verification(cfg):
         distance_ax.set_title(f"{distance_name} {uncertainty_name}")
         uncertainty_ax.set_title(f"{distance_name} {uncertainty_name}")
 
-        if "likelihood_function" in method.keys():
-            likelihood_function = method.likelihood_function.replace("_", "-")
-            num_z_samples = f"z-samples-{method.num_z_samples}"
+        if "likelihood" in method.keys():
+            likelihood = method.likelihood.name.replace("_", "-")+"_"+str(method.likelihood.args)
         else:
-            likelihood_function = ""
+            likelihood = ""
             num_z_samples = ""
         all_results[
             (
-                fusion_name,
-                distance_name,
                 uncertainty_name,
-                likelihood_function,
-                num_z_samples,
+                likelihood,
             )
         ] = result_table
 
@@ -201,7 +197,7 @@ def set_probability_based_uncertainty(
     # cache probability matrix
     prob_cache_path = (
         Path(cfg.cache_dir)
-        / f"{fusion_name}_{method.likelihood_function.replace('_','-')}_num-z-samples-{method.num_z_samples}_probabilities.npy"
+        / f"{fusion_name}_{method.likelihood.name.replace('_','-')}_{str(method.likelihood.args)}_probabilities.npy"
     )
     if prob_cache_path.is_file() and cfg.debug is False:
         print("Using cached probabily matrix")
@@ -209,12 +205,12 @@ def set_probability_based_uncertainty(
     else:
         print("Computing probabilities")
 
-        likelihood_function = getattr(likelihoods, method.likelihood_function)
+        likelihood = getattr(likelihoods, method.likelihood.name)(**method.likelihood.args)
         probabilities = compute_probalities(
             tester,
-            likelihood_function,
-            method.use_mean_z_estimate,
-            method.num_z_samples,
+            likelihood,
+            True,
+            0,
         )
         np.save(prob_cache_path, probabilities)
 

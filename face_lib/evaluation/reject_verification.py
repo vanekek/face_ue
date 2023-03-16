@@ -275,9 +275,14 @@ def get_rejected_tar_far(
         score_vec_negative = score_vec[negative][sorted_indices_negative]
         label_vec_negative = label_vec[negative][sorted_indices_negative]
 
+        beta_max = 0.05
         for rejected_portion in tqdm(rejected_portions):
-            cur_len_positive = int(score_vec_positive.shape[0] * (1 - rejected_portion))
-            cur_len_negative = int(score_vec_negative.shape[0] * (1 - rejected_portion))
+            if rejected_portion < beta_max:
+                beta = rejected_portion
+            alpha = rejected_portion - (beta - rejected_portion) * (len(sorted_indices_positive)/len(sorted_indices_negative))
+
+            cur_len_positive = int(score_vec_positive.shape[0] * (1 - beta))
+            cur_len_negative = int(score_vec_negative.shape[0] * (1 - alpha))
 
             score_vec_slice = np.concatenate([score_vec_positive[:cur_len_positive], score_vec_negative[:cur_len_negative]])
             label_vec_slice = np.concatenate([label_vec_positive[:cur_len_positive], label_vec_negative[:cur_len_negative]])
