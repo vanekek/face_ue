@@ -115,12 +115,8 @@ def eval_template_reject_verification(cfg):
         )
 
         if cfg.equal_uncertainty_enroll:
-            aggregate_templates(
-                tester.enroll_templates(), fusion_name, cfg.norm_mean
-            )
-            aggregate_templates(
-                tester.verification_templates(), "first", cfg.norm_mean
-            )
+            aggregate_templates(tester.enroll_templates(), fusion_name, cfg.norm_mean)
+            aggregate_templates(tester.verification_templates(), "first", cfg.norm_mean)
         else:
             aggregate_templates(tester.all_templates(), fusion_name)
 
@@ -140,7 +136,6 @@ def eval_template_reject_verification(cfg):
             unc_2,
             label_vec,
         ) = tester.get_features_uncertainties_labels()
-
 
         result_table = get_rejected_tar_far(
             feat_1,
@@ -169,7 +164,11 @@ def eval_template_reject_verification(cfg):
         uncertainty_ax.set_title(f"{distance_name} {uncertainty_name}")
 
         if "likelihood" in method.keys():
-            likelihood = method.likelihood.name.replace("_", "-")+"_"+str(method.likelihood.args)
+            likelihood = (
+                method.likelihood.name.replace("_", "-")
+                + "_"
+                + str(method.likelihood.args)
+            )
         else:
             likelihood = ""
             num_z_samples = ""
@@ -205,7 +204,9 @@ def set_probability_based_uncertainty(
     else:
         print("Computing probabilities")
 
-        likelihood = getattr(likelihoods, method.likelihood.name)(**method.likelihood.args)
+        likelihood = getattr(likelihoods, method.likelihood.name)(
+            **method.likelihood.args
+        )
         probabilities = compute_probalities(
             tester,
             likelihood,
@@ -231,7 +232,9 @@ def set_probability_based_uncertainty(
             t.sigma_sq = t.template_id
             enroll_templates_ids.append(t.template_id)
         for i, verif_template in tqdm(enumerate(tester.verification_templates())):
-            verif_template.sigma_sq = np.array([enroll_templates_ids, probabilities[i, :]])
+            verif_template.sigma_sq = np.array(
+                [enroll_templates_ids, probabilities[i, :]]
+            )
     if uncertainty_name == "prob-unc":
         print("Setting prob uncertainty")
         for i, verif_template in enumerate(tester.verification_templates()):

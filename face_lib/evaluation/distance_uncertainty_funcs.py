@@ -1,6 +1,7 @@
 import numpy as np
 from tqdm import tqdm
 
+
 def prob_distance(mu_1, mu_2, sigma_sq_1, sigma_sq_2):
     # mu_1 - enroll templates
     return [mu_2[i][mu_1[i]] for i in range(len(mu_1))]
@@ -10,9 +11,9 @@ def prob_unc_pair(mu_1, mu_2, sigma_sq_1, sigma_sq_2):
     # sigma_sq_2 - verif templates
     enroll_ids = sigma_sq_2[0][0]
     enroll_id_to_idx = {int(enroll_ids[int(i)]): int(i) for i in range(len(enroll_ids))}
-    print('Computing array')
-    sigma_sq_2_array = np.array(sigma_sq_2)[:,1,:]
-    print('Computing argmax')
+    print("Computing array")
+    sigma_sq_2_array = np.array(sigma_sq_2)[:, 1, :]
+    print("Computing argmax")
     sigma_sq_2_argmax = np.argmax(sigma_sq_2_array, axis=1)
     sigma_sq_2_max_ids = [int(enroll_ids[i]) for i in sigma_sq_2_argmax]
     confindences = []

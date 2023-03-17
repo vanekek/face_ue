@@ -242,7 +242,6 @@ def get_rejected_tar_far(
         else:
             raise RuntimeError("Don't know this type uncertainty mode")
 
-        
         for rejected_portion in tqdm(rejected_portions):
             cur_len = int(score_vec.shape[0] * (1 - rejected_portion))
             tars, fars, thresholds = metrics.ROC(
@@ -253,11 +252,13 @@ def get_rejected_tar_far(
             for wanted_far, real_far in zip(FARs, fars):
                 result_fars[wanted_far].append(real_far)
     else:
-        
+
         negative = np.invert(positive)
         sorted_indices_positive = uncertainty_vec[positive].argsort()
         sorted_indices_negative = uncertainty_vec[negative].argsort()
-        print(f'Using separate thresholds for {len(sorted_indices_negative)} negative and {len(sorted_indices_positive)} positive pair')
+        print(
+            f"Using separate thresholds for {len(sorted_indices_negative)} negative and {len(sorted_indices_positive)} positive pair"
+        )
 
         if uncertainty_mode == "uncertainty":
             pass
@@ -266,7 +267,7 @@ def get_rejected_tar_far(
             sorted_indices_negative = sorted_indices_negative[::-1]
         else:
             raise RuntimeError("Don't know this type uncertainty mode")
-        
+
         uncertainty_vec_positive = uncertainty_vec[positive][sorted_indices_positive]
         score_vec_positive = score_vec[positive][sorted_indices_positive]
         label_vec_positive = label_vec[positive][sorted_indices_positive]
@@ -279,13 +280,25 @@ def get_rejected_tar_far(
         for rejected_portion in tqdm(rejected_portions):
             if rejected_portion < beta_max:
                 beta = rejected_portion
-            alpha = rejected_portion - (beta - rejected_portion) * (len(sorted_indices_positive)/len(sorted_indices_negative))
+            alpha = rejected_portion - (beta - rejected_portion) * (
+                len(sorted_indices_positive) / len(sorted_indices_negative)
+            )
 
             cur_len_positive = int(score_vec_positive.shape[0] * (1 - beta))
             cur_len_negative = int(score_vec_negative.shape[0] * (1 - alpha))
 
-            score_vec_slice = np.concatenate([score_vec_positive[:cur_len_positive], score_vec_negative[:cur_len_negative]])
-            label_vec_slice = np.concatenate([label_vec_positive[:cur_len_positive], label_vec_negative[:cur_len_negative]])
+            score_vec_slice = np.concatenate(
+                [
+                    score_vec_positive[:cur_len_positive],
+                    score_vec_negative[:cur_len_negative],
+                ]
+            )
+            label_vec_slice = np.concatenate(
+                [
+                    label_vec_positive[:cur_len_positive],
+                    label_vec_negative[:cur_len_negative],
+                ]
+            )
             tars, fars, thresholds = metrics.ROC(
                 score_vec_slice, label_vec_slice, FARs=FARs
             )
@@ -293,7 +306,6 @@ def get_rejected_tar_far(
                 result_table[far].append(tar)
             for wanted_far, real_far in zip(FARs, fars):
                 result_fars[wanted_far].append(real_far)
-
 
     plots.plot_distribution(
         score_vec,

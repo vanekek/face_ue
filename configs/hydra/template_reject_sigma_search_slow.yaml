@@ -21,7 +21,7 @@ verbose: True
 
 
 # CHANGE THESE PARAMETERS
-debug: False
+debug: True
 
 
 cache_dir: "/app/cache"
@@ -35,7 +35,7 @@ methods:
     uncertainty_name: prob-unc
     uncertainty_mode: confidence
     likelihood:
-      name: DefaultPfeFast
+      name: DefaultPfe
       args:
         T: 1
         sigma_shift: 0
@@ -44,7 +44,7 @@ methods:
     uncertainty_name: prob-unc
     uncertainty_mode: confidence
     likelihood:
-      name: DefaultPfeFast
+      name: DefaultPfe
       args:
         T: 1
         sigma_shift: 0.001
@@ -53,7 +53,7 @@ methods:
     uncertainty_name: prob-unc
     uncertainty_mode: confidence
     likelihood:
-      name: DefaultPfeFast
+      name: DefaultPfe
       args:
         T: 1
         sigma_shift: 0.01
@@ -62,7 +62,7 @@ methods:
     uncertainty_name: prob-unc
     uncertainty_mode: confidence
     likelihood:
-      name: DefaultPfeFast
+      name: DefaultPfe
       args:
         T: 1
         sigma_shift: 0.1

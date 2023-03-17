@@ -21,7 +21,7 @@ verbose: True
 
 
 # CHANGE THESE PARAMETERS
-debug: False
+debug: True
 
 
 cache_dir: "/app/cache"
