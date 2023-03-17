@@ -21,7 +21,7 @@ verbose: True
 
 
 # CHANGE THESE PARAMETERS
-debug: True
+debug: False
 
 
 cache_dir: "/app/cache"
@@ -35,7 +35,7 @@ methods:
     uncertainty_name: prob-unc
     uncertainty_mode: confidence
     likelihood:
-      name: DefaultPfeFast
+      name: DefaultPfe
       args:
         T: 1
         sigma_shift: 0
@@ -44,7 +44,16 @@ methods:
     uncertainty_name: prob-unc
     uncertainty_mode: confidence
     likelihood:
-      name: DefaultPfeFast
+      name: DefaultPfe
+      args:
+        T: 1
+        sigma_shift: 0.0001
+  - fusion_name: PFE
+    distance_name: cosine
+    uncertainty_name: prob-unc
+    uncertainty_mode: confidence
+    likelihood:
+      name: DefaultPfe
       args:
         T: 1
         sigma_shift: 0.001
@@ -53,7 +62,7 @@ methods:
     uncertainty_name: prob-unc
     uncertainty_mode: confidence
     likelihood:
-      name: DefaultPfeFast
+      name: DefaultPfe
       args:
         T: 1
         sigma_shift: 0.01
@@ -62,7 +71,7 @@ methods:
     uncertainty_name: prob-unc
     uncertainty_mode: confidence
     likelihood:
-      name: DefaultPfeFast
+      name: DefaultPfe
       args:
         T: 1
         sigma_shift: 0.1
@@ -74,6 +83,11 @@ methods:
       name: CosineDistance
       args:
         T: 1
+  - fusion_name: PFE
+    distance_name: cosine
+    uncertainty_name: mean
+    uncertainty_mode: uncertainty
+    norm_mean: True
 
 
 

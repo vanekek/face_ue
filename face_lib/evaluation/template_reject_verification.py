@@ -122,8 +122,7 @@ def eval_template_reject_verification(cfg):
 
         if (
             distance_name == "prob-distance"
-            or uncertainty_name == "prob-unc-pair"
-            or uncertainty_name == "prob-unc"
+            or uncertainty_name in ["prob-unc-pair","prob-unc","entropy-unc"]
         ):
             set_probability_based_uncertainty(
                 tester, cfg, method, fusion_name, distance_name, uncertainty_name
@@ -225,7 +224,7 @@ def set_probability_based_uncertainty(
             verif_template.mu = new_mu
         for t in tester.enroll_templates():
             t.mu = t.template_id
-    if uncertainty_name == "prob-unc-pair":
+    if uncertainty_name in ["prob-unc-pair", "entropy-unc", "prob-unc"]:
         print("Setting pair prob uncertainty")
         enroll_templates_ids = []
         for t in tester.enroll_templates():
@@ -235,10 +234,10 @@ def set_probability_based_uncertainty(
             verif_template.sigma_sq = np.array(
                 [enroll_templates_ids, probabilities[i, :]]
             )
-    if uncertainty_name == "prob-unc":
-        print("Setting prob uncertainty")
-        for i, verif_template in enumerate(tester.verification_templates()):
-            verif_template.sigma_sq = np.max(probabilities[i, :])
+    # if uncertainty_name == "prob-unc":
+    #     print("Setting prob uncertainty")
+    #     for i, verif_template in enumerate(tester.verification_templates()):
+    #         verif_template.sigma_sq = np.max(probabilities[i, :])
 
 
 def get_image_embeddings(cfg):
