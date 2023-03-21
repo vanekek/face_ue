@@ -21,10 +21,13 @@ model:
         class_path: face_lib.model.heads.SCFHead
         init_args:
             convf_dim: 25088
+    softmax_weights_path: /app/data/models/backbone/ms1mv3_arcface_r50/softmax_weight.pt
+    radius: 64
+
 data:
     class_path: face_lib.datasets.lightning_ms1m.MS1M
     init_args:
-        data_dir: /app/data/ms1m/
+        data_ms1m_dir: /app/data/ms1m/
 
         evaluation_configs:
             - name: "lfw_dilemma"

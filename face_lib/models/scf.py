@@ -2,20 +2,26 @@ import torch
 from lightning import LightningModule
 
 class SphereConfidenceFace(LightningModule):
-    def __init__(self, backbone, head):
+    def __init__(self, backbone: torch.nn.Module, head: torch.nn.Module, softmax_weights_path: str, radius: int):
         super().__init__()
         self.backbone = backbone
         self.head = head
+        self.softmax_weights = torch.load(softmax_weights_path)
+        softmax_weights_norm = torch.norm(self.softmax_weights, dim=1, keepdim=True) #[N, 512]
+        self.softmax_weights = self.softmax_weights / softmax_weights_norm * radius # $ w_c \in rS^{d-1} $
+
 
     def forward(self, x):
         backbone_outputs = self.backbone(x)
         log_kappa = self.head(backbone_outputs['bottleneck_feature'])
-        return log_kappa
+        return backbone_outputs['feature'], log_kappa
 
     def training_step(self, batch, batch_idx):
-        x, y = batch
-        log_kappa = self(x)
-        loss = 1
+        images, labels = batch
+        feature, log_kappa = self(images)
+        kappa = torch.exp(log_kappa)
+        wc = self.softmax_weights[labels, :]
+        losses, l1, l2, l3 = kl(mu, kappa, wc)
         return loss
 
     def validation_step(self, batch, batch_idx):
