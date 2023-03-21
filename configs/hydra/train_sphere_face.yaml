@@ -1,3 +1,31 @@
+
+
+seed_everything: true
+trainer:
+  logger: dvclive.lightning.DVCLiveLogger
+  enable_checkpointing: true
+  callbacks:
+  - class_path: pytorch_lightning.callbacks.ModelCheckpoint
+    init_args: 
+      dirpath: dvclive/models
+  max_epochs: 100
+  accelerator: gpu
+model:
+    backbone:
+        class_path: face_lib.model.lightning_resnet.ResNet
+        init_args:
+            resnet_name: iresnet50_normalized
+            weights: /app/data/models/backbone/ms1mv3_arcface_r50/backbone.pth
+            learnable: False
+    head:
+        class_path: face_lib.model.heads.SCFHead
+        init_args:
+            convf_dim: 25088
+ckpt_path: null
+
+
+
+#
 title: "iresnet_ms1m_pfe_normalized"
 backbone:
     name: "iresnet50_normalized"
