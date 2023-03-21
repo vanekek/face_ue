@@ -6,11 +6,11 @@ sys.path.append("/app")
 from lightning.pytorch.cli import LightningCLI
 
 # simple demo classes for your convenience
-from lightning.pytorch.demos.boring_classes import DemoModel
+from face_lib.models.scf import SphereConfidenceFace
 
 
 def cli_main():
-    cli = LightningCLI(DemoModel)
+    cli = LightningCLI(SphereConfidenceFace)
 
 
 if __name__ == "__main__":

@@ -21,7 +21,26 @@ model:
         class_path: face_lib.model.heads.SCFHead
         init_args:
             convf_dim: 25088
-ckpt_path: null
+data:
+    class_path: face_lib.datasets.lightning_ms1m.MS1M
+    init_args:
+        data_dir: /app/data/ms1m/
+
+        evaluation_configs:
+            - name: "lfw_dilemma"
+            type: "lfw"
+            lfw_path: "/app/data/lfw/data_aligned_sphereface_repo"
+            - name: "low_high_similarity"
+            type: "lfw"
+            lfw_path: "/app/data/lfw/data_aligned_sphereface_repo"
+            lfw_pairs_txt_path: "/app/data/lfw/ldmarks.txt"
+            - name: "lfw_6000_pairs"
+            type: "lfw"
+            lfw_path: "/app/data/lfw/data_aligned_sphereface_repo"
+            lfw_pairs_txt_path: "/app/data/lfw/pairs_val_6000.txt"
+            N: 6000
+            n_folds: 10
+
 
 
 

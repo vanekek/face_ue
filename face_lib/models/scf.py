@@ -1,24 +1,6 @@
 import torch
 from lightning import LightningModule
 
-class Encoder(torch.nn.Module):
-    ...
-
-
-class Decoder(torch.nn.Module):
-    ...
-
-
-class AutoEncoder(torch.nn.Module):
-    def __init__(self):
-        super().__init__()
-        self.encoder = Encoder()
-        self.decoder = Decoder()
-
-    def forward(self, x):
-        return self.decoder(self.encoder(x))
-
-
 class SphereConfidenceFace(LightningModule):
     def __init__(self, backbone, head):
         super().__init__()
