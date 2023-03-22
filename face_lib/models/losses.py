@@ -38,6 +38,7 @@ class KLDiracVMF(nn.Module):
             losses,
             l1,
             l2,
+            l3,
         )
 
 

@@ -21,6 +21,8 @@ dependencies:
   - cython
   - pysoundfile
   - pip:
+    - jsonargparse[signatures]
+    - torchvision
     - progressbar2
     - exman~=0.1.9
     - easydict~=1.9

@@ -1,25 +1,10 @@
 import torch
-from lightning import LightningModule
+from pytorch_lightning import LightningModule
 import importlib
 
-
-class SphereConfidenceFace(LightningModule):
-    def __init__(
-        self,
-        backbone: torch.nn.Module,
-        head: torch.nn.Module,
-        scf_loss: torch.nn.Module,
-        optimizer,
-        scheduler_params,
-        softmax_weights_path: str,
-        radius: int,
-    ):
+class SoftmaxWeights(torch.nn.Module):
+    def __init__(self, softmax_weights_path: str, radius: int) -> None:
         super().__init__()
-        self.backbone = backbone
-        self.head = head
-        self.scf_loss = scf_loss
-        self.optimizer = optimizer
-        self.scheduler_params = scheduler_params
         self.softmax_weights = torch.load(softmax_weights_path)
         softmax_weights_norm = torch.norm(
             self.softmax_weights, dim=1, keepdim=True
@@ -28,12 +13,33 @@ class SphereConfidenceFace(LightningModule):
             self.softmax_weights / softmax_weights_norm * radius
         )  # $ w_c \in rS^{d-1} $
 
+        self.softmax_weights = torch.nn.Parameter(self.softmax_weights, requires_grad=False)
+
+class SphereConfidenceFace(LightningModule):
+    def __init__(
+        self,
+        backbone: torch.nn.Module,
+        head: torch.nn.Module,
+        scf_loss: torch.nn.Module,
+        softmax_weights: torch.nn.Module,
+        optimizer_params,
+        scheduler_params,
+    ):
+        super().__init__()
+        self.backbone = backbone
+        self.head = head
+        self.scf_loss = scf_loss
+        self.softmax_weights = softmax_weights.softmax_weights
+        self.optimizer_params = optimizer_params
+        self.scheduler_params = scheduler_params
+        
+
     def forward(self, x):
         backbone_outputs = self.backbone(x)
         log_kappa = self.head(backbone_outputs["bottleneck_feature"])
         return backbone_outputs["feature"], log_kappa
 
-    def training_step(self, batch, batch_idx):
+    def training_step(self, batch):
         images, labels = batch
         feature, log_kappa = self(images)
         kappa = torch.exp(log_kappa)
@@ -58,15 +64,17 @@ class SphereConfidenceFace(LightningModule):
         return total_loss
 
     def configure_optimizers(self):
-        optimizer = self.optimizer(self.head.parameters())
+        optimizer = getattr(
+            importlib.import_module("torch.optim"), self.optimizer_params['optimizer']
+        )(self.head.parameters(), **self.optimizer_params['params'])
         return {
             "optimizer": optimizer,
             "lr_scheduler": {
                 "scheduler": getattr(
                     importlib.import_module("torch.optim.lr_scheduler"),
-                    self.scheduler_params.scheduler,
-                )(optimizer, **self.scheduler_params.params),
-                "monitor": "train_loss",
+                    self.scheduler_params['scheduler'],
+                )(optimizer, **self.scheduler_params['params']),
+                "monitor": "train_loss"
             },
         }
 
