@@ -9,10 +9,6 @@ import numpy as np
 import os
 
 
-
-
-
-
 class MXFaceDataset(Dataset):
     def __init__(self, root_dir):
         super(MXFaceDataset, self).__init__()
@@ -52,12 +48,14 @@ class MXFaceDataset(Dataset):
     def __len__(self):
         return len(self.imgidx)
 
+
 class MS1M(pl.LightningDataModule):
     def __init__(self, data_ms1m_dir: str, batch_size: int, num_workers: int):
         super().__init__()
         self.data_ms1m_dir = data_ms1m_dir
         self.batch_size = batch_size
         self.num_workers = num_workers
+
     def prepare_data(self):
         pass
 
@@ -75,7 +73,11 @@ class MS1M(pl.LightningDataModule):
 
     def train_dataloader(self):
         return DataLoader(
-            self.ms1m_dataset, batch_size=self.batch_size, shuffle=True, drop_last=True, num_workers=self.num_workers
+            self.ms1m_dataset,
+            batch_size=self.batch_size,
+            shuffle=True,
+            drop_last=True,
+            num_workers=self.num_workers,
         )
 
     # def val_dataloader(self):

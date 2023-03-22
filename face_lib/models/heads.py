@@ -5,18 +5,19 @@ from torch.nn import Parameter
 from torch.nn.utils import spectral_norm
 from face_lib.models import FaceModule
 
+
 class SCFHead(nn.Module):
-    def __init__(self, convf_dim, z_dim):
+    def __init__(self, convf_dim, latent_vector_size):
         super().__init__()
 
         self.convf_dim = convf_dim
-        self.z_dim = z_dim
+        self.latent_vector_size = latent_vector_size
         self._log_kappa = nn.Sequential(
-            nn.Linear(self.convf_dim, self.z_dim),
+            nn.Linear(self.convf_dim, self.latent_vector_size),
             nn.ReLU(inplace=True),
-            nn.Linear(self.z_dim, self.z_dim),
+            nn.Linear(self.latent_vector_size, self.latent_vector_size),
             nn.ReLU(inplace=True),
-            nn.Linear(self.z_dim, 1),
+            nn.Linear(self.latent_vector_size, 1),
         )
 
     def forward(self, convf):
@@ -24,6 +25,8 @@ class SCFHead(nn.Module):
         log_kappa = torch.log(1e-6 + torch.exp(log_kappa))
 
         return log_kappa
+
+
 # class SCFHead(nn.Module):
 #     def __init__(self, convf_dim):
 #         super().__init__()

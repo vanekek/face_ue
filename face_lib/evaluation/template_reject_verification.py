@@ -309,7 +309,6 @@ def get_image_embeddings(cfg):
 def save_plots(
     cfg, all_results, res_AUCs, rejected_portions, distance_fig, uncertainty_fig
 ):
-
     for name, aucs in res_AUCs.items():
         print(name)
         for FAR, AUC in aucs.items():

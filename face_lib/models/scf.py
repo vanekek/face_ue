@@ -2,6 +2,7 @@ import torch
 from pytorch_lightning import LightningModule
 import importlib
 
+
 class SoftmaxWeights(torch.nn.Module):
     def __init__(self, softmax_weights_path: str, radius: int) -> None:
         super().__init__()
@@ -13,7 +14,10 @@ class SoftmaxWeights(torch.nn.Module):
             self.softmax_weights / softmax_weights_norm * radius
         )  # $ w_c \in rS^{d-1} $
 
-        self.softmax_weights = torch.nn.Parameter(self.softmax_weights, requires_grad=False)
+        self.softmax_weights = torch.nn.Parameter(
+            self.softmax_weights, requires_grad=False
+        )
+
 
 class SphereConfidenceFace(LightningModule):
     def __init__(
@@ -32,7 +36,6 @@ class SphereConfidenceFace(LightningModule):
         self.softmax_weights = softmax_weights.softmax_weights
         self.optimizer_params = optimizer_params
         self.scheduler_params = scheduler_params
-        
 
     def forward(self, x):
         backbone_outputs = self.backbone(x)
@@ -54,7 +57,6 @@ class SphereConfidenceFace(LightningModule):
 
         self.log("train_loss", total_loss.item(), prog_bar=True)
         self.log("kappa", kappa_mean.item())
-        self.log("total_loss", total_loss.item())
         self.log("neg_kappa_times_cos_theta", neg_kappa_times_cos_theta.item())
         self.log(
             "neg_dim_scalar_times_log_kappa", neg_dim_scalar_times_log_kappa.item()
@@ -65,16 +67,16 @@ class SphereConfidenceFace(LightningModule):
 
     def configure_optimizers(self):
         optimizer = getattr(
-            importlib.import_module("torch.optim"), self.optimizer_params['optimizer']
-        )(self.head.parameters(), **self.optimizer_params['params'])
+            importlib.import_module("torch.optim"), self.optimizer_params["optimizer"]
+        )(self.head.parameters(), **self.optimizer_params["params"])
         return {
             "optimizer": optimizer,
             "lr_scheduler": {
                 "scheduler": getattr(
                     importlib.import_module("torch.optim.lr_scheduler"),
-                    self.scheduler_params['scheduler'],
-                )(optimizer, **self.scheduler_params['params']),
-                "monitor": "train_loss"
+                    self.scheduler_params["scheduler"],
+                )(optimizer, **self.scheduler_params["params"]),
+                "monitor": "train_loss",
             },
         }
 

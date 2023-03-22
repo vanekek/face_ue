@@ -7,7 +7,6 @@ from numbers import Number
 class IveFunction(torch.autograd.Function):
     @staticmethod
     def forward(self, v, z):  # computing I_v(z)
-
         assert isinstance(v, Number), "v must be a scalar"
 
         self.save_for_backward(z)

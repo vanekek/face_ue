@@ -252,7 +252,6 @@ def get_rejected_tar_far(
             for wanted_far, real_far in zip(FARs, fars):
                 result_fars[wanted_far].append(real_far)
     else:
-
         negative = np.invert(positive)
         sorted_indices_positive = uncertainty_vec[positive].argsort()
         sorted_indices_negative = uncertainty_vec[negative].argsort()

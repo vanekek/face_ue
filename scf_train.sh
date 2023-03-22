@@ -1,4 +1,4 @@
-docker run \
+docker run -d \
  --shm-size=8g \
  --memory=80g \
  --cpus=40 \
