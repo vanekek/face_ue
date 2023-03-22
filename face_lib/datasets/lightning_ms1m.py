@@ -65,7 +65,7 @@ class MS1M(pl.LightningDataModule):
         # Assign train/val datasets for use in dataloaders
         if stage == "fit":
             self.ms1m_dataset = MXFaceDataset(self.data_ms1m_dir)
-
+            # self.ms1m_dataset = torch.utils.data.Subset(self.ms1m_dataset, np.random.choice(len(self.ms1m_dataset), 5000, replace=False))
         # Assign test dataset for use in dataloader(s)
         # if stage == "test":
         #     self.mnist_test = MNIST(self.data_dir, train=False, transform=self.transform)

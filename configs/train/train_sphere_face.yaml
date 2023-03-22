@@ -2,12 +2,13 @@
 
 seed_everything: 7
 trainer:
-#   logger: dvclive.lightning.DVCLiveLogger
+  log_every_n_steps: 3
+  default_root_dir: outputs/scf_train
   enable_checkpointing: true
   callbacks:
   - class_path: pytorch_lightning.callbacks.ModelCheckpoint
     init_args: 
-      dirpath: outputs/models
+      dirpath: outputs/scf_train/weights
   max_epochs: 30
   accelerator: gpu
 model:
@@ -48,7 +49,7 @@ data:
     class_path: face_lib.datasets.lightning_ms1m.MS1M
     init_args:
         data_ms1m_dir: /app/data/ms1m/
-        batch_size: 16
+        batch_size: 64
         num_workers: 20
 
 

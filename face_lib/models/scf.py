@@ -52,7 +52,7 @@ class SphereConfidenceFace(LightningModule):
         neg_dim_scalar_times_log_kappa = l2.mean()
         log_iv_kappa = l3.mean()
 
-        self.log("train_loss", total_loss.item())
+        self.log("train_loss", total_loss.item(), prog_bar=True)
         self.log("kappa", kappa_mean.item())
         self.log("total_loss", total_loss.item())
         self.log("neg_kappa_times_cos_theta", neg_kappa_times_cos_theta.item())
