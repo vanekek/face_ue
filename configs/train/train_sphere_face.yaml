@@ -39,11 +39,16 @@ model:
         params:
             lr: 3e-5
             weight_decay: 5e-4
+    # scheduler_params:
+    #     scheduler: StepLR
+    #     params:
+    #         step_size: 2
+    #         gamma: 0.5
     scheduler_params:
-        scheduler: StepLR
+        scheduler: CosineAnnealingWarmRestarts
         params:
-            step_size: 2
-            gamma: 0.5
+            T_0: 5000
+            eta_min: 3e-8
 
 
 data:

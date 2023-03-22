@@ -76,7 +76,7 @@ class SphereConfidenceFace(LightningModule):
                     importlib.import_module("torch.optim.lr_scheduler"),
                     self.scheduler_params["scheduler"],
                 )(optimizer, **self.scheduler_params["params"]),
-                "monitor": "train_loss",
+                "interval": "step"
             },
         }
 
