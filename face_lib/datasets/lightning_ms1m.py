@@ -2,15 +2,16 @@ import lightning.pytorch as pl
 from torch.utils.data import random_split, DataLoader
 
 import sys
-sys.path.append('/app')
+
+sys.path.append("/app")
 from face_lib.datasets.ms1m import MXFaceDataset
 
 
 class MS1M(pl.LightningDataModule):
-    def __init__(self, data_ms1m_dir: str, evaluation_configs):
+    def __init__(self, data_ms1m_dir: str, batch_size: int):
         super().__init__()
         self.data_ms1m_dir = data_ms1m_dir
-        self.evaluation_configs = evaluation_configs
+        self.batch_size = batch_size
 
     def prepare_data(self):
         pass
@@ -28,13 +29,15 @@ class MS1M(pl.LightningDataModule):
         #     self.mnist_predict = MNIST(self.data_dir, train=False, transform=self.transform)
 
     def train_dataloader(self):
-        return DataLoader(self.ms1m_dataset, batch_size=32)
+        return DataLoader(
+            self.ms1m_dataset, batch_size=self.batch_size, shuffle=True, drop_last=True
+        )
 
-    def val_dataloader(self):
-        return DataLoader(self.mnist_val, batch_size=32)
+    # def val_dataloader(self):
+    #     return DataLoader(self.mnist_val, batch_size=32)
 
-    def test_dataloader(self):
-        return DataLoader(self.mnist_test, batch_size=32)
+    # def test_dataloader(self):
+    #     return DataLoader(self.mnist_test, batch_size=32)
 
-    def predict_dataloader(self):
-        return DataLoader(self.mnist_predict, batch_size=32)
+    # def predict_dataloader(self):
+    #     return DataLoader(self.mnist_predict, batch_size=32)

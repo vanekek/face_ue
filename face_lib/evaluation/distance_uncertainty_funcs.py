@@ -2,10 +2,10 @@ import numpy as np
 from tqdm import tqdm
 import scipy
 
+
 def prob_distance(mu_1, mu_2, sigma_sq_1, sigma_sq_2):
     # mu_1 - enroll templates
     return [mu_2[i][mu_1[i]] for i in range(len(mu_1))]
-
 
 
 def prob_unc_pair(mu_1, mu_2, sigma_sq_1, sigma_sq_2):
@@ -31,19 +31,21 @@ def prob_unc_pair(mu_1, mu_2, sigma_sq_1, sigma_sq_2):
 
     return np.array(confindences), np.array(positive)
 
+
 def entropy_unc(mu_1, mu_2, sigma_sq_1, sigma_sq_2):
     uncertainties = []
     for verif_template in sigma_sq_2:
-        probabilities = verif_template[1,:]
+        probabilities = verif_template[1, :]
         uncertainties.append(scipy.stats.entropy(probabilities))
     return np.array(uncertainties)
+
+
 def prob_unc(mu_1, mu_2, sigma_sq_1, sigma_sq_2):
     # sigma_sq_2 - verif templates
     confindences = []
     for verif_template in sigma_sq_2:
-        confindences.append(np.max(verif_template[1,:]))
+        confindences.append(np.max(verif_template[1, :]))
 
-    
     return np.array(confindences)
 
 

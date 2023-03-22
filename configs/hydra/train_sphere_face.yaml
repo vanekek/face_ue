@@ -7,8 +7,8 @@ trainer:
   callbacks:
   - class_path: pytorch_lightning.callbacks.ModelCheckpoint
     init_args: 
-      dirpath: dvclive/models
-  max_epochs: 100
+      dirpath: outputs/models
+  max_epochs: 30
   accelerator: gpu
 model:
     backbone:
@@ -21,6 +21,21 @@ model:
         class_path: face_lib.model.heads.SCFHead
         init_args:
             convf_dim: 25088
+    scf_loss:
+        class_path: face_lib.model.losses.KLDiracVMF
+        init_args:
+            z_dim: 512
+            radius: ${model.radius}
+    optimizer_params:
+        optimizer: Adam
+        params:
+            lr: 3e-5
+            weight_decay: 5e-4
+    scheduler_params:
+        scheduler: StepLR
+        params:
+            step_size: 2
+            gamma: 0.5
     softmax_weights_path: /app/data/models/backbone/ms1mv3_arcface_r50/softmax_weight.pt
     radius: 64
 
@@ -28,21 +43,8 @@ data:
     class_path: face_lib.datasets.lightning_ms1m.MS1M
     init_args:
         data_ms1m_dir: /app/data/ms1m/
+        batch_size: 64
 
-        evaluation_configs:
-            - name: "lfw_dilemma"
-            type: "lfw"
-            lfw_path: "/app/data/lfw/data_aligned_sphereface_repo"
-            - name: "low_high_similarity"
-            type: "lfw"
-            lfw_path: "/app/data/lfw/data_aligned_sphereface_repo"
-            lfw_pairs_txt_path: "/app/data/lfw/ldmarks.txt"
-            - name: "lfw_6000_pairs"
-            type: "lfw"
-            lfw_path: "/app/data/lfw/data_aligned_sphereface_repo"
-            lfw_pairs_txt_path: "/app/data/lfw/pairs_val_6000.txt"
-            N: 6000
-            n_folds: 10
 
 
 

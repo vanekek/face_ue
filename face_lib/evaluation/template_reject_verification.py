@@ -120,10 +120,11 @@ def eval_template_reject_verification(cfg):
         else:
             aggregate_templates(tester.all_templates(), fusion_name)
 
-        if (
-            distance_name == "prob-distance"
-            or uncertainty_name in ["prob-unc-pair","prob-unc","entropy-unc"]
-        ):
+        if distance_name == "prob-distance" or uncertainty_name in [
+            "prob-unc-pair",
+            "prob-unc",
+            "entropy-unc",
+        ]:
             set_probability_based_uncertainty(
                 tester, cfg, method, fusion_name, distance_name, uncertainty_name
             )

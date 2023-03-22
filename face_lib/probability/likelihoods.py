@@ -22,7 +22,6 @@ class CosineDistance:
         return a_ilj_final / self.T
 
 
-
 class DefaultPfe:
     def __init__(self, T=1, sigma_shift=0) -> None:
         self.T = T
@@ -50,8 +49,6 @@ class DefaultPfe:
         )
         a_ilj_final = -0.5 * np.moveaxis(a_ilj_final, 2, 1) / self.T
         return a_ilj_final
-
-
 
 
 def cos_pfe_likelihood(mu, sigma, z):
