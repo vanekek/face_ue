@@ -7,6 +7,13 @@ import mxnet as mx
 import numbers
 import numpy as np
 import os
+from pathlib import Path
+
+import sys
+
+sys.path.append("/app")
+from face_lib.utils.imageprocessing import preprocess
+from face_lib.datasets import IJBDataset
 
 
 class MXFaceDataset(Dataset):
@@ -49,10 +56,35 @@ class MXFaceDataset(Dataset):
         return len(self.imgidx)
 
 
-class MS1M(pl.LightningDataModule):
-    def __init__(self, data_ms1m_dir: str, batch_size: int, num_workers: int):
+class IJBC_images(Dataset):
+    def __init__(self, data_ijbc_dir) -> None:
         super().__init__()
-        self.data_ms1m_dir = data_ms1m_dir
+        testset = IJBDataset(data_ijbc_dir)
+        self.image_paths = testset["abspath"].values
+        self.short_paths = ["/".join(Path(p).parts[-2:]) for p in self.image_paths]
+
+        self.proc_func = lambda images: preprocess(
+            images, [112, 112], is_training=False
+        )
+
+    def __getitem__(self, index):
+        return self.proc_func([self.image_paths[index]])[0], self.short_paths[index]
+
+    def __len__(self):
+        return len(self.image_paths)
+
+
+class SCF_DataModule(pl.LightningDataModule):
+    def __init__(
+        self,
+        data_train_dir: str,
+        data_predict_dir: str,
+        batch_size: int,
+        num_workers: int,
+    ):
+        super().__init__()
+        self.data_train_dir = data_train_dir
+        self.data_predict_dir = data_predict_dir
         self.batch_size = batch_size
         self.num_workers = num_workers
 
@@ -62,14 +94,15 @@ class MS1M(pl.LightningDataModule):
     def setup(self, stage: str):
         # Assign train/val datasets for use in dataloaders
         if stage == "fit":
-            self.ms1m_dataset = MXFaceDataset(self.data_ms1m_dir)
+            self.ms1m_dataset = MXFaceDataset(self.data_train_dir)
             # self.ms1m_dataset = torch.utils.data.Subset(self.ms1m_dataset, np.random.choice(len(self.ms1m_dataset), 5000, replace=False))
         # Assign test dataset for use in dataloader(s)
         # if stage == "test":
         #     self.mnist_test = MNIST(self.data_dir, train=False, transform=self.transform)
 
-        # if stage == "predict":
-        #     self.mnist_predict = MNIST(self.data_dir, train=False, transform=self.transform)
+        if stage == "predict":
+            self.ijbc_dataset = IJBC_images(self.data_predict_dir)
+            # self.ijbc_dataset = torch.utils.data.Subset(self.ijbc_dataset, np.random.choice(len(self.ijbc_dataset), 500, replace=False))
 
     def train_dataloader(self):
         return DataLoader(
@@ -86,5 +119,11 @@ class MS1M(pl.LightningDataModule):
     # def test_dataloader(self):
     #     return DataLoader(self.mnist_test, batch_size=32)
 
-    # def predict_dataloader(self):
-    #     return DataLoader(self.mnist_predict, batch_size=32)
+    def predict_dataloader(self):
+        return DataLoader(
+            self.ijbc_dataset,
+            batch_size=self.batch_size,
+            drop_last=False,
+            shuffle=False,
+            num_workers=self.num_workers,
+        )

@@ -27,11 +27,16 @@ def aggregate_PFE(x, sigma_sq=None, normalize=True, concatenate=False):
         return mu_new, sigma_sq_new
 
 
-def aggregate_PFE_properly(mu, sigma_sq):
-    sigma_sq_new = 1 / (np.sum(1 / sigma_sq, axis=0, keepdims=True))
-    mu_new = sigma_sq_new * np.sum(mu / sigma_sq, axis=0, keepdims=True)
-    mu_new = l2_normalize(mu_new)
-    return mu_new[0], sigma_sq_new[0]
+def aggregate_SCF(x, kappa=None, normalize=True, concatenate=False):
+    mu = x
+
+    mu_new = np.sum(mu * kappa, axis=0) / np.sum(kappa)
+    kappa_new = np.max(kappa)
+
+    if normalize:
+        mu_new = l2_normalize(mu_new)
+
+    return mu_new, kappa_new
 
 
 def aggregate_min(x, sigma_sq, normalize=True, concatenate=False):
@@ -77,6 +82,10 @@ def aggregate_templates(templates, method, normalize=True):
             if normalize:
                 t.mu = l2_normalize(t.mu)
             t.sigma_sq = t.sigmas[0]
+        elif method == "SCF":
+            t.mu, t.sigma_sq = aggregate_SCF(
+                t.features, kappa=t.sigmas, normalize=normalize
+            )
         elif method == "PFE":
             t.mu, t.sigma_sq = aggregate_PFE(
                 t.features, sigma_sq=t.sigmas, normalize=normalize

@@ -84,27 +84,27 @@ def eval_template_reject_verification(cfg):
         distance_axes = [distance_axes]
         uncertainty_axes = [uncertainty_axes]
 
-    # returns features and uncertainties for a list of images
-    (
-        image_paths,
-        feature_dict,
-        uncertainty_dict,
-        classifier,
-        device,
-    ) = get_image_embeddings(cfg)
-
-    tester = IJBCTemplates(image_paths, feature_dict, uncertainty_dict)
-    tester.init_proto(cfg.protocol_path)
-
     for (
         method,
         distance_ax,
         uncertainty_ax,
     ) in zip(cfg.methods, distance_axes, uncertainty_axes):
-        fusion_name = method.fusion_name
+        fusion_name = method.uncertainty_backbone_name
         distance_name = method.distance_name
         uncertainty_name = method.uncertainty_name
         print(f"==={fusion_name} {distance_name} {uncertainty_name} ===")
+
+        # returns features and uncertainties for a list of images
+        (
+            image_paths,
+            feature_dict,
+            uncertainty_dict,
+            classifier,
+            device,
+        ) = get_image_embeddings(cfg, method, cfg.cache_dir)
+
+        tester = IJBCTemplates(image_paths, feature_dict, uncertainty_dict)
+        tester.init_proto(cfg.protocol_path)
 
         distance_func, uncertainty_func = get_distance_uncertainty_funcs(
             distance_name=distance_name,
@@ -171,7 +171,6 @@ def eval_template_reject_verification(cfg):
             )
         else:
             likelihood = ""
-            num_z_samples = ""
         all_results[
             (
                 uncertainty_name,
@@ -241,26 +240,8 @@ def set_probability_based_uncertainty(
     #         verif_template.sigma_sq = np.max(probabilities[i, :])
 
 
-def get_image_embeddings(cfg):
+def get_image_embeddings(cfg, method, cache_dir):
     device = torch.device("cuda:" + str(cfg.device_id))
-
-    model_args = cfg_utils.load_config(cfg.config_path)
-    checkpoint = torch.load(cfg.checkpoint_path, map_location=device)
-
-    (
-        backbone,
-        head,
-        discriminator,
-        classifier,
-        scale_predictor,
-        uncertainty_model,
-    ) = get_required_models(
-        checkpoint=checkpoint, args=cfg, model_args=model_args, device=device
-    )
-    features_path = Path(cfg.cache_dir) / f"{cfg.uncertainty_strategy}_features.pickle"
-    uncertainty_path = (
-        Path(cfg.cache_dir) / f"{cfg.uncertainty_strategy}_uncertainty.pickle"
-    )
 
     # Setup the data
     if cfg.protocol != "ijbc":
@@ -269,6 +250,13 @@ def get_image_embeddings(cfg):
     testset = IJBDataset(cfg.dataset_path)
     image_paths = testset["abspath"].values
     short_paths = ["/".join(Path(p).parts[-2:]) for p in image_paths]
+
+    features_path = (
+        Path(cfg.cache_dir) / f"{method.uncertainty_backbone_name}_features.pickle"
+    )
+    uncertainty_path = (
+        Path(cfg.cache_dir) / f"{method.uncertainty_backbone_name}_uncertainty.pickle"
+    )
 
     if features_path.is_file() and uncertainty_path.is_file():
         with open(features_path, "rb") as f:
@@ -285,6 +273,19 @@ def get_image_embeddings(cfg):
         else:
             strategy = cfg.uncertainty_strategy
 
+        model_args = cfg_utils.load_config(cfg.config_path)
+        checkpoint = torch.load(cfg.checkpoint_path, map_location=device)
+
+        (
+            backbone,
+            head,
+            discriminator,
+            classifier,
+            scale_predictor,
+            uncertainty_model,
+        ) = get_required_models(
+            checkpoint=checkpoint, args=cfg, model_args=model_args, device=device
+        )
         features, uncertainties = extract_features_uncertainties_from_list(
             backbone,
             head,
@@ -303,7 +304,7 @@ def get_image_embeddings(cfg):
         uncertainty_dict = {p: scale for p, scale in zip(short_paths, uncertainties)}
         with open(uncertainty_path, "wb") as f:
             pickle.dump(uncertainty_dict, f)
-    return image_paths, feature_dict, uncertainty_dict, classifier, device
+    return image_paths, feature_dict, uncertainty_dict, None, device
 
 
 def save_plots(

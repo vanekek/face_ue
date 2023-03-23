@@ -10,8 +10,13 @@ trainer:
     init_args: 
       every_n_train_steps: 5000
       dirpath: outputs/scf_train/weights
+  - class_path: face_lib.models.scf.IJBC_writer
+    init_args: 
+      output_dir: /app/cache
+      write_interval: epoch
   max_epochs: 1
   accelerator: gpu
+  devices: 1
 model:
     backbone:
         class_path: face_lib.models.lightning_resnet.ResNet
@@ -52,9 +57,10 @@ model:
 
 
 data:
-    class_path: face_lib.datasets.lightning_ms1m.MS1M
+    class_path: face_lib.datasets.lightning_scf.SCF_DataModule
     init_args:
-        data_ms1m_dir: /app/data/ms1m/
+        data_train_dir: /app/data/ms1m/
+        data_predict_dir: /app/data/big
         batch_size: 64
         num_workers: 20
 
