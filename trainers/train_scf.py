@@ -7,6 +7,8 @@ sys.path.append("/app")
 # simple demo classes for your convenience
 from face_lib.models.scf import SphereConfidenceFace
 
+#  resume_from_checkpoint: /app/outputs/scf_train/weights/epoch=0-step=45000-v1.ckpt
+
 
 def cli_main():
     cli = LightningCLI(SphereConfidenceFace, parser_kwargs={"parser_mode": "omegaconf"})

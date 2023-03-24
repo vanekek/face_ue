@@ -242,12 +242,18 @@ def pair_sqrt_pfe_harmonic_biased_cosine_score(
 def pair_uncertainty_sum(mu_1, mu_2, sigma_sq_1, sigma_sq_2):
     sigma_sq_1 = np.array(sigma_sq_1)
     sigma_sq_2 = np.array(sigma_sq_2)
-    print(sigma_sq_1.shape, sigma_sq_2.shape)
     if len(sigma_sq_1.shape) == 1:
         sigma_sq_1 = sigma_sq_1[:, np.newaxis]
+    if len(sigma_sq_2.shape) == 1:
         sigma_sq_2 = sigma_sq_2[:, np.newaxis]
-    exit()
     return np.sum(sigma_sq_1, axis=1) + np.sum(sigma_sq_2, axis=1)
+
+
+def verif_uncertainty(mu_1, mu_2, sigma_sq_1, sigma_sq_2):
+    sigma_sq_2 = np.squeeze(np.array(sigma_sq_2))
+    # if len(sigma_sq_2.shape) == 1:
+    #     sigma_sq_2 = sigma_sq_2[:, np.newaxis]
+    return sigma_sq_2
 
 
 def pair_uncertainty_squared_sum(mu_1, mu_2, sigma_sq_1, sigma_sq_2):

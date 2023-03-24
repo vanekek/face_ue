@@ -173,6 +173,7 @@ def eval_template_reject_verification(cfg):
             likelihood = ""
         all_results[
             (
+                method.uncertainty_backbone_name,
                 uncertainty_name,
                 likelihood,
             )
@@ -332,9 +333,7 @@ def save_plots(
         rejected_portions,
         res_AUCs,
         title="Template reject verification",
-        save_figs_path=os.path.join(
-            cfg.exp_dir, f"all_methods_{cfg.uncertainty_strategy}_{timestamp}.jpg"
-        ),
+        save_figs_path=os.path.join(cfg.exp_dir, f"all_methods_{timestamp}.jpg"),
     )
 
     distance_fig.savefig(
@@ -350,7 +349,7 @@ def save_plots(
         all_results,
         os.path.join(
             cfg.exp_dir,
-            f"table_{cfg.uncertainty_strategy}_{timestamp}_{setup_name}.pt",
+            f"table_{timestamp}_{setup_name}.pt",
         ),
     )
 

@@ -14,8 +14,10 @@ class SCFHead(nn.Module):
         self.latent_vector_size = latent_vector_size
         self._log_kappa = nn.Sequential(
             nn.Linear(self.convf_dim, self.latent_vector_size),
+            nn.BatchNorm1d(self.latent_vector_size, affine=True),
             nn.ReLU(inplace=True),
             nn.Linear(self.latent_vector_size, self.latent_vector_size),
+            nn.BatchNorm1d(self.latent_vector_size, affine=False),
             nn.ReLU(inplace=True),
             nn.Linear(self.latent_vector_size, 1),
         )

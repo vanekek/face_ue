@@ -36,6 +36,7 @@ from .distance_uncertainty_funcs import (
     prob_unc,
     prob_unc_pair,
     entropy_unc,
+    verif_uncertainty,
 )
 
 name_to_distance_func = {
@@ -78,4 +79,5 @@ name_to_uncertainty_func = {
     "prob-unc": prob_unc,
     "prob-unc-pair": prob_unc_pair,
     "entropy-unc": entropy_unc,
+    "verif": verif_uncertainty,
 }

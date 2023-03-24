@@ -31,7 +31,7 @@ norm_mean: True
 methods:
   - uncertainty_backbone_name: SCF
     distance_name: cosine
-    uncertainty_name: mean
+    uncertainty_name: verif
     uncertainty_mode: confidence
 
   - uncertainty_backbone_name: PFE
