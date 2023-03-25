@@ -61,6 +61,6 @@ data:
     init_args:
         data_train_dir: /app/data/ms1m/
         data_predict_dir: /app/data/big
-        batch_size: 64
+        batch_size: 128
         num_workers: 20
 
