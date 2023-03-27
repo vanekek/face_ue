@@ -3,6 +3,7 @@ from tqdm import tqdm
 import multiprocessing
 import ctypes
 from functools import partial
+import scipy
 
 
 class CosineDistance:
@@ -20,6 +21,44 @@ class CosineDistance:
         assert a_ilj_final.shape[0] == z.shape[0]
         a_ilj_final = np.moveaxis(a_ilj_final, 2, 1)  # n x num_z_samples x K
         return a_ilj_final / self.T
+
+
+class DefaultSCF:
+    def __init__(self, T=1, kappa_shift=0) -> None:
+        self.T = T
+        self.kappa_shift = kappa_shift
+
+    def __call__(self, mu, kappa, z):
+        """
+        z: n x num_z_samples x 512
+        mu: K x 512
+        kappa: K
+        """
+        mu = mu.astype(np.float64)
+        kappa = kappa.astype(np.float64)
+        z = z.astype(np.float64)
+        kappa = kappa + self.kappa_shift
+
+        d = z.shape[-1]
+
+        z = np.moveaxis(z, 2, 1)  # n x 512 x num_z_samples
+        a_ilj = mu @ z
+        a_ilj = np.moveaxis(a_ilj, 2, 1)  # n x num_z_samples x K
+
+        a_ilj = a_ilj - 1
+
+        log_ive_j = scipy.special.ive(d / 2 - 1, kappa, dtype=kappa.dtype)  # K
+        log_kappa_j = np.log(kappa)  # K
+
+        a_ilj = (
+            -log_ive_j[np.newaxis, np.newaxis, :]
+            - (d / 2 - 1) * log_kappa_j[np.newaxis, np.newaxis, :]
+            + kappa[np.newaxis, np.newaxis, :] * a_ilj
+        )
+
+        a_ilj_final = a_ilj / self.T
+
+        return a_ilj_final
 
 
 class DefaultPfe:

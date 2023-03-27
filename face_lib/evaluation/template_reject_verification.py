@@ -207,11 +207,11 @@ def set_probability_based_uncertainty(
         likelihood = getattr(likelihoods, method.likelihood.name)(
             **method.likelihood.args
         )
+        apply_softmax = (
+            True if method.likelihood.name not in cfg.likelihoods_no_softmax else False
+        )
         probabilities = compute_probalities(
-            tester,
-            likelihood,
-            True,
-            0,
+            tester, likelihood, True, 0, apply_softmax=apply_softmax
         )
         np.save(prob_cache_path, probabilities)
 

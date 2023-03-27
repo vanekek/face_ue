@@ -19,9 +19,9 @@ device_id: 0
 equal_uncertainty_enroll: True
 verbose: True
 
-
+likelihoods_no_softmax: []
 # CHANGE THESE PARAMETERS
-debug: False
+debug: True
 
 
 cache_dir: "/app/cache"
@@ -31,13 +31,49 @@ norm_mean: True
 methods:
   - uncertainty_backbone_name: SCF
     distance_name: cosine
-    uncertainty_name: verif
+    uncertainty_name: prob-unc
     uncertainty_mode: confidence
+    likelihood:
+      name: DefaultSCF
+      args:
+        T: 1
+        kappa_shift: 0
+  # - uncertainty_backbone_name: SCF
+  #   distance_name: cosine
+  #   uncertainty_name: entropy-unc
+  #   uncertainty_mode: uncertainty
+  #   likelihood:
+  #     name: DefaultSCF
+  #     args:
+  #       T: 1
+  #       kappa_shift: 0
+  # - uncertainty_backbone_name: PFE
+  #   distance_name: cosine
+  #   uncertainty_name: entropy-unc
+  #   uncertainty_mode: uncertainty
+  #   likelihood:
+  #     name: DefaultPfe
+  #     args:
+  #       T: 1
+  #       sigma_shift: 0.001
+  # - uncertainty_backbone_name: PFE
+  #   distance_name: cosine
+  #   uncertainty_name: prob-unc
+  #   uncertainty_mode: confidence
+  #   likelihood:
+  #     name: DefaultPfe
+  #     args:
+  #       T: 1
+  #       sigma_shift: 0.001
+  # - uncertainty_backbone_name: SCF
+  #   distance_name: cosine
+  #   uncertainty_name: verif
+  #   uncertainty_mode: confidence
 
-  - uncertainty_backbone_name: PFE
-    distance_name: cosine
-    uncertainty_name: mean
-    uncertainty_mode: uncertainty
+  # - uncertainty_backbone_name: PFE
+  #   distance_name: cosine
+  #   uncertainty_name: mean
+  #   uncertainty_mode: uncertainty
 
 
 

@@ -7,7 +7,7 @@ from scipy.stats import multivariate_normal
 
 
 def compute_probalities(
-    tester, likelihood_function, use_mean_z_estimate, num_z_samples
+    tester, likelihood_function, use_mean_z_estimate, num_z_samples, apply_softmax
 ):
     """
     Computes probability for belonging to each class for each query image
@@ -41,11 +41,17 @@ def compute_probalities(
 
     a_ilj_final = likelihood_function(mu, sigma, z)
 
-    p_ij = np.mean(
-        softmax(
+    if apply_softmax:
+        p_ilj = softmax(
             a_ilj_final,
             axis=2,
-        ),
+        )
+    else:
+        sum_normalizer = np.sum(a_ilj_final, axis=2, keepdims=True)
+        p_ilj = a_ilj_final / sum_normalizer
+
+    p_ij = np.mean(
+        p_ilj,
         axis=1,
     )
     return p_ij
