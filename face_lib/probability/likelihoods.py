@@ -40,19 +40,21 @@ class DefaultSCF:
         kappa = kappa + self.kappa_shift
 
         d = z.shape[-1]
-
+        print(d)
         z = np.moveaxis(z, 2, 1)  # n x 512 x num_z_samples
         a_ilj = mu @ z
         a_ilj = np.moveaxis(a_ilj, 2, 1)  # n x num_z_samples x K
 
         a_ilj = a_ilj - 1
 
-        log_ive_j = scipy.special.ive(d / 2 - 1, kappa, dtype=kappa.dtype)  # K
-        log_kappa_j = np.log(kappa)  # K
+        log_ive_j = np.log(
+            10**-6 + scipy.special.ive(d / 2 - 1, kappa, dtype=kappa.dtype)
+        )  # K
+        log_kappa_j = np.log(10**-6 + kappa)  # K
 
         a_ilj = (
             -log_ive_j[np.newaxis, np.newaxis, :]
-            - (d / 2 - 1) * log_kappa_j[np.newaxis, np.newaxis, :]
+            + (d / 2 - 1) * log_kappa_j[np.newaxis, np.newaxis, :]
             + kappa[np.newaxis, np.newaxis, :] * a_ilj
         )
 
