@@ -39,7 +39,7 @@ class DefaultSCF:
         z = z.astype(np.float64)
         kappa = kappa + self.kappa_shift
 
-        d = z.shape[-1] # 512
+        d = z.shape[-1]  # 512
         z = np.moveaxis(z, 2, 1)  # n x 512 x num_z_samples
         a_ilj = mu @ z
         a_ilj = np.moveaxis(a_ilj, 2, 1)  # n x num_z_samples x K
@@ -50,7 +50,7 @@ class DefaultSCF:
         log_kappa_j = np.log(1e-6 + kappa)  # K
 
         a_ilj = (
-            kappa[np.newaxis, np.newaxis, :] * (a_ilj-1)
+            kappa[np.newaxis, np.newaxis, :] * (a_ilj - 1)
             + (d / 2 - 1) * log_kappa_j[np.newaxis, np.newaxis, :]
             - (d / 2) * np.log(2 * np.pi)
             - log_ive_j[np.newaxis, np.newaxis, :]

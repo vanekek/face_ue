@@ -31,7 +31,7 @@ def aggregate_SCF(x, kappa=None, normalize=True, concatenate=False):
     mu = x
 
     mu_new = np.sum(mu * kappa, axis=0) / np.sum(kappa)
-    #kappa_new = np.max(kappa)
+    # kappa_new = np.max(kappa)
     kappa_new = np.mean(kappa)
 
     if normalize:

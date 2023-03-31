@@ -45,6 +45,7 @@ from face_lib.evaluation.feature_extractors import (
 )
 from face_lib.evaluation.reject_verification import get_rejected_tar_far
 import face_lib.probability.likelihoods as likelihoods
+import face_lib.probability.samplers as samplers
 from face_lib.probability.utils import compute_probalities
 
 from face_lib.evaluation.aggregation import aggregate_templates
@@ -101,7 +102,7 @@ def eval_template_reject_verification(cfg):
             uncertainty_dict,
             classifier,
             device,
-        ) = get_image_embeddings(cfg, method, cfg.cache_dir)
+        ) = get_image_embeddings(cfg, method)
 
         tester = IJBCTemplates(image_paths, feature_dict, uncertainty_dict)
         tester.init_proto(cfg.protocol_path)
@@ -171,11 +172,18 @@ def eval_template_reject_verification(cfg):
             )
         else:
             likelihood = ""
+        if "sampler" in method.keys():
+            sampler = (
+                method.sampler.name.replace("_", "-") + "_" + str(method.sampler.args)
+            )
+        else:
+            sampler = ""
         all_results[
             (
                 method.uncertainty_backbone_name,
                 uncertainty_name,
                 likelihood,
+                sampler,
             )
         ] = result_table
 
@@ -196,14 +204,14 @@ def set_probability_based_uncertainty(
     # cache probability matrix
     prob_cache_path = (
         Path(cfg.cache_dir)
-        / f"{fusion_name}_{method.likelihood.name.replace('_','-')}_{str(method.likelihood.args)}_probabilities.npy"
+        / f"{fusion_name}_{method.sampler.name}_{str(method.sampler.args)}_{method.likelihood.name.replace('_','-')}_{str(method.likelihood.args)}_probabilities.npy"
     )
     if prob_cache_path.is_file() and cfg.debug is False:
         print("Using cached probabily matrix")
         probabilities = np.load(prob_cache_path)
     else:
         print("Computing probabilities")
-
+        sampler = getattr(samplers, method.sampler.name)(**method.sampler.args)
         likelihood = getattr(likelihoods, method.likelihood.name)(
             **method.likelihood.args
         )
@@ -211,7 +219,7 @@ def set_probability_based_uncertainty(
             True if method.likelihood.name not in cfg.likelihoods_no_softmax else False
         )
         probabilities = compute_probalities(
-            tester, likelihood, True, 0, apply_softmax=apply_softmax
+            tester, sampler, likelihood, True, 0, apply_softmax=apply_softmax
         )
         np.save(prob_cache_path, probabilities)
 
@@ -235,13 +243,9 @@ def set_probability_based_uncertainty(
             verif_template.sigma_sq = np.array(
                 [enroll_templates_ids, probabilities[i, :]]
             )
-    # if uncertainty_name == "prob-unc":
-    #     print("Setting prob uncertainty")
-    #     for i, verif_template in enumerate(tester.verification_templates()):
-    #         verif_template.sigma_sq = np.max(probabilities[i, :])
 
 
-def get_image_embeddings(cfg, method, cache_dir):
+def get_image_embeddings(cfg, method):
     device = torch.device("cuda:" + str(cfg.device_id))
 
     # Setup the data
@@ -253,10 +257,14 @@ def get_image_embeddings(cfg, method, cache_dir):
     short_paths = ["/".join(Path(p).parts[-2:]) for p in image_paths]
 
     features_path = (
-        Path(cfg.cache_dir) / f"{method.uncertainty_backbone_name}_features.pickle"
+        Path(cfg.cache_dir)
+        / "features"
+        / f"{method.uncertainty_backbone_name}_features.pickle"
     )
     uncertainty_path = (
-        Path(cfg.cache_dir) / f"{method.uncertainty_backbone_name}_uncertainty.pickle"
+        Path(cfg.cache_dir)
+        / "features"
+        / f"{method.uncertainty_backbone_name}_uncertainty.pickle"
     )
 
     if features_path.is_file() and uncertainty_path.is_file():

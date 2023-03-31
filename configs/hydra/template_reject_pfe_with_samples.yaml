@@ -1,0 +1,69 @@
+# INNER PARAMETERS DO NOT CHANGE
+hydra:
+  run:
+    dir: ${exp_dir}
+exp_dir: outputs/template_reject_verification/template_reject_verification_${now:%Y-%m-%d_%H-%M-%S}
+
+# DEFAULT PARAMETERS
+
+dataset_path: "/app/data/big"
+protocol: "ijbc"
+protocol_path: "/app/data/test1"
+batch_size: 64
+distaces_batch_size: False
+
+
+FARs: [0.0001] #, 0.001, 0.01, 0.05, ]
+rejected_portions: [0.0, 0.5, 50]
+device_id: 0
+equal_uncertainty_enroll: True
+verbose: True
+
+likelihoods_no_softmax: []
+# CHANGE THESE PARAMETERS
+debug: True
+
+
+cache_dir: "/app/cache"
+checkpoint_path: "/app/data/pfe.pth"
+config_path: "/app/configs/models/iresnet_ms1m_pfe_normalized.yaml"
+norm_mean: True
+methods:
+  - uncertainty_backbone_name: PFE
+    distance_name: cosine
+    uncertainty_name: entropy-unc
+    uncertainty_mode: uncertainty
+    sampler:
+      name: HighSigma
+      args:
+        K: 3
+        s: 1
+    likelihood:
+      name: DefaultPfe
+      args:
+        T: 1
+        sigma_shift: 0.001
+  - uncertainty_backbone_name: PFE
+    distance_name: cosine
+    uncertainty_name: entropy-unc
+    uncertainty_mode: uncertainty
+    sampler:
+      name: MeanEstimate
+      args:
+        K: 1
+    likelihood:
+      name: DefaultPfe
+      args:
+        T: 1
+        sigma_shift: 0.001
+
+  # - uncertainty_backbone_name: PFE
+  #   distance_name: cosine
+  #   uncertainty_name: mean
+  #   uncertainty_mode: uncertainty
+
+
+
+
+
+
