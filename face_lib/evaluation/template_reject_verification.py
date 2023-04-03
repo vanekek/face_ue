@@ -325,7 +325,7 @@ def save_plots(
             print(f"\tFAR={round(FAR, 5)} TAR_AUC : {round(AUC, 5)}")
 
     for name, result_table in all_results.items():
-        title = "Template" + " ".join(name)
+        title = "Template" + "\n".join(name)
         save_to_path = os.path.join(
             cfg.exp_dir,
             "_".join(name) + ".jpg",
