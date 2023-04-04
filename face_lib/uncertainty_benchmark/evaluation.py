@@ -1,9 +1,10 @@
-
 import sys
 import hydra
 from pathlib import Path
+
 path = str(Path(__file__).parent.parent.parent.absolute())
 sys.path.insert(1, path)
+
 
 @hydra.main(
     config_path=str(Path(".").resolve() / "configs/uncertainty_benchmark"),

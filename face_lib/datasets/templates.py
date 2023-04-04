@@ -6,7 +6,6 @@ from pathlib import Path
 import pandas as pd
 from tqdm import tqdm
 
-import face_lib.utils.metrics as metrics
 
 VerificationFold = namedtuple(
     "VerificationFold",
@@ -64,7 +63,7 @@ def build_templates(csv_path, feature_dict, uncertainty_dict):
     return templates
 
 
-class IJBCTemplates:
+class Templates:
     def __init__(self, image_paths, feature_dict, uncertainty_dict):
         """
         image_paths - short path with subject_id and image_name

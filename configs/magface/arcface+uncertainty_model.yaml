@@ -1,7 +1,0 @@
-title: "config to infer how embedding norm of magface model behaves as an uncertainty measure"
-backbone:
-    name: "iresnet50_normalized"
-    learnable: false
-uncertainty_model:
-    name: "iresnet100"
-    learnable: false

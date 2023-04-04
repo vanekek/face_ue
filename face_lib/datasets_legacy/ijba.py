@@ -25,8 +25,6 @@
 import os
 import numpy as np
 
-# import utils
-# from pathlib import Path
 
 from collections import namedtuple
 

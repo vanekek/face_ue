@@ -1,3 +1,0 @@
-name: "tensorflow_lfw_mtcnncaffe"
-path: "/gpfs/gpfs0/k.fedyanin/space/lfw/pairs_val_6000.txt"
-in_size: [112, 96]

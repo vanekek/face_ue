@@ -13,7 +13,7 @@ import sys
 
 sys.path.append("/app")
 from face_lib.utils.imageprocessing import preprocess
-from face_lib.datasets import IJBDataset
+from face_lib.datasets.ijb import IJBDataset
 
 
 class MXFaceDataset(Dataset):
@@ -92,17 +92,13 @@ class SCF_DataModule(pl.LightningDataModule):
         pass
 
     def setup(self, stage: str):
-        # Assign train/val datasets for use in dataloaders
+        # Assign train/predict datasets for use in dataloaders
         if stage == "fit":
             self.ms1m_dataset = MXFaceDataset(self.data_train_dir)
             # self.ms1m_dataset = torch.utils.data.Subset(self.ms1m_dataset, np.random.choice(len(self.ms1m_dataset), 5000, replace=False))
-        # Assign test dataset for use in dataloader(s)
-        # if stage == "test":
-        #     self.mnist_test = MNIST(self.data_dir, train=False, transform=self.transform)
 
         if stage == "predict":
             self.ijbc_dataset = IJBC_images(self.data_predict_dir)
-            # self.ijbc_dataset = torch.utils.data.Subset(self.ijbc_dataset, np.random.choice(len(self.ijbc_dataset), 500, replace=False))
 
     def train_dataloader(self):
         return DataLoader(
@@ -112,12 +108,6 @@ class SCF_DataModule(pl.LightningDataModule):
             drop_last=True,
             num_workers=self.num_workers,
         )
-
-    # def val_dataloader(self):
-    #     return DataLoader(self.mnist_val, batch_size=32)
-
-    # def test_dataloader(self):
-    #     return DataLoader(self.mnist_test, batch_size=32)
 
     def predict_dataloader(self):
         return DataLoader(
