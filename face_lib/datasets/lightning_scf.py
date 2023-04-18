@@ -18,6 +18,10 @@ from face_lib.datasets.ijb import IJBDataset
 
 class MXFaceDataset(Dataset):
     def __init__(self, root_dir):
+        """
+        ArcFace loader
+        https://github.com/deepinsight/insightface/blob/master/recognition/arcface_torch/dataset.py
+        """
         super(MXFaceDataset, self).__init__()
         self.transform = transforms.Compose(
             [
