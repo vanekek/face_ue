@@ -13,7 +13,7 @@ import sys
 
 sys.path.append("/app")
 from face_lib.utils.imageprocessing import preprocess
-from face_lib.datasets.ijb import IJBDataset
+from face_lib.datasets.arcface_ijb import IJB_aligned_images
 
 
 class MXFaceDataset(Dataset):
@@ -60,35 +60,19 @@ class MXFaceDataset(Dataset):
         return len(self.imgidx)
 
 
-class IJBC_images(Dataset):
-    def __init__(self, data_ijbc_dir) -> None:
-        super().__init__()
-        testset = IJBDataset(data_ijbc_dir)
-        self.image_paths = testset["abspath"].values
-        self.short_paths = ["/".join(Path(p).parts[-2:]) for p in self.image_paths]
-
-        self.proc_func = lambda images: preprocess(
-            images, [112, 112], is_training=False
-        )
-
-    def __getitem__(self, index):
-        return self.proc_func([self.image_paths[index]])[0], self.short_paths[index]
-
-    def __len__(self):
-        return len(self.image_paths)
-
-
 class SCF_DataModule(pl.LightningDataModule):
     def __init__(
         self,
         data_train_dir: str,
         data_predict_dir: str,
+        data_predict_subset: str,
         batch_size: int,
         num_workers: int,
     ):
         super().__init__()
         self.data_train_dir = data_train_dir
         self.data_predict_dir = data_predict_dir
+        self.data_predict_subset = data_predict_subset
         self.batch_size = batch_size
         self.num_workers = num_workers
 
@@ -102,7 +86,7 @@ class SCF_DataModule(pl.LightningDataModule):
             # self.ms1m_dataset = torch.utils.data.Subset(self.ms1m_dataset, np.random.choice(len(self.ms1m_dataset), 5000, replace=False))
 
         if stage == "predict":
-            self.ijbc_dataset = IJBC_images(self.data_predict_dir)
+            self.ijb_dataset = IJB_aligned_images(self.data_predict_dir, self.data_predict_subset)
 
     def train_dataloader(self):
         return DataLoader(
@@ -115,7 +99,7 @@ class SCF_DataModule(pl.LightningDataModule):
 
     def predict_dataloader(self):
         return DataLoader(
-            self.ijbc_dataset,
+            self.ijb_dataset,
             batch_size=self.batch_size,
             drop_last=False,
             shuffle=False,
