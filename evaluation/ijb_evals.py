@@ -498,10 +498,13 @@ class IJB_test:
         elif restore_embs != None:
             print(">>>> Reload embeddings from:", restore_embs)
             aa = np.load(restore_embs)
-            if "embs" in aa and "embs_f" in aa:
-                self.embs, self.embs_f = aa["embs"], aa["embs_f"]
+
+            if "embs" in aa and "unc" in aa:
+                self.embs = aa["embs"]
+                self.embs_f = []
+                self.unc = aa["unc"]
             else:
-                print("ERROR: %s NOT containing embs / embs_f" % restore_embs)
+                print("ERROR: %s NOT containing embs / unc" % restore_embs)
                 exit(1)
             print(">>>> Done.")
         self.data_path, self.subset, self.force_reload = data_path, subset, force_reload
@@ -777,7 +780,7 @@ def plot_dir_far_cmc_scores(scores, names=None):
 def parse_arguments(argv):
     import argparse
 
-    default_save_result_name = "IJB_result/{model_name}_{subset}_{type}.npz"
+    default_save_result_name = "/app/outputs/IJB_result/{type}.npz"
     parser = argparse.ArgumentParser(
         formatter_class=argparse.ArgumentDefaultsHelpFormatter
     )
@@ -864,27 +867,10 @@ def parse_arguments(argv):
         for ss in args.plot_only:
             score_files.extend(glob(ss.replace(",", "").strip()))
         args.plot_only = score_files
-    elif args.model_file == None and args.save_result == default_save_result_name:
-        print("Please provide -m MODEL_FILE, see `--help` for usage.")
-        exit(1)
-    elif args.model_file != None:
-        if (
-            args.model_file.endswith(".h5")
-            or args.model_file.endswith(".pth")
-            or args.model_file.endswith(".pt")
-            or args.model_file.endswith(".onnx")
-        ):
-            # Keras model file "model.h5", pytorch model ends with `.pth` or `.pt`, onnx model ends with `.onnx`
-            model_name = os.path.splitext(os.path.basename(args.model_file))[0]
-        else:
-            # MXNet model file "models/r50-arcface-emore/model,1"
-            model_name = os.path.basename(os.path.dirname(args.model_file))
+    args.save_result = default_save_result_name.format(
+        type=args.restore_embs.split("/")[-1].split(".")[0]
+    )
 
-        if args.save_result == default_save_result_name:
-            type = "1N" if args.is_one_2_N else "11"
-            args.save_result = default_save_result_name.format(
-                model_name=model_name, subset=args.subset, type=type
-            )
     return args
 
 
@@ -910,7 +896,6 @@ if __name__ == "__main__":
             args.subset,
             args.batch_size,
             args.force_reload,
-            args.save_result,
             restore_embs=args.restore_embs,
         )
         if (
@@ -938,12 +923,13 @@ if __name__ == "__main__":
         if args.save_label:
             save_items.update({"label": label})
 
-        if (
-            args.model_file != None or args.save_embeddings
-        ):  # embeddings not restored from file or should save_embeddings again
-            np.savez(args.save_result, **save_items)
+        np.savez(args.save_result, **save_items)
+        # if (
+        #     args.model_file != None or args.save_embeddings
+        # ):  # embeddings not restored from file or should save_embeddings again
 
         if args.is_one_2_N:
-            plot_dir_far_cmc_scores(scores=scores, names=names)
+            pass
+            # plot_dir_far_cmc_scores(scores=scores, names=names)
         else:
             plot_roc_and_calculate_tpr(scores, names=names, label=label)

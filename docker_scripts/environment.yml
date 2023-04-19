@@ -21,6 +21,7 @@ dependencies:
   - cython
   - pysoundfile
   - pip:
+    - tabulate
     - onnxruntime-gpu
     - glob2
     - jsonargparse[signatures]
