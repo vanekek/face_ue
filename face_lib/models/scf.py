@@ -13,8 +13,9 @@ class IJB_writer(BasePredictionWriter):
         self.subset = subset
 
     def write_on_epoch_end(self, trainer, pl_module, predictions, batch_indices):
-        embs = torch.stack([batch[0] for batch in predictions]).numpy()
-        unc = torch.stack([batch[1] for batch in predictions]).numpy()
+        embs = torch.cat([batch[0] for batch in predictions], axis=0).numpy()
+        unc = torch.cat([batch[1] for batch in predictions], axis=0).numpy()
+        print(embs.shape, unc.shape)
         np.savez(self.output_dir / f'scf_ijb_embs_{self.subset}.npz', embs=embs, unc=unc)
         # [word for sentence in text for word in sentence]
         # feature_dict = {
@@ -115,6 +116,7 @@ class SphereConfidenceFace(LightningModule):
     def predict_step(self, batch, batch_idx):
         images_batch = batch
         images_batch = images_batch.permute(0, 3, 1, 2)
+
         return self(images_batch)
     # def validation_step(self, batch, batch_idx):
     #     self._shared_eval(batch, batch_idx, "val")

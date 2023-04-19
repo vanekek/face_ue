@@ -7,6 +7,7 @@ sys.path.append("/app")
 # simple demo classes for your convenience
 from face_lib.models.scf import SphereConfidenceFace
 from face_lib.datasets.lightning_scf import SCF_DataModule
+
 #  resume_from_checkpoint: /app/outputs/scf_train/weights/epoch=0-step=45000-v1.ckpt
 
 

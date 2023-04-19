@@ -21,7 +21,7 @@ dependencies:
   - cython
   - pysoundfile
   - pip:
-    - onnxruntime-gpu==1.12
+    - onnxruntime-gpu
     - glob2
     - jsonargparse[signatures]
     - torchvision
@@ -31,7 +31,7 @@ dependencies:
     - pytorch-lightning==2.0.0
     - opencv-python~=4.5.1.48
     - mxnet
-    - numpy
+    - numpy==1.19.5
     - PyYAML~=5.4.1
     - scipy
     - pandas~=1.2.3

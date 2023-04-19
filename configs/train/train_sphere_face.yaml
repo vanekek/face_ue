@@ -23,7 +23,7 @@ model:
         class_path: face_lib.models.lightning_resnet.ResNet
         init_args:
             resnet_name: iresnet50_normalized
-            weights: /app/data/models/backbone/ms1mv3_arcface_r50/backbone.pth
+            weights: /app/models/backbone/ms1mv3_arcface_r50/backbone.pth
             learnable: False
     head:
         class_path: face_lib.models.heads.SCFHead
@@ -38,7 +38,7 @@ model:
     softmax_weights:
         class_path: face_lib.models.scf.SoftmaxWeights
         init_args:
-            softmax_weights_path: /app/data/models/backbone/ms1mv3_arcface_r50/softmax_weight.pt
+            softmax_weights_path: /app/models/backbone/ms1mv3_arcface_r50/softmax_weight.pt
             radius: ${model.scf_loss.init_args.radius}
     optimizer_params:
         optimizer: Adam
