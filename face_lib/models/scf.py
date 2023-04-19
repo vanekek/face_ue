@@ -4,30 +4,34 @@ from pytorch_lightning.callbacks import BasePredictionWriter
 import importlib
 import pickle
 from pathlib import Path
+import numpy as np
 
-
-class IJBC_writer(BasePredictionWriter):
-    def __init__(self, output_dir: str, write_interval: str):
+class IJB_writer(BasePredictionWriter):
+    def __init__(self, output_dir: str, write_interval: str, subset: str):
         super().__init__(write_interval)
         self.output_dir = Path(output_dir)
+        self.subset = subset
 
     def write_on_epoch_end(self, trainer, pl_module, predictions, batch_indices):
+        embs = torch.stack([batch[0] for batch in predictions]).numpy()
+        unc = torch.stack([batch[1] for batch in predictions]).numpy()
+        np.savez(self.output_dir / f'scf_ijb_embs_{self.subset}.npz', embs=embs, unc=unc)
         # [word for sentence in text for word in sentence]
-        feature_dict = {
-            path: features.numpy()
-            for batch in predictions
-            for features, path in zip(batch[0][0], batch[1])
-        }
+        # feature_dict = {
+        #     path: features.numpy()
+        #     for batch in predictions
+        #     for features, path in zip(batch[0][0], batch[1])
+        # }
 
-        with open(self.output_dir / "SCF_features.pickle", "wb") as f:
-            pickle.dump(feature_dict, f)
-        uncertainty_dict = {
-            path: features.numpy()
-            for batch in predictions
-            for features, path in zip(batch[0][1], batch[1])
-        }
-        with open(self.output_dir / "SCF_uncertainty.pickle", "wb") as f:
-            pickle.dump(uncertainty_dict, f)
+        # with open(self.output_dir / "SCF_features.pickle", "wb") as f:
+        #     pickle.dump(feature_dict, f)
+        # uncertainty_dict = {
+        #     path: features.numpy()
+        #     for batch in predictions
+        #     for features, path in zip(batch[0][1], batch[1])
+        # }
+        # with open(self.output_dir / "SCF_uncertainty.pickle", "wb") as f:
+        #     pickle.dump(uncertainty_dict, f)
         # torch.save(predictions, os.path.join(self.output_dir, "predictions.pt"))
 
 
@@ -109,10 +113,9 @@ class SphereConfidenceFace(LightningModule):
         }
 
     def predict_step(self, batch, batch_idx):
-        images_batch, paths_batch = batch
+        images_batch = batch
         images_batch = images_batch.permute(0, 3, 1, 2)
-        return self(images_batch), paths_batch
-
+        return self(images_batch)
     # def validation_step(self, batch, batch_idx):
     #     self._shared_eval(batch, batch_idx, "val")
 

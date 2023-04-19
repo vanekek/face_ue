@@ -1,1 +1,1 @@
-python evaluation/ijb_evals.py -m models/ms1mv3_r100.onnx -d datasets/arcface_ijb/ -N -b 16
+python evaluation/ijb_evals.py -e  -d datasets/arcface_ijb/ -N -b 16

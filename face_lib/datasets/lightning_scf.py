@@ -87,6 +87,7 @@ class SCF_DataModule(pl.LightningDataModule):
 
         if stage == "predict":
             self.ijb_dataset = IJB_aligned_images(self.data_predict_dir, self.data_predict_subset)
+            self.ijb_dataset = torch.utils.data.Subset(self.ijb_dataset, np.random.choice(len(self.ijb_dataset), 5000, replace=False))
 
     def train_dataloader(self):
         return DataLoader(

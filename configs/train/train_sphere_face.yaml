@@ -10,9 +10,10 @@ trainer:
     init_args: 
       every_n_train_steps: 5000
       dirpath: outputs/scf_train/weights
-  - class_path: face_lib.models.scf.IJBC_writer
+  - class_path: face_lib.models.scf.IJB_writer
     init_args: 
-      output_dir: /app/cache
+      output_dir: /app/cache/features
+      subset: ${data.init_args.data_predict_subset}
       write_interval: epoch
   max_epochs: 4
   accelerator: gpu

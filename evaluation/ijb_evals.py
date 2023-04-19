@@ -789,6 +789,13 @@ def parse_arguments(argv):
         help="Saved model, keras h5 / pytorch jit pth / onnx / mxnet",
     )
     parser.add_argument(
+        "-e",
+        "--restore_embs",
+        type=str,
+        default=None,
+        help="Saved image embeddings",
+    )
+    parser.add_argument(
         "-d",
         "--data_path",
         type=str,
@@ -904,6 +911,7 @@ if __name__ == "__main__":
             args.batch_size,
             args.force_reload,
             args.save_result,
+            restore_embs=args.restore_embs
         )
         if (
             args.save_embeddings
