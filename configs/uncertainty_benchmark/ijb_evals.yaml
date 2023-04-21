@@ -1,0 +1,15 @@
+restore_embs: /app/cache/features/scf_ijb_embs_${subset}.npz
+data_path: datasets/arcface_ijb/ # Dataset path containing IJBB and IJBC sub folder
+subset: IJBC # Subset test target, could be IJBB / IJBC
+batch_size: 16
+save_result: "/app/outputs/IJB_result/${subset}.npz"
+is_one_2_N: True  # Run 1:N test instead of 1
+# evaluation_1N_function: 
+#   class_path: evaluation.one_to_N_eval_functions.PairwiseSims
+#   init_args:
+#     foo: bar
+    
+evaluation_1N_function: 
+  class_path: evaluation.one_to_N_eval_functions.TcmNN
+  init_args:
+    number_of_nearest_neighbors: 2

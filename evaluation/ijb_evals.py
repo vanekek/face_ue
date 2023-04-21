@@ -7,6 +7,12 @@ from tqdm import tqdm
 from skimage import transform
 from sklearn.preprocessing import normalize
 from sklearn.metrics import roc_curve, auc
+from pathlib import Path
+import hydra
+import importlib
+import sys
+path = str(Path(__file__).parent.parent.absolute())
+sys.path.insert(1, path)
 
 
 # https://github.com/deepinsight/insightface/tree/master/recognition/_evaluation_/ijb
@@ -406,61 +412,7 @@ def verification_11(
     return np.array(score)
 
 
-def evaluation_1N(query_feats, gallery_feats, query_ids, reg_ids, fars=[0.01, 0.1]):
-    print(
-        "query_feats: %s, gallery_feats: %s" % (query_feats.shape, gallery_feats.shape)
-    )
-    similarity = np.dot(query_feats, gallery_feats.T)  # (19593, 3531)
 
-    top_1_count, top_5_count, top_10_count = 0, 0, 0
-    pos_sims, neg_sims, non_gallery_sims = [], [], []
-    for index, query_id in enumerate(query_ids):
-        if query_id in reg_ids:
-            gallery_label = np.argwhere(reg_ids == query_id)[0, 0]
-            index_sorted = np.argsort(similarity[index])[::-1]
-
-            top_1_count += gallery_label in index_sorted[:1]
-            top_5_count += gallery_label in index_sorted[:5]
-            top_10_count += gallery_label in index_sorted[:10]
-
-            pos_sims.append(similarity[index][reg_ids == query_id][0])
-            neg_sims.append(similarity[index][reg_ids != query_id])
-        else:
-            non_gallery_sims.append(similarity[index])
-    total_pos = len(pos_sims)
-    pos_sims, neg_sims, non_gallery_sims = (
-        np.array(pos_sims),
-        np.array(neg_sims),
-        np.array(non_gallery_sims),
-    )
-    print(
-        "pos_sims: %s, neg_sims: %s, non_gallery_sims: %s"
-        % (pos_sims.shape, neg_sims.shape, non_gallery_sims.shape)
-    )
-    print(
-        "top1: %f, top5: %f, top10: %f"
-        % (top_1_count / total_pos, top_5_count / total_pos, top_10_count / total_pos)
-    )
-
-    correct_pos_cond = pos_sims > neg_sims.max(1)
-    non_gallery_sims_sorted = np.sort(non_gallery_sims.max(1))[::-1]
-    threshes, recalls = [], []
-    for far in fars:
-        # thresh = non_gallery_sims_sorted[int(np.ceil(non_gallery_sims_sorted.shape[0] * far)) - 1]
-        thresh = non_gallery_sims_sorted[
-            max(int((non_gallery_sims_sorted.shape[0]) * far) - 1, 0)
-        ]
-        recall = (
-            np.logical_and(correct_pos_cond, pos_sims > thresh).sum()
-            / pos_sims.shape[0]
-        )
-        threshes.append(thresh)
-        recalls.append(recall)
-        # print("FAR = {:.10f} TPIR = {:.10f} th = {:.10f}".format(far, recall, thresh))
-    cmc_scores = list(zip(neg_sims, pos_sims.reshape(-1, 1))) + list(
-        zip(non_gallery_sims, [None] * non_gallery_sims.shape[0])
-    )
-    return top_1_count, top_5_count, top_10_count, threshes, recalls, cmc_scores
 
 
 class IJB_test:
@@ -469,9 +421,11 @@ class IJB_test:
         model_file,
         data_path,
         subset,
+        evaluation_1N_function,
         batch_size=64,
         force_reload=False,
         restore_embs=None,
+        
     ):
         (
             templates,
@@ -516,7 +470,7 @@ class IJB_test:
             label,
         )
         self.face_scores = face_scores.astype(self.embs.dtype)
-
+        self.evaluation_1N_function = evaluation_1N_function
     def run_model_test_single(
         self, use_flip_test=True, use_norm_score=False, use_detector_score=True
     ):
@@ -622,7 +576,7 @@ class IJB_test:
             g1_threshes,
             g1_recalls,
             g1_cmc_scores,
-        ) = evaluation_1N(
+        ) = self.evaluation_1N_function(
             probe_mixed_templates_feature,
             g1_templates_feature,
             probe_mixed_unique_subject_ids,
@@ -637,7 +591,7 @@ class IJB_test:
             g2_threshes,
             g2_recalls,
             g2_cmc_scores,
-        ) = evaluation_1N(
+        ) = self.evaluation_1N_function(
             probe_mixed_templates_feature,
             g2_templates_feature,
             probe_mixed_unique_subject_ids,
@@ -777,159 +731,58 @@ def plot_dir_far_cmc_scores(scores, names=None):
     return fig
 
 
-def parse_arguments(argv):
-    import argparse
+@hydra.main(
+    config_path=str(Path(".").resolve() / "configs/uncertainty_benchmark"),
+    config_name=Path(__file__).stem,
+    version_base="1.2",
+)
+def main(cfg):
 
-    default_save_result_name = "/app/outputs/IJB_result/{type}.npz"
-    parser = argparse.ArgumentParser(
-        formatter_class=argparse.ArgumentDefaultsHelpFormatter
+    save_name = os.path.splitext(os.path.basename(cfg.save_result))[0]
+    save_items = {}
+    save_path = os.path.dirname(cfg.save_result)
+    if len(save_path) != 0 and not os.path.exists(save_path):
+        os.makedirs(save_path)
+    module_name_parts = cfg.evaluation_1N_function.class_path.split('.')
+    module_path = ".".join(module_name_parts[:-1])
+    class_name = module_name_parts[-1]
+    one_to_N_eval_function = getattr(importlib.import_module(module_path), class_name)(
+            **cfg.evaluation_1N_function.init_args
     )
-    parser.add_argument(
-        "-m",
-        "--model_file",
-        type=str,
-        default=None,
-        help="Saved model, keras h5 / pytorch jit pth / onnx / mxnet",
-    )
-    parser.add_argument(
-        "-e",
-        "--restore_embs",
-        type=str,
-        default=None,
-        help="Saved image embeddings",
-    )
-    parser.add_argument(
-        "-d",
-        "--data_path",
-        type=str,
-        default="./",
-        help="Dataset path containing IJBB and IJBC sub folder",
-    )
-    parser.add_argument(
-        "-s",
-        "--subset",
-        type=str,
-        default="IJBC",
-        help="Subset test target, could be IJBB / IJBC",
-    )
-    parser.add_argument(
-        "-b",
-        "--batch_size",
-        type=int,
-        default=128,
-        help="Batch size for get_embeddings",
-    )
-    parser.add_argument(
-        "-R",
-        "--save_result",
-        type=str,
-        default=default_save_result_name,
-        help="Filename for saving / restore result",
-    )
-    parser.add_argument(
-        "-L",
-        "--save_label",
-        action="store_true",
-        help="Save label data, useful for plot only",
-    )
-    parser.add_argument(
-        "-E", "--save_embeddings", action="store_true", help="Save embeddings data"
-    )
-    parser.add_argument(
-        "-B",
-        "--is_bunch",
-        action="store_true",
-        help="Run all 8 tests N{0,1}D{0,1}F{0,1}",
-    )
-    parser.add_argument(
-        "-N", "--is_one_2_N", action="store_true", help="Run 1:N test instead of 1:1"
-    )
-    parser.add_argument(
-        "-F",
-        "--force_reload",
-        action="store_true",
-        help="Force reload, instead of using cache",
-    )
-    parser.add_argument(
-        "-P",
-        "--plot_only",
-        nargs="*",
-        type=str,
-        help="Plot saved results, Format 1 2 3 or 1, 2, 3 or *.npy",
-    )
-    args = parser.parse_known_args(argv)[0]
+    tt = IJB_test(
+        model_file = None,
+        data_path = cfg.data_path,
+        subset = cfg.subset,
+        evaluation_1N_function = one_to_N_eval_function,
+        batch_size=cfg.batch_size,
+        force_reload=False,
+        restore_embs=cfg.restore_embs,
 
-    if args.plot_only != None and len(args.plot_only) != 0:
-        # Plot only
-        from glob2 import glob
-
-        score_files = []
-        for ss in args.plot_only:
-            score_files.extend(glob(ss.replace(",", "").strip()))
-        args.plot_only = score_files
-    args.save_result = default_save_result_name.format(
-        type=args.restore_embs.split("/")[-1].split(".")[0]
     )
 
-    return args
+    if cfg.is_one_2_N:  # 1:N test
+        fars, tpirs, _, _ = tt.run_model_test_1N()
+        scores = [(fars, tpirs)]
+        names = [save_name]
+        save_items.update({"scores": scores, "names": names})
+    elif cfg.is_bunch:  # All 8 tests N{0,1}D{0,1}F{0,1}
+        scores, names = tt.run_model_test_bunch()
+        names = [save_name + "_" + ii for ii in names]
+        label = tt.label
+        save_items.update({"scores": scores, "names": names})
+    else:  # Basic 1:1 N0D1F1 test
+        score = tt.run_model_test_single()
+        scores, names, label = [score], [save_name], tt.label
+        save_items.update({"scores": scores, "names": names})
 
+
+    np.savez(cfg.save_result, **save_items)
+
+    if cfg.is_one_2_N:
+        pass
+        # plot_dir_far_cmc_scores(scores=scores, names=names)
+    else:
+        plot_roc_and_calculate_tpr(scores, names=names, label=label)
 
 if __name__ == "__main__":
-    import sys
-
-    args = parse_arguments(sys.argv[1:])
-    if args.plot_only != None and len(args.plot_only) != 0:
-        if args.is_one_2_N:
-            plot_dir_far_cmc_scores(args.plot_only)
-        else:
-            plot_roc_and_calculate_tpr(args.plot_only)
-    else:
-        save_name = os.path.splitext(os.path.basename(args.save_result))[0]
-        save_items = {}
-        save_path = os.path.dirname(args.save_result)
-        if len(save_path) != 0 and not os.path.exists(save_path):
-            os.makedirs(save_path)
-
-        tt = IJB_test(
-            args.model_file,
-            args.data_path,
-            args.subset,
-            args.batch_size,
-            args.force_reload,
-            restore_embs=args.restore_embs,
-        )
-        if (
-            args.save_embeddings
-        ):  # Save embeddings first, in case of any error happens later...
-            np.savez(args.save_result, embs=tt.embs, embs_f=tt.embs_f)
-
-        if args.is_one_2_N:  # 1:N test
-            fars, tpirs, _, _ = tt.run_model_test_1N()
-            scores = [(fars, tpirs)]
-            names = [save_name]
-            save_items.update({"scores": scores, "names": names})
-        elif args.is_bunch:  # All 8 tests N{0,1}D{0,1}F{0,1}
-            scores, names = tt.run_model_test_bunch()
-            names = [save_name + "_" + ii for ii in names]
-            label = tt.label
-            save_items.update({"scores": scores, "names": names})
-        else:  # Basic 1:1 N0D1F1 test
-            score = tt.run_model_test_single()
-            scores, names, label = [score], [save_name], tt.label
-            save_items.update({"scores": scores, "names": names})
-
-        if args.save_embeddings:
-            save_items.update({"embs": tt.embs, "embs_f": tt.embs_f})
-        if args.save_label:
-            save_items.update({"label": label})
-
-        np.savez(args.save_result, **save_items)
-        # if (
-        #     args.model_file != None or args.save_embeddings
-        # ):  # embeddings not restored from file or should save_embeddings again
-
-        if args.is_one_2_N:
-            pass
-            # plot_dir_far_cmc_scores(scores=scores, names=names)
-        else:
-            plot_roc_and_calculate_tpr(scores, names=names, label=label)
+    main()
