@@ -7,16 +7,19 @@ restore_embs: /app/cache/features/scf_ijb_embs_${subset}.npz
 data_path: datasets/arcface_ijb/ # Dataset path containing IJBB and IJBC sub folder
 subset: IJBC # Subset test target, could be IJBB / IJBC
 batch_size: 16
-save_result: "/app/outputs/IJB_result/${subset}_${open_set_identification_method}.npz"
 is_one_2_N: True  # Run 1:N test instead of 1
-# evaluation_1N_function: 
-#   class_path: evaluation.one_to_N_eval_functions.PairwiseSims
-#   init_args:
-#     foo: bar
-open_set_identification_method: TcmNN
-evaluation_1N_function: 
-  class_path: evaluation.one_to_N_eval_functions.${open_set_identification_method}
-  init_args:
-    number_of_nearest_neighbors: 2
-    scale: 2
-    p_value_cache_path: /app/cache/tcmNN_cache
+
+open_set_recognition_methods:
+  - evaluation_1N_function: 
+      class_path: evaluation.one_to_N_eval_functions.PairwiseSims
+      init_args:
+        foo: bar
+    save_result: "/app/outputs/IJB_result/${subset}_PairwiseSims.npz"
+  
+  - evaluation_1N_function: 
+      class_path: evaluation.one_to_N_eval_functions.TcmNN
+      init_args:
+        number_of_nearest_neighbors: 50
+        scale: 1
+        p_value_cache_path: /app/cache/tcmNN_cache
+    save_result: "/app/outputs/IJB_result/${subset}_TcmNN.npz"

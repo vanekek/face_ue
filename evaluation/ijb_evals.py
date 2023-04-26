@@ -762,50 +762,54 @@ def plot_dir_far_cmc_scores(scores, names=None):
     version_base="1.2",
 )
 def main(cfg):
-    save_name = os.path.splitext(os.path.basename(cfg.save_result))[0]
-    save_items = {}
-    save_path = os.path.dirname(cfg.save_result)
-    if len(save_path) != 0 and not os.path.exists(save_path):
-        os.makedirs(save_path)
-    module_name_parts = cfg.evaluation_1N_function.class_path.split(".")
-    module_path = ".".join(module_name_parts[:-1])
-    class_name = module_name_parts[-1]
-    one_to_N_eval_function = getattr(importlib.import_module(module_path), class_name)(
-        **cfg.evaluation_1N_function.init_args
-    )
-    tt = IJB_test(
-        model_file=None,
-        data_path=cfg.data_path,
-        subset=cfg.subset,
-        evaluation_1N_function=one_to_N_eval_function,
-        batch_size=cfg.batch_size,
-        force_reload=False,
-        restore_embs=cfg.restore_embs,
-    )
+    method_scores, method_names = [], []
+    for method in cfg.open_set_recognition_methods:
+        save_name = os.path.splitext(os.path.basename(method.save_result))[0]
+        save_items = {}
+        save_path = os.path.dirname(method.save_result)
+        if len(save_path) != 0 and not os.path.exists(save_path):
+            os.makedirs(save_path)
+        module_name_parts = method.evaluation_1N_function.class_path.split(".")
+        module_path = ".".join(module_name_parts[:-1])
+        class_name = module_name_parts[-1]
+        one_to_N_eval_function = getattr(
+            importlib.import_module(module_path), class_name
+        )(**method.evaluation_1N_function.init_args)
+        tt = IJB_test(
+            model_file=None,
+            data_path=cfg.data_path,
+            subset=cfg.subset,
+            evaluation_1N_function=one_to_N_eval_function,
+            batch_size=cfg.batch_size,
+            force_reload=False,
+            restore_embs=cfg.restore_embs,
+        )
 
-    if cfg.is_one_2_N:  # 1:N test
-        fars, tpirs, _, _ = tt.run_model_test_1N()
-        scores = [(fars, tpirs)]
-        names = [save_name]
-        save_items.update({"scores": scores, "names": names})
-    elif cfg.is_bunch:  # All 8 tests N{0,1}D{0,1}F{0,1}
-        scores, names = tt.run_model_test_bunch()
-        names = [save_name + "_" + ii for ii in names]
-        label = tt.label
-        save_items.update({"scores": scores, "names": names})
-    else:  # Basic 1:1 N0D1F1 test
-        score = tt.run_model_test_single()
-        scores, names, label = [score], [save_name], tt.label
-        save_items.update({"scores": scores, "names": names})
+        if cfg.is_one_2_N:  # 1:N test
+            fars, tpirs, _, _ = tt.run_model_test_1N()
+            scores = [(fars, tpirs)]
+            names = [save_name]
+            method_scores.append((fars, tpirs))
+            method_names.append(save_name)
+            save_items.update({"scores": scores, "names": names})
+        elif cfg.is_bunch:  # All 8 tests N{0,1}D{0,1}F{0,1}
+            scores, names = tt.run_model_test_bunch()
+            names = [save_name + "_" + ii for ii in names]
+            label = tt.label
+            save_items.update({"scores": scores, "names": names})
+        else:  # Basic 1:1 N0D1F1 test
+            score = tt.run_model_test_single()
+            scores, names, label = [score], [save_name], tt.label
+            save_items.update({"scores": scores, "names": names})
 
-    np.savez(cfg.save_result, **save_items)
+        np.savez(method.save_result, **save_items)
 
-    if cfg.is_one_2_N:
-        pass
-        fig = plot_dir_far_cmc_scores(scores=scores, names=names)
-        fig.savefig(Path(cfg.exp_dir) / "di_far_plot.png")
-    else:
-        plot_roc_and_calculate_tpr(scores, names=names, label=label)
+    fig = plot_dir_far_cmc_scores(scores=method_scores, names=method_names)
+    fig.savefig(Path(cfg.exp_dir) / "di_far_plot.png")
+    print("Plot path:")
+    print(str(Path(cfg.exp_dir) / "di_far_plot.png"))
+    # else:
+    #     plot_roc_and_calculate_tpr(scores, names=names, label=label)
 
 
 if __name__ == "__main__":
