@@ -506,6 +506,8 @@ class IJB_test:
         return scores, names
 
     def run_model_test_1N(self, npoints=100):
+        two_galleries = False
+
         fars_cal = [10**ii for ii in np.arange(-4, 0, 4 / npoints)] + [
             1
         ]  # plot in range [10-4, 1]
@@ -538,26 +540,48 @@ class IJB_test:
         ) = image2template_feature(
             img_input_feats, self.templates, self.medias, g1_templates, g1_ids
         )
-        (
-            g2_templates_feature,
-            g2_unique_templates,
-            g2_unique_ids,
-        ) = image2template_feature(
-            img_input_feats, self.templates, self.medias, g2_templates, g2_ids
+        if two_galleries:
+            (
+                g2_templates_feature,
+                g2_unique_templates,
+                g2_unique_ids,
+            ) = image2template_feature(
+                img_input_feats, self.templates, self.medias, g2_templates, g2_ids
+            )
+        probe_mixed_templates_feature_path = (
+            f"/app/cache/template_cache/probe_aggr_{self.subset}"
         )
-        (
-            probe_mixed_templates_feature,
-            probe_mixed_unique_templates,
-            probe_mixed_unique_subject_ids,
-        ) = image2template_feature(
-            img_input_feats,
-            self.templates,
-            self.medias,
-            probe_mixed_templates,
-            probe_mixed_ids,
-        )
+        if Path(probe_mixed_templates_feature_path + "_feature.npy").is_file():
+            probe_mixed_templates_feature = np.load(
+                probe_mixed_templates_feature_path + "_feature.npy"
+            )
+            probe_mixed_unique_subject_ids = np.load(
+                probe_mixed_templates_feature_path + "_subject_ids.npy"
+            )
+        else:
+            (
+                probe_mixed_templates_feature,
+                probe_mixed_unique_templates,
+                probe_mixed_unique_subject_ids,
+            ) = image2template_feature(
+                img_input_feats,
+                self.templates,
+                self.medias,
+                probe_mixed_templates,
+                probe_mixed_ids,
+            )
+            np.save(
+                probe_mixed_templates_feature_path + "_feature.npy",
+                probe_mixed_templates_feature,
+            )
+            np.save(
+                probe_mixed_templates_feature_path + "_subject_ids.npy",
+                probe_mixed_unique_subject_ids,
+            )
         print("g1_templates_feature:", g1_templates_feature.shape)  # (1772, 512)
-        print("g2_templates_feature:", g2_templates_feature.shape)  # (1759, 512)
+
+        if two_galleries:
+            print("g2_templates_feature:", g2_templates_feature.shape)  # (1759, 512)
 
         print(
             "probe_mixed_templates_feature:", probe_mixed_templates_feature.shape
@@ -581,40 +605,44 @@ class IJB_test:
             g1_unique_ids,
             fars_cal,
         )
-        print(">>>> Gallery 2")
-        (
-            g2_top_1_count,
-            g2_top_5_count,
-            g2_top_10_count,
-            g2_threshes,
-            g2_recalls,
-            g2_cmc_scores,
-        ) = self.evaluation_1N_function(
-            probe_mixed_templates_feature,
-            g2_templates_feature,
-            probe_mixed_unique_subject_ids,
-            g2_unique_ids,
-            fars_cal,
-        )
-        print(">>>> Mean")
-        query_num = probe_mixed_templates_feature.shape[0]
-        top_1 = (g1_top_1_count + g2_top_1_count) / query_num
-        top_5 = (g1_top_5_count + g2_top_5_count) / query_num
-        top_10 = (g1_top_10_count + g2_top_10_count) / query_num
-        print("[Mean] top1: %f, top5: %f, top10: %f" % (top_1, top_5, top_10))
 
-        mean_tpirs = (np.array(g1_recalls) + np.array(g2_recalls)) / 2
-        show_result = {}
-        for id, far in enumerate(fars_cal):
-            if id in fars_show_idx:
-                show_result.setdefault("far", []).append(far)
-                show_result.setdefault("g1_tpir", []).append(g1_recalls[id])
-                show_result.setdefault("g1_thresh", []).append(g1_threshes[id])
-                show_result.setdefault("g2_tpir", []).append(g2_recalls[id])
-                show_result.setdefault("g2_thresh", []).append(g2_threshes[id])
-                show_result.setdefault("mean_tpir", []).append(mean_tpirs[id])
-        print(pd.DataFrame(show_result).set_index("far").to_markdown())
-        return fars_cal, mean_tpirs, g1_cmc_scores, g2_cmc_scores
+        if two_galleries:
+            print(">>>> Gallery 2")
+            (
+                g2_top_1_count,
+                g2_top_5_count,
+                g2_top_10_count,
+                g2_threshes,
+                g2_recalls,
+                g2_cmc_scores,
+            ) = self.evaluation_1N_function(
+                probe_mixed_templates_feature,
+                g2_templates_feature,
+                probe_mixed_unique_subject_ids,
+                g2_unique_ids,
+                fars_cal,
+            )
+            print(">>>> Mean")
+            query_num = probe_mixed_templates_feature.shape[0]
+            top_1 = (g1_top_1_count + g2_top_1_count) / query_num
+            top_5 = (g1_top_5_count + g2_top_5_count) / query_num
+            top_10 = (g1_top_10_count + g2_top_10_count) / query_num
+            print("[Mean] top1: %f, top5: %f, top10: %f" % (top_1, top_5, top_10))
+
+            mean_tpirs = (np.array(g1_recalls) + np.array(g2_recalls)) / 2
+            show_result = {}
+            for id, far in enumerate(fars_cal):
+                if id in fars_show_idx:
+                    show_result.setdefault("far", []).append(far)
+                    show_result.setdefault("g1_tpir", []).append(g1_recalls[id])
+                    show_result.setdefault("g1_thresh", []).append(g1_threshes[id])
+                    show_result.setdefault("g2_tpir", []).append(g2_recalls[id])
+                    show_result.setdefault("g2_thresh", []).append(g2_threshes[id])
+                    show_result.setdefault("mean_tpir", []).append(mean_tpirs[id])
+            print(pd.DataFrame(show_result).set_index("far").to_markdown())
+        else:
+            mean_tpirs = np.array(g1_recalls)
+        return fars_cal, mean_tpirs, None, None  # g1_cmc_scores, g2_cmc_scores
 
 
 def plot_roc_and_calculate_tpr(scores, names=None, label=None):
@@ -721,7 +749,6 @@ def plot_dir_far_cmc_scores(scores, names=None):
         plt.grid(linestyle="--", linewidth=1)
         plt.legend(fontsize="x-small")
         plt.tight_layout()
-        plt.show()
     except:
         print("matplotlib plot failed")
         fig = None
@@ -775,7 +802,8 @@ def main(cfg):
 
     if cfg.is_one_2_N:
         pass
-        # plot_dir_far_cmc_scores(scores=scores, names=names)
+        fig = plot_dir_far_cmc_scores(scores=scores, names=names)
+        fig.savefig(Path(cfg.exp_dir) / "di_far_plot.png")
     else:
         plot_roc_and_calculate_tpr(scores, names=names, label=label)
 

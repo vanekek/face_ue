@@ -2,8 +2,9 @@ import numpy as np
 from tqdm import tqdm
 from pathlib import Path
 
+
 class TcmNN:
-    def __init__(self, number_of_nearest_neighbors) -> None:
+    def __init__(self, number_of_nearest_neighbors, scale, p_value_cache_path) -> None:
         """
         implemets knn based open-set face identification algorithm.
         See
@@ -12,7 +13,8 @@ class TcmNN:
         https://link.springer.com/chapter/10.1007/3-540-36755-1_32
         """
         self.number_of_nearest_neighbors = number_of_nearest_neighbors
-        self.scale = 0.1  # neaded because we have |D_i^y| = 1 and |D_i^{-y}|!=1
+        self.scale = scale  # neaded because we have |D_i^y| = 1 and |D_i^{-y}|!=1
+        self.p_value_cache_path = Path(p_value_cache_path)
 
     def __call__(self, query_feats, gallery_feats, query_ids, gallery_ids, fars):
         print(
@@ -48,7 +50,10 @@ class TcmNN:
         l = gallery_feats.shape[0]
         # here is error as we do not account for just added probe 'probe_index'
         # while computing strangeness for non probe class gallery classes
-        cache_path = Path(f'/app/cache/knn_gallery_size_{l}.npy')
+        cache_path = Path(
+            self.p_value_cache_path
+            / f"k_{self.number_of_nearest_neighbors}_scale_{self.scale}_gallery_size_{l}.npy"
+        )
         if cache_path.is_file():
             probe_p_values = np.load(cache_path)
         else:
@@ -58,7 +63,9 @@ class TcmNN:
                     probe_gallery_distance_matrix[probe_index] / D_minus_sum,
                 )
                 other_class_distance_sum = []
-                default_sum = np.sum(probe_gallery_distance_matrix_sorted[probe_index][:-1])
+                default_sum = np.sum(
+                    probe_gallery_distance_matrix_sorted[probe_index][:-1]
+                )
 
                 for gallery_id in range(gallery_feats.shape[0]):
                     if gallery_id in probe_gallery_distance_matrix_sorted[probe_index]:
@@ -67,25 +74,32 @@ class TcmNN:
                         other_class_distance_sum.append(np.sum(a))
                     else:
                         other_class_distance_sum.append(default_sum)
-                probe_strangeness = probe_gallery_distance_matrix[probe_index] / np.array(
-                    other_class_distance_sum
-                )
+                probe_strangeness = probe_gallery_distance_matrix[
+                    probe_index
+                ] / np.array(other_class_distance_sum)
                 # Eq. (8) https://ieeexplore.ieee.org/document/1512050
-                
 
                 p_values = 1 / (l + 1) + (np.sum(gallery_strangeness, axis=1)) / (
                     (l + 1) * probe_strangeness
                 )
                 probe_p_values.append(p_values)
-            probe_p_values = np.array(probe_p_values)# (19593, 1772)
+            probe_p_values = np.array(probe_p_values)  # (19593, 1772)
             np.save(cache_path, probe_p_values)
-        
+
         p_value_argmax = np.argmax(probe_p_values, axis=1)
         probes_psr = []
         for probe_index in tqdm(range(query_feats.shape[0])):
             max_idx = p_value_argmax[probe_index]
-            a = np.concatenate([probe_p_values[probe_index,:max_idx], probe_p_values[probe_index, max_idx+1:]])
-            probes_psr.append((probe_p_values[probe_index, max_idx] - np.mean(a)) / np.std(a))
+            a = np.concatenate(
+                [
+                    probe_p_values[probe_index, :max_idx],
+                    probe_p_values[probe_index, max_idx + 1 :],
+                ]
+            )
+            probes_psr.append(
+                (probe_p_values[probe_index, max_idx] - np.mean(a)) / np.std(a)
+            )
+
         similarity = probe_p_values
 
         top_1_count, top_5_count, top_10_count = 0, 0, 0
@@ -114,9 +128,7 @@ class TcmNN:
         neg_psr_sorted = np.sort(neg_psr)[::-1]
         threshes, recalls = [], []
         for far in fars:
-            thresh = neg_psr_sorted[
-                max(int((neg_psr_sorted.shape[0]) * far) - 1, 0)
-            ]
+            thresh = neg_psr_sorted[max(int((neg_psr_sorted.shape[0]) * far) - 1, 0)]
             recall = (
                 np.logical_and(correct_pos_cond, pos_psr > thresh).sum()
                 / pos_sims.shape[0]
@@ -127,7 +139,6 @@ class TcmNN:
             zip(non_gallery_sims, [None] * non_gallery_sims.shape[0])
         )
         return top_1_count, top_5_count, top_10_count, threshes, recalls, cmc_scores
-    
 
 
 class PairwiseSims:
