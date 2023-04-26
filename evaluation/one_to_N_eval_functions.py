@@ -16,10 +16,10 @@ class TcmNN:
         self.scale = scale  # neaded because we have |D_i^y| = 1 and |D_i^{-y}|!=1
         self.p_value_cache_path = Path(p_value_cache_path)
 
-    def __call__(self, query_feats, gallery_feats, query_ids, gallery_ids, fars):
+    def __call__(self, probe_feats, gallery_feats, probe_ids, gallery_ids, fars):
         print(
-            "query_feats: %s, gallery_feats: %s"
-            % (query_feats.shape, gallery_feats.shape)
+            "probe_feats: %s, gallery_feats: %s"
+            % (probe_feats.shape, gallery_feats.shape)
         )
 
         # 1. compute distances from each gallery class to other gallery classes
@@ -34,7 +34,7 @@ class TcmNN:
         D_minus_sum = np.sum(D_minus_y, axis=1)
         # 2. compute distances from each probe feature to all gallery classes
         probe_gallery_distance_matrix = (
-            -np.dot(query_feats, gallery_feats.T) + 1
+            -np.dot(probe_feats, gallery_feats.T) + 1
         )  # (19593, 3531)
         probe_gallery_distance_matrix_sorted = np.argsort(
             probe_gallery_distance_matrix, axis=1
@@ -57,7 +57,7 @@ class TcmNN:
         if cache_path.is_file():
             probe_p_values = np.load(cache_path)
         else:
-            for probe_index in tqdm(range(query_feats.shape[0])):
+            for probe_index in tqdm(range(probe_feats.shape[0])):
                 np.fill_diagonal(
                     gallery_strangeness,
                     probe_gallery_distance_matrix[probe_index] / D_minus_sum,
@@ -88,7 +88,7 @@ class TcmNN:
 
         p_value_argmax = np.argmax(probe_p_values, axis=1)
         probes_psr = []
-        for probe_index in tqdm(range(query_feats.shape[0])):
+        for probe_index in tqdm(range(probe_feats.shape[0])):
             max_idx = p_value_argmax[probe_index]
             a = np.concatenate(
                 [
@@ -104,7 +104,7 @@ class TcmNN:
 
         top_1_count, top_5_count, top_10_count = 0, 0, 0
         pos_sims, pos_psr, neg_sims, non_gallery_sims, neg_psr = [], [], [], [], []
-        for index, query_id in enumerate(query_ids):
+        for index, query_id in enumerate(probe_ids):
             if query_id in gallery_ids:
                 gallery_label = np.argwhere(gallery_ids == query_id)[0, 0]
                 index_sorted = np.argsort(similarity[index])[::-1]
@@ -145,16 +145,16 @@ class PairwiseSims:
     def __init__(self, foo) -> None:
         self.foo = foo
 
-    def __call__(self, query_feats, gallery_feats, query_ids, gallery_ids, fars):
+    def __call__(self, probe_feats, gallery_feats, probe_ids, gallery_ids, fars):
         print(
-            "query_feats: %s, gallery_feats: %s"
-            % (query_feats.shape, gallery_feats.shape)
+            "probe_feats: %s, gallery_feats: %s"
+            % (probe_feats.shape, gallery_feats.shape)
         )
-        similarity = np.dot(query_feats, gallery_feats.T)  # (19593, 1772)
+        similarity = np.dot(probe_feats, gallery_feats.T)  # (19593, 1772)
 
         top_1_count, top_5_count, top_10_count = 0, 0, 0
         pos_sims, neg_sims, non_gallery_sims = [], [], []
-        for index, query_id in enumerate(query_ids):
+        for index, query_id in enumerate(probe_ids):
             if query_id in gallery_ids:
                 gallery_label = np.argwhere(gallery_ids == query_id)[0, 0]
                 index_sorted = np.argsort(similarity[index])[::-1]
