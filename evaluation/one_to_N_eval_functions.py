@@ -1,7 +1,7 @@
 import numpy as np
 from tqdm import tqdm
 from pathlib import Path
-
+import scipy
 
 class TcmNN:
     def __init__(self, number_of_nearest_neighbors, scale, p_value_cache_path) -> None:
@@ -86,22 +86,24 @@ class TcmNN:
             probe_p_values = np.array(probe_p_values)  # (19593, 1772)
             np.save(cache_path, probe_p_values)
 
-        p_value_argmax = np.argmax(probe_p_values, axis=1)
+        similarity = probe_p_values
+
+        p_value_argmax = np.argmax(similarity, axis=1)
         probes_psr = []
         for probe_index in tqdm(range(probe_feats.shape[0])):
             max_idx = p_value_argmax[probe_index]
             a = np.concatenate(
                 [
-                    probe_p_values[probe_index, :max_idx],
-                    probe_p_values[probe_index, max_idx + 1 :],
+                    similarity[probe_index, :max_idx],
+                    similarity[probe_index, max_idx + 1 :],
                 ]
             )
             probes_psr.append(
-                (probe_p_values[probe_index, max_idx] - np.mean(a)) / np.std(a)
+                (similarity[probe_index, max_idx] - np.mean(a)) / np.std(a)
             )
 
-        similarity = probe_p_values
-
+        
+        # BUG: возможно есть ошибка при использовании probes_psr
         top_1_count, top_5_count, top_10_count = 0, 0, 0
         pos_sims, pos_psr, neg_sims, non_gallery_sims, neg_psr = [], [], [], [], []
         for index, query_id in enumerate(probe_ids):
@@ -142,9 +144,9 @@ class TcmNN:
 
 
 class PairwiseSims:
-    def __init__(self, foo) -> None:
-        self.foo = foo
-
+    def __init__(self, psr_top_k: int, use_entropy) -> None:
+        self.psr_top_k = psr_top_k
+        self.use_entropy = use_entropy
     def __call__(self, probe_feats, gallery_feats, probe_ids, gallery_ids, fars):
         print(
             "probe_feats: %s, gallery_feats: %s"
@@ -152,8 +154,39 @@ class PairwiseSims:
         )
         similarity = np.dot(probe_feats, gallery_feats.T)  # (19593, 1772)
 
+        p_value_argmax = np.argmax(similarity, axis=1)
+        
+        probes_score = []
+        for probe_index in tqdm(range(probe_feats.shape[0])):
+            max_idx = p_value_argmax[probe_index]
+            
+            if self.psr_top_k > 0:
+                # a = np.concatenate(
+                # [
+                #     similarity[probe_index, :max_idx],
+                #     similarity[probe_index, max_idx + 1 :],
+                # ]
+                # )
+                a = np.sort(similarity[probe_index])[::-1][:self.psr_top_k]
+
+                #a = np.sort(a)[:self.psr_top_k]
+                # probes_score.append(
+                #     (similarity[probe_index, max_idx] - np.mean(a)) / np.std(a)
+                # )
+                probes_score.append((similarity[probe_index, max_idx] - a[1]) / np.sum(a))
+            elif self.use_entropy:
+                a = np.sort(similarity[probe_index])[::-1][:100]
+                a_norm = a - np.min(a) + 1e-4
+                a_norm = a_norm / np.sum(a_norm)
+                probes_score.append(-scipy.stats.entropy(a_norm))
+            else:
+                probes_score.append(
+                    similarity[probe_index, max_idx]
+                )
+            
+
         top_1_count, top_5_count, top_10_count = 0, 0, 0
-        pos_sims, neg_sims, non_gallery_sims = [], [], []
+        pos_sims, pos_score, neg_sims, non_gallery_sims, neg_psr = [], [], [], [], []
         for index, query_id in enumerate(probe_ids):
             if query_id in gallery_ids:
                 gallery_label = np.argwhere(gallery_ids == query_id)[0, 0]
@@ -164,37 +197,23 @@ class PairwiseSims:
                 top_10_count += gallery_label in index_sorted[:10]
 
                 pos_sims.append(similarity[index][gallery_ids == query_id][0])
+                pos_score.append(probes_score[index])
                 neg_sims.append(similarity[index][gallery_ids != query_id])
             else:
                 non_gallery_sims.append(similarity[index])
-        total_pos = len(pos_sims)
+                neg_psr.append(probes_score[index])
         pos_sims, neg_sims, non_gallery_sims = (
             np.array(pos_sims),
             np.array(neg_sims),
             np.array(non_gallery_sims),
         )
-        print(
-            "pos_sims: %s, neg_sims: %s, non_gallery_sims: %s"
-            % (pos_sims.shape, neg_sims.shape, non_gallery_sims.shape)
-        )
-        print(
-            "top1: %f, top5: %f, top10: %f"
-            % (
-                top_1_count / total_pos,
-                top_5_count / total_pos,
-                top_10_count / total_pos,
-            )
-        )
-
         correct_pos_cond = pos_sims > neg_sims.max(1)
-        non_gallery_sims_sorted = np.sort(non_gallery_sims.max(1))[::-1]
+        neg_psr_sorted = np.sort(neg_psr)[::-1]
         threshes, recalls = [], []
         for far in fars:
-            thresh = non_gallery_sims_sorted[
-                max(int((non_gallery_sims_sorted.shape[0]) * far) - 1, 0)
-            ]
+            thresh = neg_psr_sorted[max(int((neg_psr_sorted.shape[0]) * far) - 1, 0)]
             recall = (
-                np.logical_and(correct_pos_cond, pos_sims > thresh).sum()
+                np.logical_and(correct_pos_cond, pos_score > thresh).sum()
                 / pos_sims.shape[0]
             )
             threshes.append(thresh)

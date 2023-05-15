@@ -13,13 +13,35 @@ open_set_recognition_methods:
   - evaluation_1N_function: 
       class_path: evaluation.one_to_N_eval_functions.PairwiseSims
       init_args:
-        foo: bar
+        psr_top_k: 0 # https://ieeexplore.ieee.org/document/1512050
+        use_entropy: False
     save_result: "/app/outputs/IJB_result/${subset}_PairwiseSims.npz"
-  
+  # - evaluation_1N_function: 
+  #     class_path: evaluation.one_to_N_eval_functions.PairwiseSims
+  #     init_args:
+  #       psr_top_k: 10
+  #       use_entropy: False
+  #   save_result: "/app/outputs/IJB_result/${subset}_PairwiseSims_withPSR_10.npz"
+  # - evaluation_1N_function: 
+  #     class_path: evaluation.one_to_N_eval_functions.PairwiseSims
+  #     init_args:
+  #       psr_top_k: 1000
+  #       use_entropy: False
+  #   save_result: "/app/outputs/IJB_result/${subset}_PairwiseSims_withPSR_1000.npz"
+
   - evaluation_1N_function: 
-      class_path: evaluation.one_to_N_eval_functions.TcmNN
+      class_path: evaluation.one_to_N_eval_functions.PairwiseSims
       init_args:
-        number_of_nearest_neighbors: 50
-        scale: 1
-        p_value_cache_path: /app/cache/tcmNN_cache
-    save_result: "/app/outputs/IJB_result/${subset}_TcmNN.npz"
+        psr_top_k: 0
+        use_entropy: True
+    save_result: "/app/outputs/IJB_result/${subset}_PairwiseSims_entropy.npz"
+
+
+  
+  # - evaluation_1N_function: 
+  #     class_path: evaluation.one_to_N_eval_functions.TcmNN
+  #     init_args:
+  #       number_of_nearest_neighbors: 50
+  #       scale: 1
+  #       p_value_cache_path: /app/cache/tcmNN_cache
+  #   save_result: "/app/outputs/IJB_result/${subset}_TcmNN.npz"

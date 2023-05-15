@@ -218,7 +218,7 @@ def load_data(fname):
     return np.array(data), np.array(labels)
 
 
-def get_accuracy(predictions, labels):
+def get_f1(predictions, labels):
     return sum(predictions == labels) / float(len(predictions))
 
 
@@ -240,27 +240,69 @@ def update_params(
 
 
 def letter_test(train_fname, test_fname):
-    with timer("...loading train data"):
-        Xtrain, ytrain = load_data(train_fname)
-        print(Xtrain.shape, ytrain.shape)
-    with timer("...loading test data"):
-        Xtest, ytest = load_data(test_fname)
-        print(Xtest.shape, ytest.shape)
-    with timer("...fitting train set"):
-        weibulls = fit(Xtrain, ytrain)
-    with timer("...reducing model"):
-        Xtrain, weibulls, ytrain = reduce_model(Xtrain, weibulls, ytrain)
-    print("...model size: {}".format(len(ytrain)))
-    with timer("...getting predictions"):
-        predictions, probs = predict(Xtest, Xtrain, weibulls, ytrain)
-    with timer("...evaluating predictions"):
-        accuracy = get_accuracy(predictions, ytest)
-    print("accuracy: {}".format(accuracy))
+    Xtrain, ytrain = load_data(train_fname)
+    Xtest, ytest = load_data(test_fname)
+    weibulls = fit(Xtrain, ytrain)
+    Xtrain, weibulls, ytrain = reduce_model(Xtrain, weibulls, ytrain)
+    predictions, probs = predict(Xtest, Xtrain, weibulls, ytrain)
+
+    accuracy = get_accuracy(predictions, ytest)
     return accuracy
 
+from pathlib import Path
+from itertools import product
+from numpy.random import RandomState
+
+def save_dataset_to_file(X, y, file_path):
+    X = X.astype('int').astype('str')
+    with open(file_path, "w") as f:
+        for i, (x_slice, y_slice) in enumerate(zip(X, y)):
+            slice = [y_slice] + list(x_slice)
+            if i == len(y) - 1:
+                f.write(",".join(slice))
+            else:
+                f.write(",".join(slice)+'\n')
+
+def create_oletter_dataset(train_fname, test_fname, seeds):
+    oletter_dir = Path('/app/sandbox/ExtremeValueMachine/TestData/oletter')
+    Xtrain, ytrain = load_data(train_fname)
+    Xtest, ytest = load_data(test_fname)
+    
+    letters = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z']
+    
+    oletter_dir.mkdir(exist_ok=True)
+    for seed in seeds:
+        rs = RandomState(seed)
+        out_dir = oletter_dir / str(seed)
+        out_dir.mkdir(exist_ok=True)
+        known_labels = list(rs.choice(letters, 15, replace=False))
+        # create train dataset
+        train_valid_letters_idx = np.isin(ytrain, known_labels)
+        Xtrain_valid = Xtrain[train_valid_letters_idx]
+        ytrain_valid = ytrain[train_valid_letters_idx]
+        save_dataset_to_file(Xtrain_valid, ytrain_valid, out_dir / f'train_dataset.txt')
+        unk_labels = list(set(letters).difference(set(known_labels)))
+        with open(out_dir / 'train_labels.txt', "w")as f:
+            f.write(",".join(known_labels))
+        with open(out_dir / 'unknown_labels.txt', "w")as f:
+            f.write(",".join(unk_labels))
+        for num_unk_classes in np.arange(len(unk_labels)+1):
+            unk_labels_to_test = unk_labels[:num_unk_classes]
+            test_labels = known_labels + unk_labels_to_test
+            test_valid_letters_idx = np.isin(ytest, test_labels)
+            Xtest_valid = Xtest[test_valid_letters_idx]
+            ytest_valid = ytest[test_valid_letters_idx]
+            save_dataset_to_file(Xtest_valid, ytest_valid, out_dir / f'with_{num_unk_classes}_unk_test_dataset.txt')
 
 if __name__ == "__main__":
-    letter_test(
-        "/app/sandbox/ExtremeValueMachine/TestData/train.txt",
-        "/app/sandbox/ExtremeValueMachine/TestData/test.txt",
-    )
+    seeds = [4, 5, 1]
+    create_oletter_dataset( "/app/sandbox/ExtremeValueMachine/TestData/train.txt",
+        "/app/sandbox/ExtremeValueMachine/TestData/test.txt", seeds)
+    for seed in seeds:
+        print(f'seed {seed}')
+        for num_unk_classes in np.arange(12):
+            print(f'15 known and {num_unk_classes} unknown in test')
+        letter_test(
+            f"/app/sandbox/ExtremeValueMachine/TestData/oletter/{seed}/train_dataset.txt",
+            f"/app/sandbox/ExtremeValueMachine/TestData/oletter/{seed}/with_{num_unk_classes}_unk_test_dataset.txt",
+        )
