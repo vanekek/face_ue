@@ -1,1 +1,1 @@
-Z,S,V,H,N,X,F,O,J,I,B
+X,O,F,B,I,H,N,Z,V,S,J

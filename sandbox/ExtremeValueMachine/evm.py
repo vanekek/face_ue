@@ -8,7 +8,77 @@ from contextlib import contextmanager
 from multiprocessing import Pool
 import itertools as it
 import argparse
+import seaborn as sns
+import matplotlib.pyplot as plt
 
+def draw_score_distr_plot(
+    scores_distr, score_type, model_name, in_data_name, out_data_name
+):
+
+    sns.set_theme()
+    plt.figure(figsize=(12, 8))
+    sns.distplot(
+        scores_distr[in_data_name],
+        kde=True,
+        norm_hist=True,
+        hist=True,
+        label=in_data_name,
+    )
+    sns.distplot(
+        scores_distr[out_data_name],
+        kde=True,
+        norm_hist=True,
+        hist=True,
+        label=out_data_name,
+    )
+
+    plt.title(
+        f"{model_name} model Softmax score distribution for {in_data_name} and {out_data_name} datasets"
+    )
+    plt.xlabel(f"{score_type} score")
+
+    plt.legend()
+
+def save_dataset_to_file(X, y, file_path):
+    X = X.astype('int').astype('str')
+    with open(file_path, "w") as f:
+        for i, (x_slice, y_slice) in enumerate(zip(X, y)):
+            slice = [y_slice] + list(x_slice)
+            if i == len(y) - 1:
+                f.write(",".join(slice))
+            else:
+                f.write(",".join(slice)+'\n')
+
+def create_oletter_dataset(train_fname, test_fname, seeds):
+    oletter_dir = Path('/app/sandbox/ExtremeValueMachine/TestData/oletter')
+    Xtrain, ytrain = load_data(train_fname)
+    Xtest, ytest = load_data(test_fname)
+    
+    letters = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z']
+    
+    oletter_dir.mkdir(exist_ok=True)
+    for seed in seeds:
+        rs = RandomState(seed)
+        out_dir = oletter_dir / str(seed)
+        out_dir.mkdir(exist_ok=True)
+        known_labels = list(rs.choice(letters, 15, replace=False))
+        # create train dataset
+        train_valid_letters_idx = np.isin(ytrain, known_labels)
+        Xtrain_valid = Xtrain[train_valid_letters_idx]
+        ytrain_valid = ytrain[train_valid_letters_idx]
+        save_dataset_to_file(Xtrain_valid, ytrain_valid, out_dir / f'train_dataset.txt')
+        unk_labels = list(set(letters).difference(set(known_labels)))
+        with open(out_dir / 'train_labels.txt', "w")as f:
+            f.write(",".join(known_labels))
+        with open(out_dir / 'unknown_labels.txt', "w")as f:
+            f.write(",".join(unk_labels))
+        for num_unk_classes in np.arange(len(unk_labels)+1):
+            unk_labels_to_test = unk_labels[:num_unk_classes]
+            test_labels = known_labels + unk_labels_to_test
+            test_valid_letters_idx = np.isin(ytest, test_labels)
+            Xtest_valid = Xtest[test_valid_letters_idx]
+            ytest_valid = ytest[test_valid_letters_idx]
+            save_dataset_to_file(Xtest_valid, ytest_valid, out_dir / f'with_{num_unk_classes}_unk_test_dataset.txt')
 
 @contextmanager
 def timer(message):
@@ -132,7 +202,7 @@ def reduce_model(points, weibulls, labels, labels_to_reduce=None):
     for ulabel in ulabels:
         ind = np.where(labels == ulabel)
         if ulabel in labels_to_reduce:
-            print("...reducing model for label {}".format(ulabel))
+            #print("...reducing model for label {}".format(ulabel))
             keep_ind = set_cover(points[ind], [weibulls[i] for i in ind[0]])
             keep = np.concatenate((keep, ind[0][keep_ind]))
         else:
@@ -185,14 +255,14 @@ def fit(X, y):
     return weibulls
 
 
-def predict(X, points, weibulls, labels):
+def predict(Xtest, Xtrain, weibulls, labels):
     """
     Analogous to scikit-learn's predict method
     except takes a few more arguments which
     constitute the actual model.
     """
     global num_to_fuse
-    d_mat = cdist_func(points, X).astype(np.float64)
+    d_mat = cdist_func(Xtrain, Xtest).astype(np.float64)
     with Pool(8) as p:
         probs = np.array(p.map(weibull_eval_parallel, zip(d_mat, weibulls)))
 
@@ -205,8 +275,8 @@ def predict(X, points, weibulls, labels):
     fused_probs = np.array(fused_probs)
     max_ind = np.argmax(fused_probs, axis=0)
     predicted_labels = ulabels[max_ind]
-    confidence = fused_probs[max_ind]
-    return predicted_labels, fused_probs
+    confidence = np.max(fused_probs, axis=0)
+    return predicted_labels, fused_probs, confidence
 
 
 def load_data(fname):
@@ -218,7 +288,7 @@ def load_data(fname):
     return np.array(data), np.array(labels)
 
 
-def get_f1(predictions, labels):
+def get_f1_score(predictions, labels):
     return sum(predictions == labels) / float(len(predictions))
 
 
@@ -238,71 +308,65 @@ def update_params(
     num_to_fuse = n_num_to_fuse
     margin_scale = n_margin_scale
 
-
+def compute_f1_measure(gallery_scores, imposter_scores, gallery_idx, predictions, ytest, thresh):
+    tp = np.sum(np.logical_and(gallery_scores > thresh, predictions[gallery_idx]==ytest[gallery_idx]))
+    fn = np.sum(gallery_scores < thresh)
+    fp = np.sum(imposter_scores > thresh)
+    recall = tp / (tp+fn)
+    precision = tp / (tp+fp)
+    return 2 * (recall * precision)/(recall + precision)
 def letter_test(train_fname, test_fname):
     Xtrain, ytrain = load_data(train_fname)
     Xtest, ytest = load_data(test_fname)
     weibulls = fit(Xtrain, ytrain)
     Xtrain, weibulls, ytrain = reduce_model(Xtrain, weibulls, ytrain)
-    predictions, probs = predict(Xtest, Xtrain, weibulls, ytrain)
+    predictions, probs, confidence = predict(Xtest, Xtrain, weibulls, ytrain)
 
-    accuracy = get_accuracy(predictions, ytest)
-    return accuracy
+    y_train_unique = np.unique(ytrain)
+    gallery_idx = np.isin(ytest, y_train_unique)
+    gallery_scores = confidence[gallery_idx]
+    imposter_scores = confidence[~gallery_idx]
+
+    # find optimal thresh
+    threshes = np.logspace(-5, -2, num=20)
+
+    f1_scores = []
+    for thresh in threshes:
+        f1_scores.append(compute_f1_measure(gallery_scores, imposter_scores, gallery_idx, predictions,ytest, thresh))
+    print(f"Optimal thresh: {threshes[np.argmax(f1_scores)]}, optimal F1 {np.max(f1_scores)}")
+    # scores_distr = {
+    #     "gallery": gallery_scores,
+    #     "imposter": imposter_scores,
+    # }
+
+    # draw_score_distr_plot(
+    # scores_distr=scores_distr,
+    # score_type="EVM",
+    # model_name="EVM",
+    # in_data_name="gallery",
+    # out_data_name="imposter",
+    # )
+    ct = len(np.unique(ytrain))
+    ce = len(np.unique(ytest))
+    # https://scikit-learn.org/stable/modules/cross_validation.html
+    f1_score = np.max(f1_scores) # get_f1_score(predictions, ytest, confidence)
+    return f1_score
 
 from pathlib import Path
 from itertools import product
 from numpy.random import RandomState
 
-def save_dataset_to_file(X, y, file_path):
-    X = X.astype('int').astype('str')
-    with open(file_path, "w") as f:
-        for i, (x_slice, y_slice) in enumerate(zip(X, y)):
-            slice = [y_slice] + list(x_slice)
-            if i == len(y) - 1:
-                f.write(",".join(slice))
-            else:
-                f.write(",".join(slice)+'\n')
-
-def create_oletter_dataset(train_fname, test_fname, seeds):
-    oletter_dir = Path('/app/sandbox/ExtremeValueMachine/TestData/oletter')
-    Xtrain, ytrain = load_data(train_fname)
-    Xtest, ytest = load_data(test_fname)
-    
-    letters = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z']
-    
-    oletter_dir.mkdir(exist_ok=True)
-    for seed in seeds:
-        rs = RandomState(seed)
-        out_dir = oletter_dir / str(seed)
-        out_dir.mkdir(exist_ok=True)
-        known_labels = list(rs.choice(letters, 15, replace=False))
-        # create train dataset
-        train_valid_letters_idx = np.isin(ytrain, known_labels)
-        Xtrain_valid = Xtrain[train_valid_letters_idx]
-        ytrain_valid = ytrain[train_valid_letters_idx]
-        save_dataset_to_file(Xtrain_valid, ytrain_valid, out_dir / f'train_dataset.txt')
-        unk_labels = list(set(letters).difference(set(known_labels)))
-        with open(out_dir / 'train_labels.txt', "w")as f:
-            f.write(",".join(known_labels))
-        with open(out_dir / 'unknown_labels.txt', "w")as f:
-            f.write(",".join(unk_labels))
-        for num_unk_classes in np.arange(len(unk_labels)+1):
-            unk_labels_to_test = unk_labels[:num_unk_classes]
-            test_labels = known_labels + unk_labels_to_test
-            test_valid_letters_idx = np.isin(ytest, test_labels)
-            Xtest_valid = Xtest[test_valid_letters_idx]
-            ytest_valid = ytest[test_valid_letters_idx]
-            save_dataset_to_file(Xtest_valid, ytest_valid, out_dir / f'with_{num_unk_classes}_unk_test_dataset.txt')
 
 if __name__ == "__main__":
-    seeds = [4, 5, 1]
-    create_oletter_dataset( "/app/sandbox/ExtremeValueMachine/TestData/train.txt",
-        "/app/sandbox/ExtremeValueMachine/TestData/test.txt", seeds)
+    seeds = [4, 5]
+    # create_oletter_dataset( "/app/sandbox/ExtremeValueMachine/TestData/train.txt",
+    #     "/app/sandbox/ExtremeValueMachine/TestData/test.txt", seeds)
     for seed in seeds:
         print(f'seed {seed}')
         for num_unk_classes in np.arange(12):
             print(f'15 known and {num_unk_classes} unknown in test')
-        letter_test(
-            f"/app/sandbox/ExtremeValueMachine/TestData/oletter/{seed}/train_dataset.txt",
-            f"/app/sandbox/ExtremeValueMachine/TestData/oletter/{seed}/with_{num_unk_classes}_unk_test_dataset.txt",
-        )
+            f1_score = letter_test(
+                f"/app/sandbox/ExtremeValueMachine/TestData/oletter/{seed}/train_dataset.txt",
+                f"/app/sandbox/ExtremeValueMachine/TestData/oletter/{seed}/with_{num_unk_classes}_unk_test_dataset.txt",
+            )
+            #print(f'f1_score: {f1_score}')
