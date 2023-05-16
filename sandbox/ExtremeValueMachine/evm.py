@@ -11,10 +11,10 @@ import argparse
 import seaborn as sns
 import matplotlib.pyplot as plt
 
+
 def draw_score_distr_plot(
     scores_distr, score_type, model_name, in_data_name, out_data_name
 ):
-
     sns.set_theme()
     plt.figure(figsize=(12, 8))
     sns.distplot(
@@ -39,23 +39,52 @@ def draw_score_distr_plot(
 
     plt.legend()
 
+
 def save_dataset_to_file(X, y, file_path):
-    X = X.astype('int').astype('str')
+    X = X.astype("int").astype("str")
     with open(file_path, "w") as f:
         for i, (x_slice, y_slice) in enumerate(zip(X, y)):
             slice = [y_slice] + list(x_slice)
             if i == len(y) - 1:
                 f.write(",".join(slice))
             else:
-                f.write(",".join(slice)+'\n')
+                f.write(",".join(slice) + "\n")
+
 
 def create_oletter_dataset(train_fname, test_fname, seeds):
-    oletter_dir = Path('/app/sandbox/ExtremeValueMachine/TestData/oletter')
+    oletter_dir = Path("/app/sandbox/ExtremeValueMachine/TestData/oletter")
     Xtrain, ytrain = load_data(train_fname)
     Xtest, ytest = load_data(test_fname)
-    
-    letters = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z']
-    
+
+    letters = [
+        "A",
+        "B",
+        "C",
+        "D",
+        "E",
+        "F",
+        "G",
+        "H",
+        "I",
+        "J",
+        "K",
+        "L",
+        "M",
+        "N",
+        "O",
+        "P",
+        "Q",
+        "R",
+        "S",
+        "T",
+        "U",
+        "V",
+        "W",
+        "X",
+        "Y",
+        "Z",
+    ]
+
     oletter_dir.mkdir(exist_ok=True)
     for seed in seeds:
         rs = RandomState(seed)
@@ -66,19 +95,24 @@ def create_oletter_dataset(train_fname, test_fname, seeds):
         train_valid_letters_idx = np.isin(ytrain, known_labels)
         Xtrain_valid = Xtrain[train_valid_letters_idx]
         ytrain_valid = ytrain[train_valid_letters_idx]
-        save_dataset_to_file(Xtrain_valid, ytrain_valid, out_dir / f'train_dataset.txt')
+        save_dataset_to_file(Xtrain_valid, ytrain_valid, out_dir / f"train_dataset.txt")
         unk_labels = list(set(letters).difference(set(known_labels)))
-        with open(out_dir / 'train_labels.txt', "w")as f:
+        with open(out_dir / "train_labels.txt", "w") as f:
             f.write(",".join(known_labels))
-        with open(out_dir / 'unknown_labels.txt', "w")as f:
+        with open(out_dir / "unknown_labels.txt", "w") as f:
             f.write(",".join(unk_labels))
-        for num_unk_classes in np.arange(len(unk_labels)+1):
+        for num_unk_classes in np.arange(len(unk_labels) + 1):
             unk_labels_to_test = unk_labels[:num_unk_classes]
             test_labels = known_labels + unk_labels_to_test
             test_valid_letters_idx = np.isin(ytest, test_labels)
             Xtest_valid = Xtest[test_valid_letters_idx]
             ytest_valid = ytest[test_valid_letters_idx]
-            save_dataset_to_file(Xtest_valid, ytest_valid, out_dir / f'with_{num_unk_classes}_unk_test_dataset.txt')
+            save_dataset_to_file(
+                Xtest_valid,
+                ytest_valid,
+                out_dir / f"with_{num_unk_classes}_unk_test_dataset.txt",
+            )
+
 
 @contextmanager
 def timer(message):
@@ -202,7 +236,7 @@ def reduce_model(points, weibulls, labels, labels_to_reduce=None):
     for ulabel in ulabels:
         ind = np.where(labels == ulabel)
         if ulabel in labels_to_reduce:
-            #print("...reducing model for label {}".format(ulabel))
+            # print("...reducing model for label {}".format(ulabel))
             keep_ind = set_cover(points[ind], [weibulls[i] for i in ind[0]])
             keep = np.concatenate((keep, ind[0][keep_ind]))
         else:
@@ -308,13 +342,22 @@ def update_params(
     num_to_fuse = n_num_to_fuse
     margin_scale = n_margin_scale
 
-def compute_f1_measure(gallery_scores, imposter_scores, gallery_idx, predictions, ytest, thresh):
-    tp = np.sum(np.logical_and(gallery_scores > thresh, predictions[gallery_idx]==ytest[gallery_idx]))
+
+def compute_f1_measure(
+    gallery_scores, imposter_scores, gallery_idx, predictions, ytest, thresh
+):
+    tp = np.sum(
+        np.logical_and(
+            gallery_scores > thresh, predictions[gallery_idx] == ytest[gallery_idx]
+        )
+    )
     fn = np.sum(gallery_scores < thresh)
     fp = np.sum(imposter_scores > thresh)
-    recall = tp / (tp+fn)
-    precision = tp / (tp+fp)
-    return 2 * (recall * precision)/(recall + precision)
+    recall = tp / (tp + fn)
+    precision = tp / (tp + fp)
+    return 2 * (recall * precision) / (recall + precision)
+
+
 def letter_test(train_fname, test_fname):
     Xtrain, ytrain = load_data(train_fname)
     Xtest, ytest = load_data(test_fname)
@@ -332,25 +375,32 @@ def letter_test(train_fname, test_fname):
 
     f1_scores = []
     for thresh in threshes:
-        f1_scores.append(compute_f1_measure(gallery_scores, imposter_scores, gallery_idx, predictions,ytest, thresh))
-    print(f"Optimal thresh: {threshes[np.argmax(f1_scores)]}, optimal F1 {np.max(f1_scores)}")
-    # scores_distr = {
-    #     "gallery": gallery_scores,
-    #     "imposter": imposter_scores,
-    # }
+        f1_scores.append(
+            compute_f1_measure(
+                gallery_scores, imposter_scores, gallery_idx, predictions, ytest, thresh
+            )
+        )
+    print(
+        f"Optimal thresh: {threshes[np.argmax(f1_scores)]}, optimal F1 {np.max(f1_scores)}"
+    )
+    scores_distr = {
+        "gallery": gallery_scores,
+        "imposter": imposter_scores,
+    }
 
-    # draw_score_distr_plot(
-    # scores_distr=scores_distr,
-    # score_type="EVM",
-    # model_name="EVM",
-    # in_data_name="gallery",
-    # out_data_name="imposter",
-    # )
+    draw_score_distr_plot(
+        scores_distr=scores_distr,
+        score_type="EVM",
+        model_name="EVM",
+        in_data_name="gallery",
+        out_data_name="imposter",
+    )
     ct = len(np.unique(ytrain))
     ce = len(np.unique(ytest))
     # https://scikit-learn.org/stable/modules/cross_validation.html
-    f1_score = np.max(f1_scores) # get_f1_score(predictions, ytest, confidence)
+    f1_score = np.max(f1_scores)  # get_f1_score(predictions, ytest, confidence)
     return f1_score
+
 
 from pathlib import Path
 from itertools import product
@@ -362,11 +412,11 @@ if __name__ == "__main__":
     # create_oletter_dataset( "/app/sandbox/ExtremeValueMachine/TestData/train.txt",
     #     "/app/sandbox/ExtremeValueMachine/TestData/test.txt", seeds)
     for seed in seeds:
-        print(f'seed {seed}')
-        for num_unk_classes in np.arange(12):
-            print(f'15 known and {num_unk_classes} unknown in test')
+        print(f"seed {seed}")
+        for num_unk_classes in [11]:  # np.arange(12):
+            print(f"15 known and {num_unk_classes} unknown in test")
             f1_score = letter_test(
                 f"/app/sandbox/ExtremeValueMachine/TestData/oletter/{seed}/train_dataset.txt",
                 f"/app/sandbox/ExtremeValueMachine/TestData/oletter/{seed}/with_{num_unk_classes}_unk_test_dataset.txt",
             )
-            #print(f'f1_score: {f1_score}')
+            # print(f'f1_score: {f1_score}')

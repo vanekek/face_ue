@@ -2,6 +2,9 @@ import numpy as np
 from tqdm import tqdm
 from pathlib import Path
 import scipy
+from metrics import compute_detection_and_identification_rate
+import confidence_functions
+
 
 class TcmNN:
     def __init__(self, number_of_nearest_neighbors, scale, p_value_cache_path) -> None:
@@ -102,7 +105,6 @@ class TcmNN:
                 (similarity[probe_index, max_idx] - np.mean(a)) / np.std(a)
             )
 
-        
         # BUG: возможно есть ошибка при использовании probes_psr
         top_1_count, top_5_count, top_10_count = 0, 0, 0
         pos_sims, pos_psr, neg_sims, non_gallery_sims, neg_psr = [], [], [], [], []
@@ -144,9 +146,9 @@ class TcmNN:
 
 
 class PairwiseSims:
-    def __init__(self, psr_top_k: int, use_entropy) -> None:
-        self.psr_top_k = psr_top_k
-        self.use_entropy = use_entropy
+    def __init__(self, confidence_function_name: str) -> None:
+        self.confidence_function_name = confidence_function_name
+
     def __call__(self, probe_feats, gallery_feats, probe_ids, gallery_ids, fars):
         print(
             "probe_feats: %s, gallery_feats: %s"
@@ -154,71 +156,21 @@ class PairwiseSims:
         )
         similarity = np.dot(probe_feats, gallery_feats.T)  # (19593, 1772)
 
-        p_value_argmax = np.argmax(similarity, axis=1)
-        
-        probes_score = []
-        for probe_index in tqdm(range(probe_feats.shape[0])):
-            max_idx = p_value_argmax[probe_index]
-            
-            if self.psr_top_k > 0:
-                # a = np.concatenate(
-                # [
-                #     similarity[probe_index, :max_idx],
-                #     similarity[probe_index, max_idx + 1 :],
-                # ]
-                # )
-                a = np.sort(similarity[probe_index])[::-1][:self.psr_top_k]
-
-                #a = np.sort(a)[:self.psr_top_k]
-                # probes_score.append(
-                #     (similarity[probe_index, max_idx] - np.mean(a)) / np.std(a)
-                # )
-                probes_score.append((similarity[probe_index, max_idx] - a[1]) / np.sum(a))
-            elif self.use_entropy:
-                a = np.sort(similarity[probe_index])[::-1][:100]
-                a_norm = a - np.min(a) + 1e-4
-                a_norm = a_norm / np.sum(a_norm)
-                probes_score.append(-scipy.stats.entropy(a_norm))
-            else:
-                probes_score.append(
-                    similarity[probe_index, max_idx]
-                )
-            
-
-        top_1_count, top_5_count, top_10_count = 0, 0, 0
-        pos_sims, pos_score, neg_sims, non_gallery_sims, neg_psr = [], [], [], [], []
-        for index, query_id in enumerate(probe_ids):
-            if query_id in gallery_ids:
-                gallery_label = np.argwhere(gallery_ids == query_id)[0, 0]
-                index_sorted = np.argsort(similarity[index])[::-1]
-
-                top_1_count += gallery_label in index_sorted[:1]
-                top_5_count += gallery_label in index_sorted[:5]
-                top_10_count += gallery_label in index_sorted[:10]
-
-                pos_sims.append(similarity[index][gallery_ids == query_id][0])
-                pos_score.append(probes_score[index])
-                neg_sims.append(similarity[index][gallery_ids != query_id])
-            else:
-                non_gallery_sims.append(similarity[index])
-                neg_psr.append(probes_score[index])
-        pos_sims, neg_sims, non_gallery_sims = (
-            np.array(pos_sims),
-            np.array(neg_sims),
-            np.array(non_gallery_sims),
+        # compute confidences
+        confidence_function = getattr(
+            confidence_functions, self.confidence_function_name
         )
-        correct_pos_cond = pos_sims > neg_sims.max(1)
-        neg_psr_sorted = np.sort(neg_psr)[::-1]
-        threshes, recalls = [], []
-        for far in fars:
-            thresh = neg_psr_sorted[max(int((neg_psr_sorted.shape[0]) * far) - 1, 0)]
-            recall = (
-                np.logical_and(correct_pos_cond, pos_score > thresh).sum()
-                / pos_sims.shape[0]
-            )
-            threshes.append(thresh)
-            recalls.append(recall)
-        cmc_scores = list(zip(neg_sims, pos_sims.reshape(-1, 1))) + list(
-            zip(non_gallery_sims, [None] * non_gallery_sims.shape[0])
+        probe_score = confidence_function(similarity)
+
+        # Compute Detection & identification rate for open set recognition
+        (
+            top_1_count,
+            top_5_count,
+            top_10_count,
+            threshes,
+            recalls,
+            cmc_scores,
+        ) = compute_detection_and_identification_rate(
+            fars, probe_ids, gallery_ids, similarity, probe_score
         )
         return top_1_count, top_5_count, top_10_count, threshes, recalls, cmc_scores
