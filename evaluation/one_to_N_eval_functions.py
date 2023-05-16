@@ -144,10 +144,22 @@ class TcmNN:
         )
         return top_1_count, top_5_count, top_10_count, threshes, recalls, cmc_scores
 
-
-class PairwiseSims:
+class EVM:
     def __init__(self, confidence_function_name: str) -> None:
+        """
+        Implemetns Extreme Value Machine (EVM) and uses it for open set recognition
+        in case of one sample of each known class. In particular, we do not perform
+        Model Reduction, decried in section IV. A
+
+        https://arxiv.org/abs/1506.06112
+        """
         self.confidence_function_name = confidence_function_name
+
+    def __call__(self, probe_feats, gallery_feats, probe_ids, gallery_ids, fars):
+        pass
+class CosineSim:
+    def __init__(self, confidence_function: dict) -> None:
+        self.confidence_function = confidence_function
 
     def __call__(self, probe_feats, gallery_feats, probe_ids, gallery_ids, fars):
         print(
@@ -158,8 +170,8 @@ class PairwiseSims:
 
         # compute confidences
         confidence_function = getattr(
-            confidence_functions, self.confidence_function_name
-        )
+            confidence_functions, self.confidence_function.class_name
+        )(**self.confidence_function.init_args)
         probe_score = confidence_function(similarity)
 
         # Compute Detection & identification rate for open set recognition

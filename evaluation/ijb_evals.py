@@ -423,6 +423,7 @@ class IJB_test:
         batch_size=64,
         force_reload=False,
         restore_embs=None,
+        far_range=[-4, 0, 100]
     ):
         (
             templates,
@@ -468,7 +469,7 @@ class IJB_test:
         )
         self.face_scores = face_scores.astype(self.embs.dtype)
         self.evaluation_1N_function = evaluation_1N_function
-
+        self.far_range=far_range
     def run_model_test_single(
         self, use_flip_test=True, use_norm_score=False, use_detector_score=True
     ):
@@ -508,7 +509,7 @@ class IJB_test:
     def run_model_test_1N(self, npoints=100):
         two_galleries = False
 
-        fars_cal = [10**ii for ii in np.arange(-4, 0, 4 / npoints)] + [
+        fars_cal = [10**ii for ii in np.arange(self.far_range[0], self.far_range[1], 4.0 / self.far_range[2])] + [
             1
         ]  # plot in range [10-4, 1]
         fars_show_idx = np.arange(len(fars_cal))[
@@ -724,34 +725,33 @@ def plot_roc_and_calculate_tpr(scores, names=None, label=None):
 
 
 def plot_dir_far_cmc_scores(scores, names=None):
-    try:
-        import matplotlib.pyplot as plt
+    import matplotlib.pyplot as plt
 
-        fig = plt.figure()
-        for id, score in enumerate(scores):
-            name = None if names is None else names[id]
-            if isinstance(score, str) and score.endswith(".npz"):
-                aa = np.load(score)
-                score, name = aa.get("scores")[0], aa.get("names")[0]
-            fars, tpirs = score[0], score[1]
-            name = name if name is not None else str(id)
+    fig = plt.figure()
+    for id, score in enumerate(scores):
+        name = None if names is None else names[id]
+        if isinstance(score, str) and score.endswith(".npz"):
+            aa = np.load(score)
+            score, name = aa.get("scores")[0], aa.get("names")[0]
+        fars, tpirs = score[0], score[1]
+        name = name if name is not None else str(id)
 
-            auc_value = auc(fars, tpirs)
-            label = "[%s (AUC = %0.4f%%)]" % (name, auc_value * 100)
-            plt.plot(fars, tpirs, lw=1, label=label)
+        auc_value = auc(fars, tpirs)
+        label = "[%s (AUC = %0.4f%%)]" % (name, auc_value * 100)
+        plt.plot(fars, tpirs, lw=1, label=label)
 
-        plt.xlabel("False Alarm Rate")
-        plt.xlim([0.0001, 1])
-        plt.xscale("log")
-        plt.ylabel("Detection & Identification Rate (%)")
-        plt.ylim([0, 1])
+    plt.xlabel("False Alarm Rate")
+    plt.xlim([0.0001, 1])
+    plt.xscale("log")
+    plt.ylabel("Detection & Identification Rate (%)")
+    plt.ylim([0, 1])
 
-        plt.grid(linestyle="--", linewidth=1)
-        plt.legend(fontsize="x-small")
-        plt.tight_layout()
-    except:
-        print("matplotlib plot failed")
-        fig = None
+    plt.grid(linestyle="--", linewidth=1)
+    plt.legend(fontsize="x-small")
+    plt.tight_layout()
+    # except:
+    #     print("matplotlib plot failed")
+    #     fig = None
 
     return fig
 
@@ -783,6 +783,7 @@ def main(cfg):
             batch_size=cfg.batch_size,
             force_reload=False,
             restore_embs=cfg.restore_embs,
+            far_range=cfg.far_range
         )
 
         if cfg.is_one_2_N:  # 1:N test
