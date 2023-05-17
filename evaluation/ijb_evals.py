@@ -423,7 +423,7 @@ class IJB_test:
         batch_size=64,
         force_reload=False,
         restore_embs=None,
-        far_range=[-4, 0, 100]
+        far_range=[-4, 0, 100],
     ):
         (
             templates,
@@ -469,7 +469,8 @@ class IJB_test:
         )
         self.face_scores = face_scores.astype(self.embs.dtype)
         self.evaluation_1N_function = evaluation_1N_function
-        self.far_range=far_range
+        self.far_range = far_range
+
     def run_model_test_single(
         self, use_flip_test=True, use_norm_score=False, use_detector_score=True
     ):
@@ -509,7 +510,12 @@ class IJB_test:
     def run_model_test_1N(self, npoints=100):
         two_galleries = False
 
-        fars_cal = [10**ii for ii in np.arange(self.far_range[0], self.far_range[1], 4.0 / self.far_range[2])] + [
+        fars_cal = [
+            10**ii
+            for ii in np.arange(
+                self.far_range[0], self.far_range[1], 4.0 / self.far_range[2]
+            )
+        ] + [
             1
         ]  # plot in range [10-4, 1]
         fars_show_idx = np.arange(len(fars_cal))[
@@ -783,7 +789,7 @@ def main(cfg):
             batch_size=cfg.batch_size,
             force_reload=False,
             restore_embs=cfg.restore_embs,
-            far_range=cfg.far_range
+            far_range=cfg.far_range,
         )
 
         if cfg.is_one_2_N:  # 1:N test
