@@ -457,10 +457,13 @@ class IJB_test:
         aggregate_gallery_templates_with_confidence,
         use_detector_score,
         use_two_galleries,
+        recompute_template_pooling,
+        features,
         far_range,
     ):
         self.use_two_galleries = use_two_galleries
-
+        self.recompute_template_pooling = recompute_template_pooling
+        self.features = features
         (
             templates,
             medias,
@@ -605,38 +608,41 @@ class IJB_test:
                 g2_ids,
                 self.aggregate_gallery_templates_with_confidence,
             )
-        # probe_mixed_templates_feature_path = (
-        #     f"/app/cache/template_cache/probe_aggr_{self.subset}"
-        # )
-        # if Path(probe_mixed_templates_feature_path + "_feature.npy").is_file():
-        #     probe_mixed_templates_feature = np.load(
-        #         probe_mixed_templates_feature_path + "_feature.npy"
-        #     )
-        #     probe_mixed_unique_subject_ids = np.load(
-        #         probe_mixed_templates_feature_path + "_subject_ids.npy"
-        #     )
-        # else:
-        (
-            probe_mixed_templates_feature,
-            probe_mixed_unique_templates,
-            probe_mixed_unique_subject_ids,
-        ) = image2template_feature(
-            img_input_feats,
-            self.unc,
-            self.templates,
-            self.medias,
-            probe_mixed_templates,
-            probe_mixed_ids,
-            self.aggregate_gallery_templates_with_confidence,  # self.aggregate_gallery_templates_with_confidence,
-        )
-        # np.save(
-        #     probe_mixed_templates_feature_path + "_feature.npy",
-        #     probe_mixed_templates_feature,
-        # )
-        # np.save(
-        #     probe_mixed_templates_feature_path + "_subject_ids.npy",
-        #     probe_mixed_unique_subject_ids,
-        # )
+
+        probe_mixed_templates_feature_path = f"/app/cache/template_cache/probe_aggr_{str(self.aggregate_gallery_templates_with_confidence)}_{str(self.use_detector_score)}_{self.features}_{self.subset}"
+
+        if (
+            Path(probe_mixed_templates_feature_path + "_feature.npy").is_file()
+            and self.recompute_template_pooling is False
+        ):
+            probe_mixed_templates_feature = np.load(
+                probe_mixed_templates_feature_path + "_feature.npy"
+            )
+            probe_mixed_unique_subject_ids = np.load(
+                probe_mixed_templates_feature_path + "_subject_ids.npy"
+            )
+        else:
+            (
+                probe_mixed_templates_feature,
+                probe_mixed_unique_templates,
+                probe_mixed_unique_subject_ids,
+            ) = image2template_feature(
+                img_input_feats,
+                self.unc,
+                self.templates,
+                self.medias,
+                probe_mixed_templates,
+                probe_mixed_ids,
+                self.aggregate_gallery_templates_with_confidence,  # self.aggregate_gallery_templates_with_confidence,
+            )
+            np.save(
+                probe_mixed_templates_feature_path + "_feature.npy",
+                probe_mixed_templates_feature,
+            )
+            np.save(
+                probe_mixed_templates_feature_path + "_subject_ids.npy",
+                probe_mixed_unique_subject_ids,
+            )
         print("g1_templates_feature:", g1_templates_feature.shape)  # (1772, 512)
 
         if self.use_two_galleries:
@@ -834,6 +840,8 @@ def main(cfg):
             aggregate_gallery_templates_with_confidence=method.aggregate_gallery_templates_with_confidence,
             use_detector_score=method.use_detector_score,
             use_two_galleries=cfg.use_two_galleries,
+            recompute_template_pooling=cfg.recompute_template_pooling,
+            features=method.features,
             far_range=cfg.far_range,
         )
 
