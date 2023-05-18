@@ -3,22 +3,25 @@ hydra:
     dir: ${exp_dir}
 exp_dir: outputs/ijb_evals/ijb_evals_${now:%Y-%m-%d_%H-%M-%S}
 
-restore_embs: /app/cache/features/scf_ijb_embs_${subset}.npz
+
 data_path: datasets/arcface_ijb/ # Dataset path containing IJBB and IJBC sub folder
 subset: IJBC # Subset test target, could be IJBB / IJBC
+use_two_galleries: False
 batch_size: 16
 is_one_2_N: True  # Run 1:N test instead of 1
 far_range: [-4, 0, 100]
 open_set_recognition_methods:
-  - evaluation_1N_function: 
-      class_path: evaluation.one_to_N_eval_functions.CosineSim
-      init_args:
-        confidence_function: 
-          class_name: NAC_confidence
-          init_args:
-            k: 16
-            s: 1
-    save_result: "/app/outputs/IJB_result/${subset}_NAC_k_16.npz"
+  # - evaluation_1N_function: 
+  #     class_path: evaluation.one_to_N_eval_functions.CosineSim
+  #     init_args:
+  #       confidence_function: 
+  #         class_name: NAC_confidence
+  #         init_args:
+  #           k: 16
+  #           s: 1
+  #   restore_embs: /app/cache/features/scf_ijb_embs_${subset}.npz
+  #   aggregate_gallery_templates_with_confidence: True
+  #   save_result: "${exp_dir}/${subset}_NAC_k_16.npz"
   # - evaluation_1N_function: 
   #     class_path: evaluation.one_to_N_eval_functions.PFE
   #     init_args:
@@ -26,7 +29,7 @@ open_set_recognition_methods:
   #         class_name: MaxSimilarity_confidence
   #         init_args:
   #           foo: bar
-  #   save_result: "/app/outputs/IJB_result/${subset}_PFE.npz"
+  #   save_result: "${exp_dir}/${subset}_PFE.npz"
   - evaluation_1N_function: 
       class_path: evaluation.one_to_N_eval_functions.CosineSim
       init_args:
@@ -34,33 +37,58 @@ open_set_recognition_methods:
           class_name: MaxSimilarity_confidence
           init_args:
             foo: bar
-    save_result: "/app/outputs/IJB_result/${subset}_CosineSim.npz"
+    restore_embs: /app/cache/features/scf_ijb_embs_${subset}.npz
+    aggregate_gallery_templates_with_confidence: False
+    use_detector_score: False
+    save_result: "${exp_dir}/${subset}_CosineSim.npz"
+  - evaluation_1N_function: 
+      class_path: evaluation.one_to_N_eval_functions.CosineSim
+      init_args:
+        confidence_function: 
+          class_name: MaxSimilarity_confidence
+          init_args:
+            foo: bar
+    restore_embs: /app/cache/features/scf_ijb_embs_${subset}.npz
+    aggregate_gallery_templates_with_confidence: False
+    use_detector_score: True
+    save_result: "${exp_dir}/${subset}_CosineSim_det_score.npz"
+
+  - evaluation_1N_function: 
+      class_path: evaluation.one_to_N_eval_functions.CosineSim
+      init_args:
+        confidence_function: 
+          class_name: MaxSimilarity_confidence
+          init_args:
+            foo: bar
+    restore_embs: /app/cache/features/scf_ijb_embs_${subset}.npz
+    aggregate_gallery_templates_with_confidence: True
+    use_detector_score: True
+    save_result: "${exp_dir}/${subset}_CosineSim_det_and_scf_score_.npz"
+
+  # - evaluation_1N_function: 
+  #     class_path: evaluation.one_to_N_eval_functions.SCF
+  #     init_args:
+  #       confidence_function: 
+  #         class_name: MaxSimilarity_confidence
+  #         init_args:
+  #           foo: bar
+  #   restore_embs: /app/cache/features/scf_ijb_embs_${subset}.npz
+  #   aggregate_gallery_templates_with_confidence: False
+  #   save_result: "${exp_dir}/${subset}_SCF.npz"
+    
+  # - evaluation_1N_function: 
+  #     class_path: evaluation.one_to_N_eval_functions.SCF
+  #     init_args:
+  #       confidence_function: 
+  #         class_name: NAC_confidence
+  #         init_args:
+  #           k: 16
+  #           s: 1
+  #   restore_embs: /app/cache/features/scf_ijb_embs_${subset}.npz
+  #   aggregate_gallery_templates_with_confidence: False
+  #   save_result: "${exp_dir}/${subset}_SCF_NAC.npz"
 
 
-  # - evaluation_1N_function: 
-  #     class_path: evaluation.one_to_N_eval_functions.EVM
-  #     init_args:
-  #       confidence_function_name: max_similarity_value_confidence
-  #   save_result: "/app/outputs/IJB_result/${subset}_EVM.npz"
-  # - evaluation_1N_function: 
-  #     class_path: evaluation.one_to_N_eval_functions.PairwiseSims
-  #     init_args:
-  #       psr_top_k: 10
-  #       use_entropy: False
-  #   save_result: "/app/outputs/IJB_result/${subset}_PairwiseSims_withPSR_10.npz"
-  # - evaluation_1N_function: 
-  #     class_path: evaluation.one_to_N_eval_functions.PairwiseSims
-  #     init_args:
-  #       psr_top_k: 1000
-  #       use_entropy: False
-  #   save_result: "/app/outputs/IJB_result/${subset}_PairwiseSims_withPSR_1000.npz"
-
-  # - evaluation_1N_function: 
-  #     class_path: evaluation.one_to_N_eval_functions.PairwiseSims
-  #     init_args:
-  #       psr_top_k: 0
-  #       use_entropy: True
-  #   save_result: "/app/outputs/IJB_result/${subset}_PairwiseSims_entropy.npz"
 
 
   
@@ -70,4 +98,4 @@ open_set_recognition_methods:
   #       number_of_nearest_neighbors: 50
   #       scale: 1
   #       p_value_cache_path: /app/cache/tcmNN_cache
-  #   save_result: "/app/outputs/IJB_result/${subset}_TcmNN.npz"
+  #   save_result: "${exp_dir}/${subset}_TcmNN.npz"

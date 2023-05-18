@@ -348,7 +348,7 @@ def process_embeddings(
 
 
 def image2template_feature(
-    img_feats=None, templates=None, medias=None, choose_templates=None, choose_ids=None
+    img_feats, unc, templates, medias, choose_templates, choose_ids, unc_pool: bool
 ):
     if choose_templates is not None:  # 1:N
         unique_templates, indices = np.unique(choose_templates, return_index=True)
@@ -374,10 +374,17 @@ def image2template_feature(
             if ct == 1:
                 media_norm_feats += [face_norm_feats[ind_m]]
             else:  # image features from the same video will be aggregated into one feature
+                assert False
                 media_norm_feats += [np.mean(face_norm_feats[ind_m], 0, keepdims=True)]
         media_norm_feats = np.array(media_norm_feats)
         # media_norm_feats = media_norm_feats / np.sqrt(np.sum(media_norm_feats ** 2, -1, keepdims=True))
-        template_feats[count_template] = np.sum(media_norm_feats, 0)
+        if unc_pool:
+            template_conf = unc[ind_t]
+            template_feats[count_template] = np.sum(
+                media_norm_feats * template_conf[:, np.newaxis], axis=0
+            ) / np.sum(template_conf)
+        else:
+            template_feats[count_template] = np.sum(media_norm_feats, 0)
     template_norm_feats = normalize(template_feats)
     return template_norm_feats, unique_templates, unique_subjectids
 
@@ -420,11 +427,16 @@ class IJB_test:
         data_path,
         subset,
         evaluation_1N_function,
-        batch_size=64,
-        force_reload=False,
-        restore_embs=None,
-        far_range=[-4, 0, 100],
+        batch_size,
+        force_reload,
+        restore_embs,
+        aggregate_gallery_templates_with_confidence,
+        use_detector_score,
+        use_two_galleries,
+        far_range,
     ):
+        self.use_two_galleries = use_two_galleries
+
         (
             templates,
             medias,
@@ -469,6 +481,10 @@ class IJB_test:
         )
         self.face_scores = face_scores.astype(self.embs.dtype)
         self.evaluation_1N_function = evaluation_1N_function
+        self.aggregate_gallery_templates_with_confidence = (
+            aggregate_gallery_templates_with_confidence
+        )
+        self.use_detector_score = use_detector_score
         self.far_range = far_range
 
     def run_model_test_single(
@@ -508,8 +524,6 @@ class IJB_test:
         return scores, names
 
     def run_model_test_1N(self, npoints=100):
-        two_galleries = False
-
         fars_cal = [
             10**ii
             for ii in np.arange(
@@ -535,9 +549,9 @@ class IJB_test:
         img_input_feats = process_embeddings(
             self.embs,
             self.embs_f,
-            use_flip_test=True,
+            use_flip_test=False,
             use_norm_score=False,
-            use_detector_score=True,
+            use_detector_score=self.use_detector_score,
             face_scores=self.face_scores,
         )
         (
@@ -545,9 +559,15 @@ class IJB_test:
             g1_unique_templates,
             g1_unique_ids,
         ) = image2template_feature(
-            img_input_feats, self.templates, self.medias, g1_templates, g1_ids
+            img_input_feats,
+            self.unc,
+            self.templates,
+            self.medias,
+            g1_templates,
+            g1_ids,
+            self.aggregate_gallery_templates_with_confidence,
         )
-        if two_galleries:
+        if self.use_two_galleries:
             (
                 g2_templates_feature,
                 g2_unique_templates,
@@ -587,7 +607,7 @@ class IJB_test:
             )
         print("g1_templates_feature:", g1_templates_feature.shape)  # (1772, 512)
 
-        if two_galleries:
+        if self.use_two_galleries:
             print("g2_templates_feature:", g2_templates_feature.shape)  # (1759, 512)
 
         print(
@@ -613,7 +633,7 @@ class IJB_test:
             fars_cal,
         )
 
-        if two_galleries:
+        if self.use_two_galleries:
             print(">>>> Gallery 2")
             (
                 g2_top_1_count,
@@ -788,7 +808,10 @@ def main(cfg):
             evaluation_1N_function=one_to_N_eval_function,
             batch_size=cfg.batch_size,
             force_reload=False,
-            restore_embs=cfg.restore_embs,
+            restore_embs=method.restore_embs,
+            aggregate_gallery_templates_with_confidence=method.aggregate_gallery_templates_with_confidence,
+            use_detector_score=method.use_detector_score,
+            use_two_galleries=cfg.use_two_galleries,
             far_range=cfg.far_range,
         )
 
