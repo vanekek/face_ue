@@ -19,7 +19,16 @@ class TcmNN:
         self.scale = scale  # neaded because we have |D_i^y| = 1 and |D_i^{-y}|!=1
         self.p_value_cache_path = Path(p_value_cache_path)
 
-    def __call__(self, probe_feats, gallery_feats, probe_ids, gallery_ids, fars):
+    def __call__(
+        self,
+        probe_feats,
+        probe_unc,
+        gallery_feats,
+        gallery_unc,
+        probe_ids,
+        gallery_ids,
+        fars,
+    ):
         print(
             "probe_feats: %s, gallery_feats: %s"
             % (probe_feats.shape, gallery_feats.shape)
@@ -156,7 +165,16 @@ class EVM:
         """
         self.confidence_function_name = confidence_function_name
 
-    def __call__(self, probe_feats, gallery_feats, probe_ids, gallery_ids, fars):
+    def __call__(
+        self,
+        probe_feats,
+        probe_unc,
+        gallery_feats,
+        gallery_unc,
+        probe_ids,
+        gallery_ids,
+        fars,
+    ):
         pass
 
 
@@ -164,7 +182,16 @@ class CosineSim:
     def __init__(self, confidence_function: dict) -> None:
         self.confidence_function = confidence_function
 
-    def __call__(self, probe_feats, gallery_feats, probe_ids, gallery_ids, fars):
+    def __call__(
+        self,
+        probe_feats,
+        probe_unc,
+        gallery_feats,
+        gallery_unc,
+        probe_ids,
+        gallery_ids,
+        fars,
+    ):
         print(
             "probe_feats: %s, gallery_feats: %s"
             % (probe_feats.shape, gallery_feats.shape)
@@ -201,12 +228,51 @@ class SCF:
         """
         self.confidence_function = confidence_function
 
-    def __call__(self, probe_feats, gallery_feats, probe_ids, gallery_ids, fars):
+    def __call__(
+        self,
+        probe_feats,
+        probe_unc,
+        gallery_feats,
+        gallery_unc,
+        probe_ids,
+        gallery_ids,
+        fars,
+    ):
         print(
             "probe_feats: %s, gallery_feats: %s"
             % (probe_feats.shape, gallery_feats.shape)
         )
-        similarity = np.dot(probe_feats, gallery_feats.T)  # (19593, 1772)
+        probe_unc = probe_unc[:, 0]
+        gallery_unc = gallery_unc[:, 0]
+        d = probe_feats.shape[1]
+        k_ij = probe_unc[:, np.newaxis] * gallery_unc[np.newaxis, :]
+        mu_ij = 2 * np.dot(probe_feats, gallery_feats.T)
+        k_tilde = np.sqrt(
+            probe_unc[:, np.newaxis] ** 2 + gallery_unc[np.newaxis, :] + mu_ij * k_ij
+        )
+
+        log_ive_i = np.log(
+            1e-6 + scipy.special.ive(d / 2 - 1, probe_unc, dtype=probe_unc.dtype)
+        )
+        log_ive_j = np.log(
+            1e-6 + scipy.special.ive(d / 2 - 1, gallery_unc, dtype=gallery_unc.dtype)
+        )
+        log_ive_ij = np.log(
+            1e-6 + scipy.special.ive(d / 2 - 1, k_tilde, dtype=k_tilde.dtype)
+        )
+
+        similarity = (d / 2 - 1) * (
+            np.log(probe_unc[:, np.newaxis])
+            + np.log(gallery_unc[np.newaxis, :])
+            - np.log(k_tilde)
+        ) - (
+            log_ive_i[:, np.newaxis]
+            + probe_unc[:, np.newaxis]
+            + log_ive_j[np.newaxis, :]
+            + gallery_unc[np.newaxis, :]
+            - log_ive_ij
+            - k_tilde
+        )
 
         # compute confidences
         confidence_function = getattr(
@@ -238,7 +304,16 @@ class PFE:
         """
         self.confidence_function = confidence_function
 
-    def __call__(self, probe_feats, gallery_feats, probe_ids, gallery_ids, fars):
+    def __call__(
+        self,
+        probe_feats,
+        probe_unc,
+        gallery_feats,
+        gallery_unc,
+        probe_ids,
+        gallery_ids,
+        fars,
+    ):
         print(
             "probe_feats: %s, gallery_feats: %s"
             % (probe_feats.shape, gallery_feats.shape)

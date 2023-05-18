@@ -365,6 +365,7 @@ def image2template_feature(
 
     # template_feats = np.zeros((len(unique_templates), img_feats.shape[1]), dtype=img_feats.dtype)
     template_feats = np.zeros((len(unique_templates), img_feats.shape[1]))
+    template_unc = np.zeros((len(unique_templates), unc.shape[1]))
     for count_template, uqt in tqdm(
         enumerate(unique_templates),
         "Extract template feature",
@@ -399,8 +400,8 @@ def image2template_feature(
                     ]
         media_norm_feats = np.array(media_norm_feats)[:, 0, :]
         # media_norm_feats = media_norm_feats / np.sqrt(np.sum(media_norm_feats ** 2, -1, keepdims=True))
+        template_conf = np.array(template_conf)[:, 0]
         if unc_pool:
-            template_conf = np.array(template_conf)[:, 0]
             template_feats[count_template] = np.sum(
                 media_norm_feats * template_conf, axis=0
             ) / np.sum(template_conf)
@@ -408,9 +409,10 @@ def image2template_feature(
             #     media_norm_feats * unc[ind_t], axis=0
             # ) / np.sum(unc[ind_t])
         else:
-            template_feats[count_template] = np.sum(media_norm_feats, 0)
+            template_feats[count_template] = np.sum(media_norm_feats, axis=0)
+        template_unc[count_template] = np.mean(template_conf, axis=0)
     template_norm_feats = normalize(template_feats)
-    return template_norm_feats, unique_templates, unique_subjectids
+    return template_norm_feats, template_unc, unique_templates, unique_subjectids
 
 
 def verification_11(
@@ -525,7 +527,7 @@ class IJB_test:
             use_detector_score=use_detector_score,
             face_scores=self.face_scores,
         )
-        template_norm_feats, unique_templates, _ = image2template_feature(
+        template_norm_feats, template_unc, unique_templates, _ = image2template_feature(
             img_input_feats, self.templates, self.medias
         )
         score = verification_11(template_norm_feats, unique_templates, self.p1, self.p2)
@@ -583,6 +585,7 @@ class IJB_test:
         )
         (
             g1_templates_feature,
+            g1_template_unc,
             g1_unique_templates,
             g1_unique_ids,
         ) = image2template_feature(
@@ -597,6 +600,7 @@ class IJB_test:
         if self.use_two_galleries:
             (
                 g2_templates_feature,
+                g2_template_unc,
                 g2_unique_templates,
                 g2_unique_ids,
             ) = image2template_feature(
@@ -612,11 +616,14 @@ class IJB_test:
         probe_mixed_templates_feature_path = f"/app/cache/template_cache/probe_aggr_{str(self.aggregate_gallery_templates_with_confidence)}_{str(self.use_detector_score)}_{self.features}_{self.subset}"
 
         if (
-            Path(probe_mixed_templates_feature_path + "_feature.npy").is_file()
+            Path(probe_mixed_templates_feature_path + "_unc.npy").is_file()
             and self.recompute_template_pooling is False
         ):
             probe_mixed_templates_feature = np.load(
                 probe_mixed_templates_feature_path + "_feature.npy"
+            )
+            probe_template_unc = np.load(
+                probe_mixed_templates_feature_path + "_unc.npy"
             )
             probe_mixed_unique_subject_ids = np.load(
                 probe_mixed_templates_feature_path + "_subject_ids.npy"
@@ -624,6 +631,7 @@ class IJB_test:
         else:
             (
                 probe_mixed_templates_feature,
+                probe_template_unc,
                 probe_mixed_unique_templates,
                 probe_mixed_unique_subject_ids,
             ) = image2template_feature(
@@ -638,6 +646,10 @@ class IJB_test:
             np.save(
                 probe_mixed_templates_feature_path + "_feature.npy",
                 probe_mixed_templates_feature,
+            )
+            np.save(
+                probe_mixed_templates_feature_path + "_unc.npy",
+                probe_template_unc,
             )
             np.save(
                 probe_mixed_templates_feature_path + "_subject_ids.npy",
@@ -665,7 +677,9 @@ class IJB_test:
             g1_cmc_scores,
         ) = self.evaluation_1N_function(
             probe_mixed_templates_feature,
+            probe_template_unc,
             g1_templates_feature,
+            g1_template_unc,
             probe_mixed_unique_subject_ids,
             g1_unique_ids,
             fars_cal,
@@ -682,7 +696,9 @@ class IJB_test:
                 g2_cmc_scores,
             ) = self.evaluation_1N_function(
                 probe_mixed_templates_feature,
+                probe_template_unc,
                 g2_templates_feature,
+                g2_template_unc,
                 probe_mixed_unique_subject_ids,
                 g2_unique_ids,
                 fars_cal,
