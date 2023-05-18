@@ -348,7 +348,14 @@ def process_embeddings(
 
 
 def image2template_feature(
-    img_feats, unc, templates, medias, choose_templates, choose_ids, unc_pool: bool
+    img_feats,
+    unc,
+    templates,
+    medias,
+    choose_templates,
+    choose_ids,
+    unc_pool: bool,
+    is_gallery: bool,
 ):
     if choose_templates is not None:  # 1:N
         unique_templates, indices = np.unique(choose_templates, return_index=True)
@@ -369,20 +376,35 @@ def image2template_feature(
         face_medias = medias[ind_t]
         unique_medias, unique_media_counts = np.unique(face_medias, return_counts=True)
         media_norm_feats = []
+        template_conf = []
         for u, ct in zip(unique_medias, unique_media_counts):
             (ind_m,) = np.where(face_medias == u)
             if ct == 1:
                 media_norm_feats += [face_norm_feats[ind_m]]
+                template_conf += [unc[ind_m]]
             else:  # image features from the same video will be aggregated into one feature
-                assert False
-                media_norm_feats += [np.mean(face_norm_feats[ind_m], 0, keepdims=True)]
-        media_norm_feats = np.array(media_norm_feats)
+                template_conf += [np.mean(unc[ind_m], 0, keepdims=True)]
+                if unc_pool and is_gallery:
+                    media_norm_feats += [
+                        np.sum(
+                            face_norm_feats[ind_m] * unc[ind_m], axis=0, keepdims=True
+                        )
+                        / np.sum(unc[ind_m])
+                    ]
+                else:
+                    media_norm_feats += [
+                        np.mean(face_norm_feats[ind_m], 0, keepdims=True)
+                    ]
+        media_norm_feats = np.array(media_norm_feats)[:, 0, :]
         # media_norm_feats = media_norm_feats / np.sqrt(np.sum(media_norm_feats ** 2, -1, keepdims=True))
         if unc_pool:
-            template_conf = unc[ind_t]
+            template_conf = np.array(template_conf)[:, 0]
             template_feats[count_template] = np.sum(
-                media_norm_feats * template_conf[:, np.newaxis], axis=0
+                media_norm_feats * template_conf, axis=0
             ) / np.sum(template_conf)
+            # template_feats[count_template] = np.sum(
+            #     media_norm_feats * unc[ind_t], axis=0
+            # ) / np.sum(unc[ind_t])
         else:
             template_feats[count_template] = np.sum(media_norm_feats, 0)
     template_norm_feats = normalize(template_feats)
@@ -566,6 +588,7 @@ class IJB_test:
             g1_templates,
             g1_ids,
             self.aggregate_gallery_templates_with_confidence,
+            True,
         )
         if self.use_two_galleries:
             (
@@ -573,38 +596,48 @@ class IJB_test:
                 g2_unique_templates,
                 g2_unique_ids,
             ) = image2template_feature(
-                img_input_feats, self.templates, self.medias, g2_templates, g2_ids
-            )
-        probe_mixed_templates_feature_path = (
-            f"/app/cache/template_cache/probe_aggr_{self.subset}"
-        )
-        if Path(probe_mixed_templates_feature_path + "_feature.npy").is_file():
-            probe_mixed_templates_feature = np.load(
-                probe_mixed_templates_feature_path + "_feature.npy"
-            )
-            probe_mixed_unique_subject_ids = np.load(
-                probe_mixed_templates_feature_path + "_subject_ids.npy"
-            )
-        else:
-            (
-                probe_mixed_templates_feature,
-                probe_mixed_unique_templates,
-                probe_mixed_unique_subject_ids,
-            ) = image2template_feature(
                 img_input_feats,
+                self.unc,
                 self.templates,
                 self.medias,
-                probe_mixed_templates,
-                probe_mixed_ids,
+                g2_templates,
+                g2_ids,
+                self.aggregate_gallery_templates_with_confidence,
+                True,
             )
-            np.save(
-                probe_mixed_templates_feature_path + "_feature.npy",
-                probe_mixed_templates_feature,
-            )
-            np.save(
-                probe_mixed_templates_feature_path + "_subject_ids.npy",
-                probe_mixed_unique_subject_ids,
-            )
+        # probe_mixed_templates_feature_path = (
+        #     f"/app/cache/template_cache/probe_aggr_{self.subset}"
+        # )
+        # if Path(probe_mixed_templates_feature_path + "_feature.npy").is_file():
+        #     probe_mixed_templates_feature = np.load(
+        #         probe_mixed_templates_feature_path + "_feature.npy"
+        #     )
+        #     probe_mixed_unique_subject_ids = np.load(
+        #         probe_mixed_templates_feature_path + "_subject_ids.npy"
+        #     )
+        # else:
+        (
+            probe_mixed_templates_feature,
+            probe_mixed_unique_templates,
+            probe_mixed_unique_subject_ids,
+        ) = image2template_feature(
+            img_input_feats,
+            self.unc,
+            self.templates,
+            self.medias,
+            probe_mixed_templates,
+            probe_mixed_ids,
+            False,  # self.aggregate_gallery_templates_with_confidence,
+            True,
+        )
+        # np.save(
+        #     probe_mixed_templates_feature_path + "_feature.npy",
+        #     probe_mixed_templates_feature,
+        # )
+        # np.save(
+        #     probe_mixed_templates_feature_path + "_subject_ids.npy",
+        #     probe_mixed_unique_subject_ids,
+        # )
         print("g1_templates_feature:", g1_templates_feature.shape)  # (1772, 512)
 
         if self.use_two_galleries:
@@ -657,16 +690,6 @@ class IJB_test:
             print("[Mean] top1: %f, top5: %f, top10: %f" % (top_1, top_5, top_10))
 
             mean_tpirs = (np.array(g1_recalls) + np.array(g2_recalls)) / 2
-            show_result = {}
-            for id, far in enumerate(fars_cal):
-                if id in fars_show_idx:
-                    show_result.setdefault("far", []).append(far)
-                    show_result.setdefault("g1_tpir", []).append(g1_recalls[id])
-                    show_result.setdefault("g1_thresh", []).append(g1_threshes[id])
-                    show_result.setdefault("g2_tpir", []).append(g2_recalls[id])
-                    show_result.setdefault("g2_thresh", []).append(g2_threshes[id])
-                    show_result.setdefault("mean_tpir", []).append(mean_tpirs[id])
-            print(pd.DataFrame(show_result).set_index("far").to_markdown())
         else:
             mean_tpirs = np.array(g1_recalls)
         return fars_cal, mean_tpirs, None, None  # g1_cmc_scores, g2_cmc_scores
@@ -835,7 +858,7 @@ def main(cfg):
         np.savez(method.save_result, **save_items)
 
     fig = plot_dir_far_cmc_scores(scores=method_scores, names=method_names)
-    fig.savefig(Path(cfg.exp_dir) / "di_far_plot.png")
+    fig.savefig(Path(cfg.exp_dir) / "di_far_plot.png", dpi=300)
     print("Plot path:")
     print(str(Path(cfg.exp_dir) / "di_far_plot.png"))
     # else:
