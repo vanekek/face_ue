@@ -355,7 +355,6 @@ def image2template_feature(
     choose_templates,
     choose_ids,
     unc_pool: bool,
-    is_gallery: bool,
 ):
     if choose_templates is not None:  # 1:N
         unique_templates, indices = np.unique(choose_templates, return_index=True)
@@ -373,6 +372,7 @@ def image2template_feature(
     ):
         (ind_t,) = np.where(templates == uqt)
         face_norm_feats = img_feats[ind_t]
+        unc_template = unc[ind_t]
         face_medias = medias[ind_t]
         unique_medias, unique_media_counts = np.unique(face_medias, return_counts=True)
         media_norm_feats = []
@@ -381,15 +381,17 @@ def image2template_feature(
             (ind_m,) = np.where(face_medias == u)
             if ct == 1:
                 media_norm_feats += [face_norm_feats[ind_m]]
-                template_conf += [unc[ind_m]]
+                template_conf += [unc_template[ind_m]]
             else:  # image features from the same video will be aggregated into one feature
-                template_conf += [np.mean(unc[ind_m], 0, keepdims=True)]
-                if unc_pool and is_gallery:
+                template_conf += [np.mean(unc_template[ind_m], 0, keepdims=True)]
+                if unc_pool:
                     media_norm_feats += [
                         np.sum(
-                            face_norm_feats[ind_m] * unc[ind_m], axis=0, keepdims=True
+                            face_norm_feats[ind_m] * unc_template[ind_m],
+                            axis=0,
+                            keepdims=True,
                         )
-                        / np.sum(unc[ind_m])
+                        / np.sum(unc_template[ind_m])
                     ]
                 else:
                     media_norm_feats += [
@@ -588,7 +590,6 @@ class IJB_test:
             g1_templates,
             g1_ids,
             self.aggregate_gallery_templates_with_confidence,
-            True,
         )
         if self.use_two_galleries:
             (
@@ -603,7 +604,6 @@ class IJB_test:
                 g2_templates,
                 g2_ids,
                 self.aggregate_gallery_templates_with_confidence,
-                True,
             )
         # probe_mixed_templates_feature_path = (
         #     f"/app/cache/template_cache/probe_aggr_{self.subset}"
@@ -627,8 +627,7 @@ class IJB_test:
             self.medias,
             probe_mixed_templates,
             probe_mixed_ids,
-            False,  # self.aggregate_gallery_templates_with_confidence,
-            True,
+            self.aggregate_gallery_templates_with_confidence,  # self.aggregate_gallery_templates_with_confidence,
         )
         # np.save(
         #     probe_mixed_templates_feature_path + "_feature.npy",
