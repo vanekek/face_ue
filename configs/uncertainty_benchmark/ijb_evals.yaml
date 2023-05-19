@@ -5,8 +5,8 @@ exp_dir: outputs/ijb_evals/ijb_evals_${now:%Y-%m-%d_%H-%M-%S}
 
 
 data_path: datasets/arcface_ijb/ # Dataset path containing IJBB and IJBC sub folder
-subset: IJBC # Subset test target, could be IJBB / IJBC
-use_two_galleries: True
+subset: IJBB # Subset test target, could be IJBB / IJBC
+use_two_galleries: False
 recompute_template_pooling: False
 batch_size: 16
 is_one_2_N: True  # Run 1:N test instead of 1

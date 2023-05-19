@@ -49,7 +49,7 @@ data:
     init_args:
         data_train_dir: /app/data/ms1m/
         data_predict_dir: /app/datasets/arcface_ijb
-        data_predict_subset: IJBB
+        data_predict_subset: IJBC
         batch_size: 128
         num_workers: 20
 

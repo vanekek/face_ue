@@ -7,12 +7,10 @@ import mxnet as mx
 import numbers
 import numpy as np
 import os
-from pathlib import Path
 
 import sys
 
 sys.path.append("/app")
-from face_lib.utils.imageprocessing import preprocess
 from face_lib.datasets.arcface_ijb import IJB_aligned_images
 
 
