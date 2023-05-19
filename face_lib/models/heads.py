@@ -73,7 +73,7 @@ class PFEHeadAdjustable(FaceModule):
     
 class PFEHeadAdjustableLightning(FaceModule):
     def __init__(self, in_feat=512, out_feat=512, **kwargs):
-        super(PFEHeadAdjustable, self).__init__(**kwargs)
+        super(PFEHeadAdjustableLightning, self).__init__(**kwargs)
         self.fc1 = Parameter(torch.Tensor(out_feat, in_feat))
         self.bn1 = nn.BatchNorm1d(out_feat, affine=True)
         self.relu = nn.ReLU()
@@ -90,7 +90,7 @@ class PFEHeadAdjustableLightning(FaceModule):
         x = self.bn2(F.linear(x, F.normalize(self.fc2)))  # 2*log(sigma)
         x = self.gamma * x + self.beta
         x = torch.log(1e-6 + torch.exp(x))  # log(sigma^2)
-        return {"log_sigma": x}
+        return x
 
 
 class PFEHeadAdjustableSpectralSimple(FaceModule):

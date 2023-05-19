@@ -22,7 +22,7 @@ model:
     class_path: face_lib.models.pfe.ProbabilisticFaceEmbedding
     init_args:
         weights: /app/models/pfe_old/sota.pth
-        pfe_loss:
+        pfe_loss: # NOT USED
             class_path: face_lib.models.losses.KLDiracVMF
             init_args:
                 z_dim: 512
