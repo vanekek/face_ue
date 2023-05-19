@@ -218,8 +218,10 @@ class CosineSim:
         return top_1_count, top_5_count, top_10_count, threshes, recalls, cmc_scores
 
 
-class SCF:
-    def __init__(self, confidence_function: dict) -> None:
+
+
+class SCF: # Не работает, в статье эту меру близости тоже не используют
+    def __init__(self, confidence_function: dict, k_shift: float) -> None:
         """
         Implements SCF mutual “likelihood” of distributions belonging to the same person (sharing the same latent code)
 
@@ -227,6 +229,7 @@ class SCF:
         Eq. (13)
         """
         self.confidence_function = confidence_function
+        self.k_shift = k_shift
 
     def __call__(
         self,
@@ -242,43 +245,44 @@ class SCF:
             "probe_feats: %s, gallery_feats: %s"
             % (probe_feats.shape, gallery_feats.shape)
         )
-        probe_unc = probe_unc[:, 0]
-        gallery_unc = gallery_unc[:, 0]
+        gallery_unc = gallery_unc[np.newaxis, :, 0]
+
+        gallery_unc = gallery_unc #+ self.k_shift
+        probe_unc = probe_unc #+ self.k_shift
+
         d = probe_feats.shape[1]
-        k_ij = probe_unc[:, np.newaxis] * gallery_unc[np.newaxis, :]
+        k_i_times_k_j = probe_unc * gallery_unc
         mu_ij = 2 * np.dot(probe_feats, gallery_feats.T)
-        k_tilde = np.sqrt(
-            probe_unc[:, np.newaxis] ** 2 + gallery_unc[np.newaxis, :] + mu_ij * k_ij
+        k_ij = np.sqrt(probe_unc**2 + gallery_unc**2 + mu_ij * k_i_times_k_j)
+
+        log_iv_i = (
+            np.log(
+                1e-6 + scipy.special.ive(d / 2 - 1, probe_unc, dtype=probe_unc.dtype)
+            )
+            + probe_unc
+        )
+        log_iv_j = (
+            np.log(
+                1e-6
+                + scipy.special.ive(d / 2 - 1, gallery_unc, dtype=gallery_unc.dtype)
+            )
+            + gallery_unc
+        )
+        log_iv_ij = (
+            np.log(1e-6 + scipy.special.ive(d / 2 - 1, k_ij, dtype=k_ij.dtype)) + k_ij
         )
 
-        log_ive_i = np.log(
-            1e-6 + scipy.special.ive(d / 2 - 1, probe_unc, dtype=probe_unc.dtype)
-        )
-        log_ive_j = np.log(
-            1e-6 + scipy.special.ive(d / 2 - 1, gallery_unc, dtype=gallery_unc.dtype)
-        )
-        log_ive_ij = np.log(
-            1e-6 + scipy.special.ive(d / 2 - 1, k_tilde, dtype=k_tilde.dtype)
-        )
-
-        similarity = (d / 2 - 1) * (
-            np.log(probe_unc[:, np.newaxis])
-            + np.log(gallery_unc[np.newaxis, :])
-            - np.log(k_tilde)
-        ) - (
-            log_ive_i[:, np.newaxis]
-            + probe_unc[:, np.newaxis]
-            + log_ive_j[np.newaxis, :]
-            + gallery_unc[np.newaxis, :]
-            - log_ive_ij
-            - k_tilde
-        )
-
+        scf_similarity = (d / 2 - 1) * (
+            np.log(probe_unc) + np.log(gallery_unc) - np.log(k_ij)
+        ) - (log_iv_i + log_iv_j - log_iv_ij) - d/2*np.log(2*np.pi) - d*np.log(64)
+        #scf_similarity = -scf_similarity
+        similarity = mu_ij / 2
+        #similarity = -similarity
         # compute confidences
         confidence_function = getattr(
             confidence_functions, self.confidence_function.class_name
         )(**self.confidence_function.init_args)
-        probe_score = confidence_function(similarity)
+        probe_score = confidence_function(scf_similarity)
 
         # Compute Detection & identification rate for open set recognition
         (

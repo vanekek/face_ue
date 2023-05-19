@@ -4,7 +4,7 @@ import torch.nn.functional as F
 from torch.nn import Parameter
 from torch.nn.utils import spectral_norm
 from face_lib.models import FaceModule
-
+from face_lib import models as mlib
 
 class SCFHead(nn.Module):
     def __init__(self, convf_dim, latent_vector_size):
@@ -27,28 +27,6 @@ class SCFHead(nn.Module):
         log_kappa = torch.log(1e-6 + torch.exp(log_kappa))
 
         return log_kappa
-
-
-# class SCFHead(nn.Module):
-#     def __init__(self, convf_dim):
-#         super().__init__()
-
-#         self.convf_dim = convf_dim
-
-#         self._log_kappa = nn.Sequential(
-#             nn.Linear(self.convf_dim, self.convf_dim // 2),
-#             nn.ReLU(inplace=True),
-#             nn.Linear(self.convf_dim // 2, self.convf_dim // 4),
-#             nn.ReLU(inplace=True),
-#             nn.Linear(self.convf_dim // 4, 1),
-#         )
-
-#     def forward(self, convf):
-#         log_kappa = self._log_kappa(convf)
-#         log_kappa = torch.log(1e-6 + torch.exp(log_kappa))
-
-#         return log_kappa
-
 
 class PFEHead(FaceModule):
     def __init__(self, in_feat=512, **kwargs):
@@ -88,6 +66,27 @@ class PFEHeadAdjustable(FaceModule):
     def forward(self, **kwargs):
         x: torch.Tensor = kwargs["bottleneck_feature"]
         x = self.relu(self.bn1(F.linear(x, F.normalize(self.fc1))))
+        x = self.bn2(F.linear(x, F.normalize(self.fc2)))  # 2*log(sigma)
+        x = self.gamma * x + self.beta
+        x = torch.log(1e-6 + torch.exp(x))  # log(sigma^2)
+        return {"log_sigma": x}
+    
+class PFEHeadAdjustableLightning(FaceModule):
+    def __init__(self, in_feat=512, out_feat=512, **kwargs):
+        super(PFEHeadAdjustable, self).__init__(**kwargs)
+        self.fc1 = Parameter(torch.Tensor(out_feat, in_feat))
+        self.bn1 = nn.BatchNorm1d(out_feat, affine=True)
+        self.relu = nn.ReLU()
+        self.fc2 = Parameter(torch.Tensor(out_feat, out_feat))
+        self.bn2 = nn.BatchNorm1d(out_feat, affine=False)
+        self.gamma = Parameter(torch.Tensor([1.0]))
+        self.beta = Parameter(torch.Tensor([0.0]))
+
+        nn.init.kaiming_normal_(self.fc1)
+        nn.init.kaiming_normal_(self.fc2)
+
+    def forward(self, bottleneck_feature: torch.Tensor):
+        x = self.relu(self.bn1(F.linear(bottleneck_feature, F.normalize(self.fc1))))
         x = self.bn2(F.linear(x, F.normalize(self.fc2)))  # 2*log(sigma)
         x = self.gamma * x + self.beta
         x = torch.log(1e-6 + torch.exp(x))  # log(sigma^2)

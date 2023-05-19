@@ -3,14 +3,14 @@
 seed_everything: 7
 trainer:
   log_every_n_steps: 3
-  default_root_dir: outputs/scf_train
+  default_root_dir: outputs/pfe_train
   enable_checkpointing: true
   callbacks:
   - class_path: pytorch_lightning.callbacks.ModelCheckpoint
     init_args: 
       every_n_train_steps: 5000
-      dirpath: outputs/scf_train/weights
-  - class_path: face_lib.models.scf.IJB_writer
+      dirpath: outputs/pfe_train/weights
+  - class_path: face_lib.models.pfe.IJB_writer
     init_args: 
       output_dir: /app/cache/features
       subset: ${data.init_args.data_predict_subset}
@@ -19,29 +19,14 @@ trainer:
   accelerator: gpu
   devices: 2
 model:
-    class_path: face_lib.models.scf.SphereConfidenceFace
+    class_path: face_lib.models.pfe.ProbabilisticFaceEmbedding
     init_args:
-        backbone:
-            class_path: face_lib.models.lightning_resnet.ResNet
-            init_args:
-                resnet_name: iresnet50_normalized
-                weights: /app/models/backbone/ms1mv3_arcface_r50/backbone.pth
-                learnable: False
-        head:
-            class_path: face_lib.models.heads.SCFHead
-            init_args:
-                convf_dim: 25088
-                latent_vector_size: 2048
-        scf_loss:
+        weights: /app/models/pfe_old/sota.pth
+        pfe_loss:
             class_path: face_lib.models.losses.KLDiracVMF
             init_args:
                 z_dim: 512
                 radius: 64
-        softmax_weights:
-            class_path: face_lib.models.scf.SoftmaxWeights
-            init_args:
-                softmax_weights_path: /app/models/backbone/ms1mv3_arcface_r50/softmax_weight.pt
-                radius: ${model.scf_loss.init_args.radius}
         optimizer_params:
             optimizer: Adam
             params:
