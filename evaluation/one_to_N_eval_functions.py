@@ -218,9 +218,7 @@ class CosineSim:
         return top_1_count, top_5_count, top_10_count, threshes, recalls, cmc_scores
 
 
-
-
-class SCF: # Не работает, в статье эту меру близости тоже не используют
+class SCF:  # Не работает, в статье эту меру близости тоже не используют
     def __init__(self, confidence_function: dict, k_shift: float) -> None:
         """
         Implements SCF mutual “likelihood” of distributions belonging to the same person (sharing the same latent code)
@@ -247,8 +245,8 @@ class SCF: # Не работает, в статье эту меру близос
         )
         gallery_unc = gallery_unc[np.newaxis, :, 0]
 
-        gallery_unc = gallery_unc #+ self.k_shift
-        probe_unc = probe_unc #+ self.k_shift
+        gallery_unc = gallery_unc  # + self.k_shift
+        probe_unc = probe_unc  # + self.k_shift
 
         d = probe_feats.shape[1]
         k_i_times_k_j = probe_unc * gallery_unc
@@ -272,12 +270,15 @@ class SCF: # Не работает, в статье эту меру близос
             np.log(1e-6 + scipy.special.ive(d / 2 - 1, k_ij, dtype=k_ij.dtype)) + k_ij
         )
 
-        scf_similarity = (d / 2 - 1) * (
-            np.log(probe_unc) + np.log(gallery_unc) - np.log(k_ij)
-        ) - (log_iv_i + log_iv_j - log_iv_ij) - d/2*np.log(2*np.pi) - d*np.log(64)
-        #scf_similarity = -scf_similarity
+        scf_similarity = (
+            (d / 2 - 1) * (np.log(probe_unc) + np.log(gallery_unc) - np.log(k_ij))
+            - (log_iv_i + log_iv_j - log_iv_ij)
+            - d / 2 * np.log(2 * np.pi)
+            - d * np.log(64)
+        )
+        # scf_similarity = -scf_similarity
         similarity = mu_ij / 2
-        #similarity = -similarity
+        # similarity = -similarity
         # compute confidences
         confidence_function = getattr(
             confidence_functions, self.confidence_function.class_name

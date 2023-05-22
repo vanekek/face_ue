@@ -12,25 +12,31 @@ batch_size: 16
 is_one_2_N: True  # Run 1:N test instead of 1
 far_range: [-4, 0, 100]
 open_set_recognition_methods:
-  # - evaluation_1N_function: 
-  #     class_path: evaluation.one_to_N_eval_functions.CosineSim
-  #     init_args:
-  #       confidence_function: 
-  #         class_name: NAC_confidence
-  #         init_args:
-  #           k: 16
-  #           s: 1
-  #   restore_embs: /app/cache/features/scf_ijb_embs_${subset}.npz
-  #   aggregate_gallery_templates_with_confidence: True
-  #   save_result: "${exp_dir}/${subset}_NAC_k_16.npz"
-  # - evaluation_1N_function: 
-  #     class_path: evaluation.one_to_N_eval_functions.PFE
-  #     init_args:
-  #       confidence_function: 
-  #         class_name: MaxSimilarity_confidence
-  #         init_args:
-  #           foo: bar
-  #   save_result: "${exp_dir}/${subset}_PFE.npz"
+  - evaluation_1N_function: 
+      class_path: evaluation.one_to_N_eval_functions.CosineSim
+      init_args:
+        confidence_function: 
+          class_name: MaxSimilarity_confidence
+          init_args:
+            foo: bar
+    restore_embs: /app/cache/features/pfe_ijb_embs_${subset}.npz
+    aggregate_gallery_templates_with_confidence: True
+    features: pfe
+    use_detector_score: True
+    save_result: "${exp_dir}/${subset}_CosineSim_det_and_pfe_score_.npz"
+  - evaluation_1N_function: 
+      class_path: evaluation.one_to_N_eval_functions.CosineSim
+      init_args:
+        confidence_function: 
+          class_name: MaxSimilarity_confidence
+          init_args:
+            foo: bar
+    restore_embs: /app/cache/features/pfe_ijb_embs_${subset}.npz
+    aggregate_gallery_templates_with_confidence: True
+    features: pfe
+    use_detector_score: False
+    save_result: "${exp_dir}/${subset}_CosineSim_pfe_score_.npz"
+    
   - evaluation_1N_function: 
       class_path: evaluation.one_to_N_eval_functions.CosineSim
       init_args:

@@ -356,7 +356,7 @@ def image2template_feature(
     choose_templates,
     choose_ids,
     conf_pool: bool,
-    unc_type: str
+    unc_type: str,
 ):
     if choose_templates is not None:  # 1:N
         unique_templates, indices = np.unique(choose_templates, return_index=True)
@@ -367,10 +367,9 @@ def image2template_feature(
     if unc_type == "pfe":
         # compute harmonic mean of unc
         raw_unc = np.exp(raw_unc)
-        conf = 1 / scipy.stats.hmean(raw_unc, axis = 1)
+        conf = 1 / scipy.stats.hmean(raw_unc, axis=1)
         conf = conf[:, np.newaxis]
     elif unc_type == "scf":
-        
         conf = np.exp(raw_unc)
     else:
         raise ValueError

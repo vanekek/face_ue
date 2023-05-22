@@ -12,7 +12,8 @@ from face_lib.utils.imageprocessing import (
     preprocess_tta,
     preprocess_gan,
     preprocess_magface,
-    preprocess_blurred)
+    preprocess_blurred,
+)
 from face_lib.evaluation.utils import get_precalculated_embeddings
 
 
@@ -225,7 +226,6 @@ def extract_features_grad(
         img_random = np.random.rand(*images_batch[0].shape)
         sigma_sq_temp = []
         for i in range(images_batch.shape[0]):
-
             sx = ndimage.sobel(images_batch[0], axis=0, mode="constant")
             sy = ndimage.sobel(images_batch[0], axis=1, mode="constant")
             sobel = np.hypot(sx, sy)
@@ -339,7 +339,9 @@ def extract_features_gan(
         print("")
 
     uncertainties = []
-    uncertainty_proc_func = lambda images: preprocess_gan(images, resize_size=[256, 256], is_training=False)
+    uncertainty_proc_func = lambda images: preprocess_gan(
+        images, resize_size=[256, 256], is_training=False
+    )
     start_time = time.time()
     for start_idx in tqdm(range(0, num_images, batch_size)):
         if verbose:
@@ -457,7 +459,6 @@ def extract_features_backbone_uncertainty(
     verbose=False,
     device=torch.device("cpu"),
 ):
-
     num_images = len(images)
     mu = []
     uncertainty = []
@@ -622,7 +623,8 @@ def extract_features_uncertainties_from_list(
         assert scale_predictor is not None
         assert blur_intensity is not None
         proc_func = lambda images: preprocess_blurred(
-            images, [112, 112], is_training=False, blur_intensity=blur_intensity)
+            images, [112, 112], is_training=False, blur_intensity=blur_intensity
+        )
 
         features, uncertainties = extract_features_scale(
             backbone,
@@ -645,7 +647,9 @@ def extract_features_uncertainties_from_list(
             device=device,
         )
     elif uncertainty_strategy == "magface":
-        proc_func = lambda images: preprocess_magface(images, [112, 112], is_training=False)
+        proc_func = lambda images: preprocess_magface(
+            images, [112, 112], is_training=False
+        )
 
         features, uncertainties = extract_features_emb_norm(
             backbone,
@@ -656,8 +660,12 @@ def extract_features_uncertainties_from_list(
             device=device,
         )
     elif uncertainty_strategy == "backbone+uncertainty_model":
-        backbone_proc_func = lambda images: preprocess(images, [112, 112], is_training=False)
-        uncertainty_proc_func = lambda images: preprocess_magface(images, [112, 112], is_training=False)
+        backbone_proc_func = lambda images: preprocess(
+            images, [112, 112], is_training=False
+        )
+        uncertainty_proc_func = lambda images: preprocess_magface(
+            images, [112, 112], is_training=False
+        )
 
         features, uncertainties = extract_features_backbone_uncertainty(
             backbone,
@@ -683,9 +691,11 @@ def extract_uncertainties_from_dataset(
     verbose=False,
     device=torch.device("cpu"),
 ):
-
     dataloader = torch.utils.data.DataLoader(
-        dataset=dataset, batch_size=batch_size, shuffle=False, num_workers=4,
+        dataset=dataset,
+        batch_size=batch_size,
+        shuffle=False,
+        num_workers=4,
     )
 
     uncertainties = []
@@ -734,16 +744,19 @@ def get_features_uncertainties_labels(
     device=torch.device("cuda:0"),
     verbose=False,
 ):
-
     pairs, label_vec, unique_imgs = extract_pairs_info(pairs_table_path)
 
     if uncertainty_strategy == "magface_precalculated":
-        features, img_to_idx = get_precalculated_embeddings(precalculated_path, verbose=verbose)
+        features, img_to_idx = get_precalculated_embeddings(
+            precalculated_path, verbose=verbose
+        )
         # TODO: Fair calculation of uncertainty
         uncertainties = np.linalg.norm(features, axis=1, keepdims=True)
 
     elif uncertainty_strategy == "backbone+magface":
-        features, img_to_idx = get_precalculated_embeddings(precalculated_path, verbose=verbose)
+        features, img_to_idx = get_precalculated_embeddings(
+            precalculated_path, verbose=verbose
+        )
         uncertainties = np.linalg.norm(features, axis=1, keepdims=True)
 
         unc_1 = np.array([uncertainties[img_to_idx[pair[0]]] for pair in pairs])
