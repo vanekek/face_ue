@@ -365,8 +365,13 @@ def image2template_feature(
         unique_templates = np.unique(templates)
         unique_subjectids = None
     if unc_type == "pfe":
-        # compute harmonic mean of unc
         raw_unc = np.exp(raw_unc)
+
+        # compute harmonic mean of unc
+        # raise NotImplemented
+        # need to use aggregation as in Eqn. (6-7) and min variance pool, when media type is the same
+        # across pooled images
+        
         conf = 1 / scipy.stats.hmean(raw_unc, axis=1)
         conf = conf[:, np.newaxis]
     elif unc_type == "scf":
