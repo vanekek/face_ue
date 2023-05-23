@@ -20,8 +20,8 @@ open_set_recognition_methods:
   restore_embs: /app/cache/features/scf_ijb_embs_${subset}.npz
   aggregate_gallery_templates_with_confidence: true
   features: scf
-  use_detector_score: false
-  save_result: ${exp_dir}/${subset}_CosineSim_scf_score_.npz
+  use_detector_score: true
+  save_result: ${exp_dir}/${subset}_CosineSim_det_and_scf_score_.npz
 - evaluation_1N_function:
     class_path: evaluation.one_to_N_eval_functions.SCF
     init_args:
@@ -33,8 +33,8 @@ open_set_recognition_methods:
   restore_embs: /app/cache/features/scf_ijb_embs_${subset}.npz
   aggregate_gallery_templates_with_confidence: true
   features: scf
-  use_detector_score: false
-  save_result: ${exp_dir}/${subset}_SCF_scf_score.npz
+  use_detector_score: true
+  save_result: ${exp_dir}/${subset}_SCF_det_and_scf_score.npz
 - evaluation_1N_function:
     class_path: evaluation.one_to_N_eval_functions.SCF
     init_args:
@@ -46,8 +46,8 @@ open_set_recognition_methods:
   restore_embs: /app/cache/features/scf_ijb_embs_${subset}.npz
   aggregate_gallery_templates_with_confidence: true
   features: scf
-  use_detector_score: false
-  save_result: ${exp_dir}/${subset}_SCF_scf_score_shift_10.npz
+  use_detector_score: true
+  save_result: ${exp_dir}/${subset}_SCF_det_and_scf_score_shift_10.npz
 - evaluation_1N_function:
     class_path: evaluation.one_to_N_eval_functions.SCF
     init_args:
@@ -59,8 +59,8 @@ open_set_recognition_methods:
   restore_embs: /app/cache/features/scf_ijb_embs_${subset}.npz
   aggregate_gallery_templates_with_confidence: true
   features: scf
-  use_detector_score: false
-  save_result: ${exp_dir}/${subset}_SCF_scf_score_shift_150.npz
+  use_detector_score: true
+  save_result: ${exp_dir}/${subset}_SCF_det_and_scf_score_shift_150.npz
 - evaluation_1N_function:
     class_path: evaluation.one_to_N_eval_functions.SCF
     init_args:
@@ -72,8 +72,8 @@ open_set_recognition_methods:
   restore_embs: /app/cache/features/scf_ijb_embs_${subset}.npz
   aggregate_gallery_templates_with_confidence: true
   features: scf
-  use_detector_score: false
-  save_result: ${exp_dir}/${subset}_SCF_scf_score_shift_300.npz
+  use_detector_score: true
+  save_result: ${exp_dir}/${subset}_SCF_det_and_scf_score_shift_300.npz
 - evaluation_1N_function:
     class_path: evaluation.one_to_N_eval_functions.SCF
     init_args:
@@ -85,8 +85,8 @@ open_set_recognition_methods:
   restore_embs: /app/cache/features/scf_ijb_embs_${subset}.npz
   aggregate_gallery_templates_with_confidence: true
   features: scf
-  use_detector_score: false
-  save_result: ${exp_dir}/${subset}_SCF_scf_score_shift_600.npz
+  use_detector_score: true
+  save_result: ${exp_dir}/${subset}_SCF_det_and_scf_score_shift_600.npz
 - evaluation_1N_function:
     class_path: evaluation.one_to_N_eval_functions.SCF
     init_args:
@@ -98,44 +98,5 @@ open_set_recognition_methods:
   restore_embs: /app/cache/features/scf_ijb_embs_${subset}.npz
   aggregate_gallery_templates_with_confidence: true
   features: scf
-  use_detector_score: false
-  save_result: ${exp_dir}/${subset}_SCF_scf_score_shift_1200.npz
-- evaluation_1N_function:
-    class_path: evaluation.one_to_N_eval_functions.SCF
-    init_args:
-      confidence_function:
-        class_name: MaxSimilarity_confidence
-        init_args:
-          foo: bar
-      k_shift: 5000
-  restore_embs: /app/cache/features/scf_ijb_embs_${subset}.npz
-  aggregate_gallery_templates_with_confidence: true
-  features: scf
-  use_detector_score: false
-  save_result: ${exp_dir}/${subset}_SCF_scf_score_shift_5000.npz
-- evaluation_1N_function:
-    class_path: evaluation.one_to_N_eval_functions.SCF
-    init_args:
-      confidence_function:
-        class_name: MaxSimilarity_confidence
-        init_args:
-          foo: bar
-      k_shift: 10000
-  restore_embs: /app/cache/features/scf_ijb_embs_${subset}.npz
-  aggregate_gallery_templates_with_confidence: true
-  features: scf
-  use_detector_score: false
-  save_result: ${exp_dir}/${subset}_SCF_scf_score_shift_10000.npz
-- evaluation_1N_function:
-    class_path: evaluation.one_to_N_eval_functions.SCF
-    init_args:
-      confidence_function:
-        class_name: MaxSimilarity_confidence
-        init_args:
-          foo: bar
-      k_shift: 50000
-  restore_embs: /app/cache/features/scf_ijb_embs_${subset}.npz
-  aggregate_gallery_templates_with_confidence: true
-  features: scf
-  use_detector_score: false
-  save_result: ${exp_dir}/${subset}_SCF_scf_score_shift_50000.npz
+  use_detector_score: true
+  save_result: ${exp_dir}/${subset}_SCF_det_and_scf_score_shift_1200.npz
