@@ -1,0 +1,55 @@
+
+
+seed_everything: 7
+trainer:
+  log_every_n_steps: 3
+  default_root_dir: outputs/pfe_train
+  enable_checkpointing: true
+  callbacks:
+  - class_path: pytorch_lightning.callbacks.ModelCheckpoint
+    init_args: 
+      every_n_train_steps: 5000
+      dirpath: outputs/pfe_train/weights
+  - class_path: face_lib.models.pfe.IJB_writer
+    init_args: 
+      output_dir: /app/cache/features
+      subset: ${data.init_args.data_predict_subset}
+      write_interval: epoch
+  max_epochs: 4
+  accelerator: gpu
+  devices: 2
+model:
+    class_path: face_lib.models.pfe.ProbabilisticFaceEmbedding
+    init_args:
+        weights: /app/models/pfe_old/sota.pth
+        pfe_loss: # NOT USED
+            class_path: face_lib.models.losses.KLDiracVMF
+            init_args:
+                z_dim: 512
+                radius: 64
+        optimizer_params:
+            optimizer: Adam
+            params:
+                lr: 3e-5
+                weight_decay: 5e-4
+        # scheduler_params:
+        #     scheduler: StepLR
+        #     params:
+        #         step_size: 1
+        #         gamma: 0.5
+        scheduler_params:
+            scheduler: CosineAnnealingWarmRestarts
+            params:
+                T_0: 5000
+                eta_min: 3e-8
+
+
+data:
+    class_path: face_lib.datasets.lightning_scf.SCF_DataModule
+    init_args:
+        data_train_dir: /app/data/ms1m/
+        data_predict_dir: /app/datasets/arcface_ijb
+        data_predict_subset: IJBC
+        batch_size: 128
+        num_workers: 20
+

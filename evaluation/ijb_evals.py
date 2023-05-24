@@ -11,6 +11,7 @@ from pathlib import Path
 import hydra
 import importlib
 import sys
+import scipy
 
 path = str(Path(__file__).parent.parent.absolute())
 sys.path.insert(1, path)
@@ -348,7 +349,14 @@ def process_embeddings(
 
 
 def image2template_feature(
-    img_feats=None, templates=None, medias=None, choose_templates=None, choose_ids=None
+    img_feats,
+    raw_unc,
+    templates,
+    medias,
+    choose_templates,
+    choose_ids,
+    conf_pool: bool,
+    unc_type: str,
 ):
     if choose_templates is not None:  # 1:N
         unique_templates, indices = np.unique(choose_templates, return_index=True)
@@ -356,9 +364,23 @@ def image2template_feature(
     else:  # 1:1
         unique_templates = np.unique(templates)
         unique_subjectids = None
+    if unc_type == "pfe":
+        
 
+        # compute harmonic mean of unc
+        # raise NotImplemented
+        # need to use aggregation as in Eqn. (6-7) and min variance pool, when media type is the same
+        # across pooled images
+        raw_unc = np.exp(raw_unc)
+        # conf = 1 / scipy.stats.hmean(raw_unc, axis=1)
+        conf = raw_unc[:, np.newaxis]
+    elif unc_type == "scf":
+        conf = np.exp(raw_unc)
+    else:
+        raise ValueError
     # template_feats = np.zeros((len(unique_templates), img_feats.shape[1]), dtype=img_feats.dtype)
     template_feats = np.zeros((len(unique_templates), img_feats.shape[1]))
+    templates_conf = np.zeros((len(unique_templates), raw_unc.shape[1]))
     for count_template, uqt in tqdm(
         enumerate(unique_templates),
         "Extract template feature",
@@ -366,20 +388,75 @@ def image2template_feature(
     ):
         (ind_t,) = np.where(templates == uqt)
         face_norm_feats = img_feats[ind_t]
+        conf_template = conf[ind_t]
         face_medias = medias[ind_t]
         unique_medias, unique_media_counts = np.unique(face_medias, return_counts=True)
         media_norm_feats = []
+        template_conf = []
         for u, ct in zip(unique_medias, unique_media_counts):
             (ind_m,) = np.where(face_medias == u)
             if ct == 1:
                 media_norm_feats += [face_norm_feats[ind_m]]
+                template_conf += [conf_template[ind_m]]
             else:  # image features from the same video will be aggregated into one feature
-                media_norm_feats += [np.mean(face_norm_feats[ind_m], 0, keepdims=True)]
-        media_norm_feats = np.array(media_norm_feats)
+                if conf_pool:
+                    if unc_type == "scf":
+                        template_conf += [
+                            np.mean(conf_template[ind_m], 0, keepdims=True)
+                        ]
+                        media_norm_feats += [
+                            np.sum(
+                                face_norm_feats[ind_m] * conf_template[ind_m],
+                                axis=0,
+                                keepdims=True,
+                            )
+                            / np.sum(conf_template[ind_m])
+                        ]
+                    elif unc_type == "pfe":
+                        media_variance = np.min(conf_template[ind_m], 0, keepdims=True)
+                        template_conf += [media_variance]
+                        media_norm_feats += [
+                            np.sum(
+                                (face_norm_feats[ind_m] / conf_template[ind_m]),
+                                axis=0,
+                                keepdims=True,
+                            )
+                            * media_variance
+                        ]
+                    else:
+                        raise ValueError
+                else:
+                    media_norm_feats += [
+                        np.mean(face_norm_feats[ind_m], 0, keepdims=True)
+                    ]
+        media_norm_feats = np.array(media_norm_feats)[:, 0, :]
         # media_norm_feats = media_norm_feats / np.sqrt(np.sum(media_norm_feats ** 2, -1, keepdims=True))
-        template_feats[count_template] = np.sum(media_norm_feats, 0)
+        template_conf = np.array(template_conf)[:, 0]
+        if conf_pool:
+            if unc_type == "scf":
+                template_feats[count_template] = np.sum(
+                    media_norm_feats * template_conf, axis=0
+                ) / np.sum(template_conf)
+                final_template_conf = np.mean(template_conf, axis=0)
+            elif unc_type == "pfe":
+                pfe_template_variance = 1 / np.sum(1 / template_conf[:, 0, :], axis=0)
+                template_feats[count_template] = (
+                    np.sum(media_norm_feats / template_conf[:, 0, :], axis=0)
+                    * pfe_template_variance
+                )
+                final_template_conf = pfe_template_variance
+            else:
+                raise ValueError
+            
+            templates_conf[
+            count_template
+            ] = final_template_conf  # np.mean(template_conf, axis=0)
+        else:
+            template_feats[count_template] = np.sum(media_norm_feats, axis=0)
+
+        
     template_norm_feats = normalize(template_feats)
-    return template_norm_feats, unique_templates, unique_subjectids
+    return template_norm_feats, templates_conf, unique_templates, unique_subjectids
 
 
 def verification_11(
@@ -420,10 +497,19 @@ class IJB_test:
         data_path,
         subset,
         evaluation_1N_function,
-        batch_size=64,
-        force_reload=False,
-        restore_embs=None,
+        batch_size,
+        force_reload,
+        restore_embs,
+        aggregate_gallery_templates_with_confidence,
+        use_detector_score,
+        use_two_galleries,
+        recompute_template_pooling,
+        features,
+        far_range,
     ):
+        self.use_two_galleries = use_two_galleries
+        self.recompute_template_pooling = recompute_template_pooling
+        self.features = features
         (
             templates,
             medias,
@@ -468,6 +554,11 @@ class IJB_test:
         )
         self.face_scores = face_scores.astype(self.embs.dtype)
         self.evaluation_1N_function = evaluation_1N_function
+        self.aggregate_gallery_templates_with_confidence = (
+            aggregate_gallery_templates_with_confidence
+        )
+        self.use_detector_score = use_detector_score
+        self.far_range = far_range
 
     def run_model_test_single(
         self, use_flip_test=True, use_norm_score=False, use_detector_score=True
@@ -480,7 +571,7 @@ class IJB_test:
             use_detector_score=use_detector_score,
             face_scores=self.face_scores,
         )
-        template_norm_feats, unique_templates, _ = image2template_feature(
+        template_norm_feats, template_unc, unique_templates, _ = image2template_feature(
             img_input_feats, self.templates, self.medias
         )
         score = verification_11(template_norm_feats, unique_templates, self.p1, self.p2)
@@ -506,9 +597,12 @@ class IJB_test:
         return scores, names
 
     def run_model_test_1N(self, npoints=100):
-        two_galleries = False
-
-        fars_cal = [10**ii for ii in np.arange(-4, 0, 4 / npoints)] + [
+        fars_cal = [
+            10**ii
+            for ii in np.arange(
+                self.far_range[0], self.far_range[1], 4.0 / self.far_range[2]
+            )
+        ] + [
             1
         ]  # plot in range [10-4, 1]
         fars_show_idx = np.arange(len(fars_cal))[
@@ -528,32 +622,54 @@ class IJB_test:
         img_input_feats = process_embeddings(
             self.embs,
             self.embs_f,
-            use_flip_test=True,
+            use_flip_test=False,
             use_norm_score=False,
-            use_detector_score=True,
+            use_detector_score=self.use_detector_score,
             face_scores=self.face_scores,
         )
         (
             g1_templates_feature,
+            g1_template_unc,
             g1_unique_templates,
             g1_unique_ids,
         ) = image2template_feature(
-            img_input_feats, self.templates, self.medias, g1_templates, g1_ids
+            img_input_feats,
+            self.unc,
+            self.templates,
+            self.medias,
+            g1_templates,
+            g1_ids,
+            self.aggregate_gallery_templates_with_confidence,
+            self.features,
         )
-        if two_galleries:
+        if self.use_two_galleries:
             (
                 g2_templates_feature,
+                g2_template_unc,
                 g2_unique_templates,
                 g2_unique_ids,
             ) = image2template_feature(
-                img_input_feats, self.templates, self.medias, g2_templates, g2_ids
+                img_input_feats,
+                self.unc,
+                self.templates,
+                self.medias,
+                g2_templates,
+                g2_ids,
+                self.aggregate_gallery_templates_with_confidence,
+                self.features,
             )
-        probe_mixed_templates_feature_path = (
-            f"/app/cache/template_cache/probe_aggr_{self.subset}"
-        )
-        if Path(probe_mixed_templates_feature_path + "_feature.npy").is_file():
+
+        probe_mixed_templates_feature_path = f"/app/cache/template_cache/probe_aggr_{str(self.aggregate_gallery_templates_with_confidence)}_{str(self.use_detector_score)}_{self.features}_{self.subset}"
+
+        if (
+            Path(probe_mixed_templates_feature_path + "_unc.npy").is_file()
+            and self.recompute_template_pooling is False
+        ):
             probe_mixed_templates_feature = np.load(
                 probe_mixed_templates_feature_path + "_feature.npy"
+            )
+            probe_template_unc = np.load(
+                probe_mixed_templates_feature_path + "_unc.npy"
             )
             probe_mixed_unique_subject_ids = np.load(
                 probe_mixed_templates_feature_path + "_subject_ids.npy"
@@ -561,18 +677,26 @@ class IJB_test:
         else:
             (
                 probe_mixed_templates_feature,
+                probe_template_unc,
                 probe_mixed_unique_templates,
                 probe_mixed_unique_subject_ids,
             ) = image2template_feature(
                 img_input_feats,
+                self.unc,
                 self.templates,
                 self.medias,
                 probe_mixed_templates,
                 probe_mixed_ids,
+                self.aggregate_gallery_templates_with_confidence,
+                self.features,
             )
             np.save(
                 probe_mixed_templates_feature_path + "_feature.npy",
                 probe_mixed_templates_feature,
+            )
+            np.save(
+                probe_mixed_templates_feature_path + "_unc.npy",
+                probe_template_unc,
             )
             np.save(
                 probe_mixed_templates_feature_path + "_subject_ids.npy",
@@ -580,7 +704,7 @@ class IJB_test:
             )
         print("g1_templates_feature:", g1_templates_feature.shape)  # (1772, 512)
 
-        if two_galleries:
+        if self.use_two_galleries:
             print("g2_templates_feature:", g2_templates_feature.shape)  # (1759, 512)
 
         print(
@@ -600,13 +724,15 @@ class IJB_test:
             g1_cmc_scores,
         ) = self.evaluation_1N_function(
             probe_mixed_templates_feature,
+            probe_template_unc,
             g1_templates_feature,
+            g1_template_unc,
             probe_mixed_unique_subject_ids,
             g1_unique_ids,
             fars_cal,
         )
 
-        if two_galleries:
+        if self.use_two_galleries:
             print(">>>> Gallery 2")
             (
                 g2_top_1_count,
@@ -617,7 +743,9 @@ class IJB_test:
                 g2_cmc_scores,
             ) = self.evaluation_1N_function(
                 probe_mixed_templates_feature,
+                probe_template_unc,
                 g2_templates_feature,
+                g2_template_unc,
                 probe_mixed_unique_subject_ids,
                 g2_unique_ids,
                 fars_cal,
@@ -630,16 +758,6 @@ class IJB_test:
             print("[Mean] top1: %f, top5: %f, top10: %f" % (top_1, top_5, top_10))
 
             mean_tpirs = (np.array(g1_recalls) + np.array(g2_recalls)) / 2
-            show_result = {}
-            for id, far in enumerate(fars_cal):
-                if id in fars_show_idx:
-                    show_result.setdefault("far", []).append(far)
-                    show_result.setdefault("g1_tpir", []).append(g1_recalls[id])
-                    show_result.setdefault("g1_thresh", []).append(g1_threshes[id])
-                    show_result.setdefault("g2_tpir", []).append(g2_recalls[id])
-                    show_result.setdefault("g2_thresh", []).append(g2_threshes[id])
-                    show_result.setdefault("mean_tpir", []).append(mean_tpirs[id])
-            print(pd.DataFrame(show_result).set_index("far").to_markdown())
         else:
             mean_tpirs = np.array(g1_recalls)
         return fars_cal, mean_tpirs, None, None  # g1_cmc_scores, g2_cmc_scores
@@ -724,34 +842,33 @@ def plot_roc_and_calculate_tpr(scores, names=None, label=None):
 
 
 def plot_dir_far_cmc_scores(scores, names=None):
-    try:
-        import matplotlib.pyplot as plt
+    import matplotlib.pyplot as plt
 
-        fig = plt.figure()
-        for id, score in enumerate(scores):
-            name = None if names is None else names[id]
-            if isinstance(score, str) and score.endswith(".npz"):
-                aa = np.load(score)
-                score, name = aa.get("scores")[0], aa.get("names")[0]
-            fars, tpirs = score[0], score[1]
-            name = name if name is not None else str(id)
+    fig = plt.figure()
+    for id, score in enumerate(scores):
+        name = None if names is None else names[id]
+        if isinstance(score, str) and score.endswith(".npz"):
+            aa = np.load(score)
+            score, name = aa.get("scores")[0], aa.get("names")[0]
+        fars, tpirs = score[0], score[1]
+        name = name if name is not None else str(id)
 
-            auc_value = auc(fars, tpirs)
-            label = "[%s (AUC = %0.4f%%)]" % (name, auc_value * 100)
-            plt.plot(fars, tpirs, lw=1, label=label)
+        auc_value = auc(fars, tpirs)
+        label = "[%s (AUC = %0.4f%%)]" % (name, auc_value * 100)
+        plt.plot(fars, tpirs, lw=1, label=label)
 
-        plt.xlabel("False Alarm Rate")
-        plt.xlim([0.0001, 1])
-        plt.xscale("log")
-        plt.ylabel("Detection & Identification Rate (%)")
-        plt.ylim([0, 1])
+    plt.xlabel("False Alarm Rate")
+    plt.xlim([0.0001, 1])
+    plt.xscale("log")
+    plt.ylabel("Detection & Identification Rate (%)")
+    plt.ylim([0, 1])
 
-        plt.grid(linestyle="--", linewidth=1)
-        plt.legend(fontsize="x-small")
-        plt.tight_layout()
-    except:
-        print("matplotlib plot failed")
-        fig = None
+    plt.grid(linestyle="--", linewidth=1)
+    plt.legend(fontsize="x-small")
+    plt.tight_layout()
+    # except:
+    #     print("matplotlib plot failed")
+    #     fig = None
 
     return fig
 
@@ -782,7 +899,13 @@ def main(cfg):
             evaluation_1N_function=one_to_N_eval_function,
             batch_size=cfg.batch_size,
             force_reload=False,
-            restore_embs=cfg.restore_embs,
+            restore_embs=method.restore_embs,
+            aggregate_gallery_templates_with_confidence=method.aggregate_gallery_templates_with_confidence,
+            use_detector_score=method.use_detector_score,
+            use_two_galleries=cfg.use_two_galleries,
+            recompute_template_pooling=cfg.recompute_template_pooling,
+            features=method.features,
+            far_range=cfg.far_range,
         )
 
         if cfg.is_one_2_N:  # 1:N test
@@ -805,7 +928,7 @@ def main(cfg):
         np.savez(method.save_result, **save_items)
 
     fig = plot_dir_far_cmc_scores(scores=method_scores, names=method_names)
-    fig.savefig(Path(cfg.exp_dir) / "di_far_plot.png")
+    fig.savefig(Path(cfg.exp_dir) / "di_far_plot.png", dpi=300)
     print("Plot path:")
     print(str(Path(cfg.exp_dir) / "di_far_plot.png"))
     # else:
