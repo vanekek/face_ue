@@ -4,7 +4,7 @@ from pathlib import Path
 import scipy
 from metrics import compute_detection_and_identification_rate
 import confidence_functions
-
+from multiprocessing import Pool
 
 class TcmNN:
     def __init__(self, number_of_nearest_neighbors, scale, p_value_cache_path) -> None:
@@ -299,6 +299,10 @@ class SCF:  # Не работает, в статье эту меру близо�
         return top_1_count, top_5_count, top_10_count, threshes, recalls, cmc_scores
 
 
+def compute_pfe(pfe_similarity, d, probe_feats, probe_unc, gallery_feats, gallery_unc):
+    sigma_sum = probe_unc[:, :,d] + gallery_unc[:,:,d]
+    slice = (probe_feats[:, :,d] - gallery_feats[:,:,d])**2 / sigma_sum + np.log(sigma_sum)
+    pfe_similarity += slice
 class PFE:
     def __init__(self, confidence_function: dict) -> None:
         """
@@ -325,6 +329,19 @@ class PFE:
         )
         similarity = np.dot(probe_feats, gallery_feats.T)  # (19593, 1772)
 
+        # compute pfe likelihood
+        probe_feats = probe_feats[:, np.newaxis, :]
+        probe_unc = probe_unc[:, np.newaxis, :]**2
+
+        gallery_feats = gallery_feats[np.newaxis, :, :]
+        gallery_unc = gallery_unc[np.newaxis, :, :]**2
+
+        pfe_similarity = np.zeros_like(similarity)
+        #pfe_arguments = [(pfe_similarity, d, probe_feats, probe_unc, gallery_feats, gallery_unc) for d in range(probe_feats.shape[2])]
+        
+        for d in tqdm(range(probe_feats.shape[2])):
+            compute_pfe(pfe_similarity, d, probe_feats, probe_unc, gallery_feats, gallery_unc)
+            
         # compute confidences
         confidence_function = getattr(
             confidence_functions, self.confidence_function.class_name
