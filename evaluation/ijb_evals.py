@@ -371,16 +371,16 @@ def image2template_feature(
         # raise NotImplemented
         # need to use aggregation as in Eqn. (6-7) and min variance pool, when media type is the same
         # across pooled images
-        
-        conf = 1 / scipy.stats.hmean(raw_unc, axis=1)
-        conf = conf[:, np.newaxis]
+
+        # conf = 1 / scipy.stats.hmean(raw_unc, axis=1)
+        conf = raw_unc[:, np.newaxis]
     elif unc_type == "scf":
         conf = np.exp(raw_unc)
     else:
         raise ValueError
     # template_feats = np.zeros((len(unique_templates), img_feats.shape[1]), dtype=img_feats.dtype)
     template_feats = np.zeros((len(unique_templates), img_feats.shape[1]))
-    templates_conf = np.zeros((len(unique_templates), 1))
+    templates_conf = np.zeros((len(unique_templates), raw_unc.shape[1]))
     for count_template, uqt in tqdm(
         enumerate(unique_templates),
         "Extract template feature",
@@ -399,16 +399,32 @@ def image2template_feature(
                 media_norm_feats += [face_norm_feats[ind_m]]
                 template_conf += [conf_template[ind_m]]
             else:  # image features from the same video will be aggregated into one feature
-                template_conf += [np.mean(conf_template[ind_m], 0, keepdims=True)]
                 if conf_pool:
-                    media_norm_feats += [
-                        np.sum(
-                            face_norm_feats[ind_m] * conf_template[ind_m],
-                            axis=0,
-                            keepdims=True,
-                        )
-                        / np.sum(conf_template[ind_m])
-                    ]
+                    if unc_type == "scf":
+                        template_conf += [
+                            np.mean(conf_template[ind_m], 0, keepdims=True)
+                        ]
+                        media_norm_feats += [
+                            np.sum(
+                                face_norm_feats[ind_m] * conf_template[ind_m],
+                                axis=0,
+                                keepdims=True,
+                            )
+                            / np.sum(conf_template[ind_m])
+                        ]
+                    elif unc_type == "pfe":
+                        media_variance = np.min(conf_template[ind_m], 0, keepdims=True)
+                        template_conf += [media_variance]
+                        media_norm_feats += [
+                            np.sum(
+                                (face_norm_feats[ind_m] / conf_template[ind_m]),
+                                axis=0,
+                                keepdims=True,
+                            )
+                            * media_variance
+                        ]
+                    else:
+                        raise ValueError
                 else:
                     media_norm_feats += [
                         np.mean(face_norm_feats[ind_m], 0, keepdims=True)
@@ -417,15 +433,26 @@ def image2template_feature(
         # media_norm_feats = media_norm_feats / np.sqrt(np.sum(media_norm_feats ** 2, -1, keepdims=True))
         template_conf = np.array(template_conf)[:, 0]
         if conf_pool:
-            template_feats[count_template] = np.sum(
-                media_norm_feats * template_conf, axis=0
-            ) / np.sum(template_conf)
-            # template_feats[count_template] = np.sum(
-            #     media_norm_feats * conf[ind_t], axis=0
-            # ) / np.sum(conf[ind_t])
+            if unc_type == "scf":
+                template_feats[count_template] = np.sum(
+                    media_norm_feats * template_conf, axis=0
+                ) / np.sum(template_conf)
+                final_template_conf = np.mean(template_conf, axis=0)
+            elif unc_type == "pfe":
+                pfe_template_variance = 1 / np.sum(1 / template_conf[:, 0, :], axis=0)
+                template_feats[count_template] = (
+                    np.sum(media_norm_feats / template_conf[:, 0, :], axis=0)
+                    * pfe_template_variance
+                )
+                final_template_conf = pfe_template_variance
+            else:
+                raise ValueError
         else:
             template_feats[count_template] = np.sum(media_norm_feats, axis=0)
-        templates_conf[count_template] = np.mean(template_conf, axis=0)
+
+        templates_conf[
+            count_template
+        ] = final_template_conf  # np.mean(template_conf, axis=0)
     template_norm_feats = normalize(template_feats)
     return template_norm_feats, templates_conf, unique_templates, unique_subjectids
 

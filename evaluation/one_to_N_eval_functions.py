@@ -245,8 +245,8 @@ class SCF:  # Не работает, в статье эту меру близо�
         )
         gallery_unc = gallery_unc[np.newaxis, :, 0]
 
-        gallery_unc = gallery_unc  + self.k_shift
-        probe_unc = probe_unc  + self.k_shift
+        gallery_unc = gallery_unc + self.k_shift
+        probe_unc = probe_unc + self.k_shift
 
         d = probe_feats.shape[1]
         k_i_times_k_j = probe_unc * gallery_unc
@@ -276,7 +276,7 @@ class SCF:  # Не работает, в статье эту меру близо�
             - d / 2 * np.log(2 * np.pi)
             - d * np.log(64)
         )
-        #scf_similarity = -scf_similarity
+        # scf_similarity = -scf_similarity
         similarity = mu_ij / 2
         # similarity = -similarity
         # compute confidences
