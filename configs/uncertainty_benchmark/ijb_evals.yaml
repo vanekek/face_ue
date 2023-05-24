@@ -23,3 +23,11 @@ open_set_recognition_methods:
         scale: 1
         p_value_cache_path: /app/cache/tcmNN_cache
     save_result: "/app/outputs/IJB_result/${subset}_TcmNN.npz"
+
+  - evaluation_1N_function:
+      class_path: evaluation.one_to_N_eval_functions.OneVSSetMachine
+      init_args:
+        near_p: 1.6
+        far_p: 4
+        l_r: 1
+    save_result: "/app/outputs/IJB_result/${subset}_onevsset.npz"
