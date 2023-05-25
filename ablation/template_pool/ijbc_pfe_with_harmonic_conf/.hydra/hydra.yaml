@@ -140,7 +140,7 @@ hydra:
     - path: ''
       schema: structured
       provider: schema
-    output_dir: /app/outputs/ijb_evals/ijb_evals_2023-05-24_10-53-02
+    output_dir: /app/outputs/ijb_evals/ijb_evals_2023-05-25_11-43-11
     choices:
       hydra/env: default
       hydra/callbacks: null

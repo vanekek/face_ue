@@ -7,11 +7,40 @@ exp_dir: outputs/ijb_evals/ijb_evals_${now:%Y-%m-%d_%H-%M-%S}
 data_path: datasets/arcface_ijb/ # Dataset path containing IJBB and IJBC sub folder
 subset: IJBC # Subset test target, could be IJBB / IJBC
 use_two_galleries: True
-recompute_template_pooling: True
+recompute_template_pooling: False
 batch_size: 16
 is_one_2_N: True  # Run 1:N test instead of 1
 far_range: [-4, 0, 100]
 open_set_recognition_methods:
+
+  - evaluation_1N_function: 
+      class_path: evaluation.one_to_N_eval_functions.CosineSim
+      init_args:
+        confidence_function: 
+          class_name: MaxSimilarity_confidence
+          init_args:
+            foo: bar
+    template_pooling_strategy:
+      function_path: evaluation.template_pooling_strategies.pooling_PFE_harmonic_mean
+    restore_embs: /app/cache/features/pfe_ijb_embs_${subset}.npz
+    features: pfe
+    use_detector_score: False
+    save_result: "${exp_dir}/${subset}_CosineSim_harmonic_pfe_score.npz"
+
+  - evaluation_1N_function: 
+      class_path: evaluation.one_to_N_eval_functions.CosineSim
+      init_args:
+        confidence_function: 
+          class_name: MaxSimilarity_confidence
+          init_args:
+            foo: bar
+    template_pooling_strategy:
+      function_path: evaluation.template_pooling_strategies.pooling_PFE_harmonic_mean
+    restore_embs: /app/cache/features/pfe_ijb_embs_${subset}.npz
+    features: pfe
+    use_detector_score: True
+    save_result: "${exp_dir}/${subset}_CosineSim_det_and_harmonic_pfe_score.npz"
+
   - evaluation_1N_function: 
       class_path: evaluation.one_to_N_eval_functions.CosineSim
       init_args:
@@ -22,11 +51,10 @@ open_set_recognition_methods:
     template_pooling_strategy:
       function_path: evaluation.template_pooling_strategies.pooling_SCF
     restore_embs: /app/cache/features/scf_ijb_embs_${subset}.npz
-    aggregate_gallery_templates_with_confidence: True
     features: scf
     use_detector_score: True
-    save_result: "${exp_dir}/${subset}_CosineSim_det_and_scf_score_.npz"
-    
+    save_result: "${exp_dir}/${subset}_CosineSim_det_and_scf_score.npz"
+
   - evaluation_1N_function: 
       class_path: evaluation.one_to_N_eval_functions.CosineSim
       init_args:
@@ -37,10 +65,9 @@ open_set_recognition_methods:
     template_pooling_strategy:
       function_path: evaluation.template_pooling_strategies.pooling_default
     restore_embs: /app/cache/features/scf_ijb_embs_${subset}.npz
-    aggregate_gallery_templates_with_confidence: True
     features: scf
     use_detector_score: True
-    save_result: "${exp_dir}/${subset}_CosineSim_det_and_scf_score_.npz"
+    save_result: "${exp_dir}/${subset}_CosineSim_det_score.npz"
 
 
 
@@ -55,10 +82,9 @@ open_set_recognition_methods:
     template_pooling_strategy:
       function_path: evaluation.template_pooling_strategies.pooling_PFE
     restore_embs: /app/cache/features/pfe_ijb_embs_${subset}.npz
-    aggregate_gallery_templates_with_confidence: True
     features: pfe
     use_detector_score: False
-    save_result: "${exp_dir}/${subset}_CosineSim_pfe_score_.npz"
+    save_result: "${exp_dir}/${subset}_CosineSim_pfe_score.npz"
 
 
   # - evaluation_1N_function: 
@@ -70,7 +96,7 @@ open_set_recognition_methods:
   #           foo: bar
   #   template_pooling_strategy
   #   restore_embs: /app/cache/features/pfe_ijb_embs_${subset}.npz
-  #   aggregate_gallery_templates_with_confidence: True
+  #
   #   features: pfe
   #   use_detector_score: True
   #   save_result: "${exp_dir}/${subset}_PFE_det_and_pfe_score.npz"
@@ -83,7 +109,7 @@ open_set_recognition_methods:
   #         init_args:
   #           foo: bar
   #   restore_embs: /app/cache/features/pfe_ijb_embs_${subset}.npz
-  #   aggregate_gallery_templates_with_confidence: True
+  #
   #   features: pfe
   #   use_detector_score: True
   #   save_result: "${exp_dir}/${subset}_CosineSim_det_and_pfe_score.npz"
@@ -98,7 +124,7 @@ open_set_recognition_methods:
   #         init_args:
   #           foo: bar
   #   restore_embs: /app/cache/features/scf_ijb_embs_${subset}.npz
-  #   aggregate_gallery_templates_with_confidence: True
+  #
   #   features: scf
   #   use_detector_score: False
   #   save_result: "${exp_dir}/${subset}_CosineSim_and_scf_score.npz"
@@ -111,7 +137,7 @@ open_set_recognition_methods:
   #         init_args:
   #           foo: bar
   #   restore_embs: /app/cache/features/pfe_ijb_embs_${subset}.npz
-  #   aggregate_gallery_templates_with_confidence: True
+  #
   #   features: pfe
   #   use_detector_score: True
   #   save_result: "${exp_dir}/${subset}_PFE_det_and_pfe_score.npz"
@@ -127,7 +153,7 @@ open_set_recognition_methods:
   #           foo: bar
   #       k_shift: 1200
   #   restore_embs: /app/cache/features/scf_ijb_embs_${subset}.npz
-  #   aggregate_gallery_templates_with_confidence: True
+  #
   #   features: scf
   #   use_detector_score: True
   #   save_result: "${exp_dir}/${subset}_SCF_det_and_scf_score.npz"
