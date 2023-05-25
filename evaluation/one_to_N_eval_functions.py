@@ -351,7 +351,7 @@ class PFE:
 
 
 from sklearn.svm import LinearSVC
-
+from scipy.special import softmax, expit
 
 class OVRSVM:
     def __init__(self, **svm_args):
@@ -367,39 +367,15 @@ class OVRSVM:
         gallery_ids, 
         fars
     ) -> Any:
-        is_seen = np.isin(probe_ids, gallery_ids)
         self.model = LinearSVC(**self.svm_args)
         self.model.fit(gallery_feats, gallery_ids)
         
         decision_scores = self.model.decision_function(probe_feats)
         
-        positive_ids = probe_ids[is_seen]
-        positive_scores = decision_scores[is_seen]
-        correct_positive_preds = np.argmax(positive_scores, axis=1) == positive_ids
-        
-        top_counts = [
-            top_k_accuracy_score(
-                positive_ids, 
-                positive_scores, 
-                k=k, 
-                labels=sorted(gallery_ids),
-                normalize=False) 
-            for k in [1, 5, 10]
-        ]
-        
-        thresholds = []
-        recalls = []
-        novel_scores_maxxed = decision_scores[~is_seen].max(axis=1)
-        novel_sort_perm = np.argsort(novel_scores_maxxed)
-        novel_scores_maxxed = novel_scores_maxxed[novel_sort_perm]
-        for far in fars:
-            thr = novel_scores_maxxed[
-                max(int((novel_scores_maxxed.shape[0]) * far) - 1, 0)
-            ]
-
-            recall = np.logical_and(correct_positive_preds, positive_scores.max(1) > thr).mean()
-            
-            recalls.append(recall)
-            thresholds.append(thr)
-        
-        return *top_counts, thresholds, recalls, None
+        return compute_detection_and_identification_rate(
+            fars,
+            probe_ids,
+            gallery_ids,
+            decision_scores,
+            expit(decision_scores.max(1))
+        )
