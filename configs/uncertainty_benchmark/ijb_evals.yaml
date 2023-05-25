@@ -38,39 +38,42 @@ open_set_recognition_methods:
     use_detector_score: False
     save_result: "${exp_dir}/${subset}_CosineSim_and_scf_score.npz"
 
-  # - evaluation_1N_function: 
-  #     class_path: evaluation.one_to_N_eval_functions.PFE
-  #     init_args:
-  #       confidence_function: 
-  #         class_name: MaxSimilarity_confidence
-  #         init_args:
-  #           foo: bar
-  #   restore_embs: /app/cache/features/pfe_ijb_embs_${subset}.npz
-  #   aggregate_gallery_templates_with_confidence: True
-  #   features: pfe
-  #   use_detector_score: True
-  #   save_result: "${exp_dir}/${subset}_PFE_det_and_pfe_score.npz"
+  - evaluation_1N_function: 
+      class_path: evaluation.one_to_N_eval_functions.PFE
+      init_args:
+        confidence_function: 
+          class_name: MaxSimilarity_confidence
+          init_args:
+            foo: bar
+    restore_embs: /app/cache/features/pfe_ijb_embs_${subset}.npz
+    aggregate_gallery_templates_with_confidence: True
+    features: pfe
+    use_detector_score: True
+    save_result: "${exp_dir}/${subset}_PFE_det_and_pfe_score.npz"
 
 
 
-  # - evaluation_1N_function: 
-  #     class_path: evaluation.one_to_N_eval_functions.SCF
-  #     init_args:
-  #       confidence_function: 
-  #         class_name: MaxSimilarity_confidence
-  #         init_args:
-  #           foo: bar
-  #       k_shift: 1200
-  #   restore_embs: /app/cache/features/scf_ijb_embs_${subset}.npz
-  #   aggregate_gallery_templates_with_confidence: True
-  #   features: scf
-  #   use_detector_score: True
-  #   save_result: "${exp_dir}/${subset}_SCF_det_and_scf_score.npz"
+  - evaluation_1N_function: 
+      class_path: evaluation.one_to_N_eval_functions.SCF
+      init_args:
+        confidence_function: 
+          class_name: MaxSimilarity_confidence
+          init_args:
+            foo: bar
+        k_shift: 1200
+    restore_embs: /app/cache/features/scf_ijb_embs_${subset}.npz
+    aggregate_gallery_templates_with_confidence: True
+    features: scf
+    use_detector_score: True
+    save_result: "${exp_dir}/${subset}_SCF_det_and_scf_score.npz"
 
   - evaluation_1N_function:
-      class_path: evaluation.one_to_N_eval_functions.OneVSSetMachine
+      class_path: evaluation.one_to_N_eval_functions.OVRSVM
       init_args:
-        near_p: 1.6
-        far_p: 4
-        l_r: 1
-    save_result: "/app/outputs/IJB_result/${subset}_onevsset.npz"
+        penalty: l2
+        loss: squared_hinge
+    restore_embs: /app/cache/features/scf_ijb_embs_${subset}.npz
+    aggregate_gallery_templates_with_confidence: True
+    features: scf
+    use_detector_score: True
+    save_result: "/app/outputs/IJB_result/${subset}_ovr.npz"
