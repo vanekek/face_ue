@@ -1,4 +1,5 @@
 import numpy as np
+from scipy.stats import rankdata
 
 
 def compute_detection_and_identification_rate(
@@ -29,16 +30,17 @@ def compute_detection_and_identification_rate(
 
     top_1_count, top_5_count, top_10_count = 0, 0, 0
     pos_sims, pos_score, neg_sims, non_gallery_sims, neg_score = [], [], [], [], []
+    gallery_ranks = rankdata(gallery_ids) - 1
     for index, query_id in enumerate(probe_ids):
-        if query_id in gallery_ids:
+        if (gallery_index := np.argwhere(gallery_ids == query_id)):
             # gallery test image
 
-            gallery_label = np.argwhere(gallery_ids == query_id)[0, 0]
             index_sorted = np.argsort(similarity[index])[::-1]
+            rank = gallery_ranks[gallery_index]
 
-            top_1_count += gallery_label in index_sorted[:1]
-            top_5_count += gallery_label in index_sorted[:5]
-            top_10_count += gallery_label in index_sorted[:10]
+            top_1_count += rank in index_sorted[:1]
+            top_5_count += rank in index_sorted[:5]
+            top_10_count += rank in index_sorted[:10]
 
             # closeness of test image to true class in gallery
             pos_sims.append(similarity[index][gallery_ids == query_id][0])

@@ -351,11 +351,10 @@ class PFE:
 
 
 from sklearn.svm import LinearSVC
-from scipy.special import softmax, expit
 
 class OVRSVM:
-    def __init__(self, **svm_args):
-        self.svm_args=svm_args
+    def __init__(self, **args):
+        pass
     
     def __call__(
         self, 
@@ -367,15 +366,16 @@ class OVRSVM:
         gallery_ids, 
         fars
     ) -> Any:
-        self.model = LinearSVC(**self.svm_args)
+        self.model = LinearSVC()
         self.model.fit(gallery_feats, gallery_ids)
         
         decision_scores = self.model.decision_function(probe_feats)
+        is_seen = np.isin(probe_ids, gallery_ids)
         
         return compute_detection_and_identification_rate(
             fars,
             probe_ids,
             gallery_ids,
             decision_scores,
-            expit(decision_scores.max(1))
+            decision_scores.max(1)
         )
