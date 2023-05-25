@@ -365,15 +365,13 @@ def image2template_feature(
         unique_templates = np.unique(templates)
         unique_subjectids = None
     if unc_type == "pfe":
-        
-
         # compute harmonic mean of unc
         # raise NotImplemented
         # need to use aggregation as in Eqn. (6-7) and min variance pool, when media type is the same
         # across pooled images
-        raw_unc = np.exp(raw_unc)
+        sigma_sq = np.exp(raw_unc)
         # conf = 1 / scipy.stats.hmean(raw_unc, axis=1)
-        conf = raw_unc[:, np.newaxis]
+        conf = sigma_sq
     elif unc_type == "scf":
         conf = np.exp(raw_unc)
     else:
@@ -397,12 +395,12 @@ def image2template_feature(
             (ind_m,) = np.where(face_medias == u)
             if ct == 1:
                 media_norm_feats += [face_norm_feats[ind_m]]
-                template_conf += [np.squeeze(conf_template[ind_m])]
+                template_conf += [conf_template[ind_m]]
             else:  # image features from the same video will be aggregated into one feature
                 if conf_pool:
                     if unc_type == "scf":
                         template_conf += [
-                            np.squeeze(np.mean(conf_template[ind_m], 0, keepdims=True))
+                            np.mean(conf_template[ind_m], 0, keepdims=True)
                         ]
                         media_norm_feats += [
                             np.sum(
@@ -413,16 +411,18 @@ def image2template_feature(
                             / np.sum(conf_template[ind_m])
                         ]
                     elif unc_type == "pfe":
-                        media_var = conf_template[ind_m][:,0,:]
-                        result_median_variance = np.min(media_var, 0, keepdims=True)
-                        template_conf += [np.squeeze(result_median_variance)]
+                        # here we pool variance by taking minimum value
+                        media_var = conf_template[ind_m]
+                        result_media_variance = np.min(media_var, 0, keepdims=True)
+                        # result_media_variance = 1 / np.sum(1 / media_var, axis=0, keepdims=True)
+                        template_conf += [result_media_variance]
                         media_norm_feats += [
                             np.sum(
                                 (face_norm_feats[ind_m] / media_var),
                                 axis=0,
                                 keepdims=True,
                             )
-                            * result_median_variance
+                            * result_media_variance
                         ]
                     else:
                         raise ValueError
@@ -430,32 +430,33 @@ def image2template_feature(
                     media_norm_feats += [
                         np.mean(face_norm_feats[ind_m], 0, keepdims=True)
                     ]
-        media_norm_feats = np.array(media_norm_feats)[:, 0, :]
-        # media_norm_feats = media_norm_feats / np.sqrt(np.sum(media_norm_feats ** 2, -1, keepdims=True))
-        template_conf = np.array(template_conf)
+        media_norm_feats = np.concatenate(media_norm_feats)
+        template_conf = np.concatenate(template_conf)
+
         if conf_pool:
             if unc_type == "scf":
                 template_feats[count_template] = np.sum(
-                    media_norm_feats * template_conf[:,np.newaxis], axis=0
+                    media_norm_feats * template_conf[:, np.newaxis], axis=0
                 ) / np.sum(template_conf)
                 final_template_conf = np.mean(template_conf, axis=0)
             elif unc_type == "pfe":
-                pfe_template_variance = 1 / np.sum(1 / template_conf, axis=0)
+                pfe_template_variance = 1 / np.sum(
+                    1 / template_conf, axis=0
+                )  # Eqn. (7) https://ieeexplore.ieee.org/document/9008376
                 template_feats[count_template] = (
-                    np.sum(media_norm_feats / template_conf, axis=0)
+                    np.sum(media_norm_feats / template_conf, axis=0)  # Eqn. (6)
                     * pfe_template_variance
                 )
                 final_template_conf = pfe_template_variance
             else:
                 raise ValueError
-            
+
             templates_conf[
-            count_template
+                count_template
             ] = final_template_conf  # np.mean(template_conf, axis=0)
         else:
             template_feats[count_template] = np.sum(media_norm_feats, axis=0)
 
-        
     template_norm_feats = normalize(template_feats)
     return template_norm_feats, templates_conf, unique_templates, unique_subjectids
 
@@ -501,7 +502,7 @@ class IJB_test:
         batch_size,
         force_reload,
         restore_embs,
-        aggregate_gallery_templates_with_confidence,
+        template_pooling_strategy,
         use_detector_score,
         use_two_galleries,
         recompute_template_pooling,
@@ -555,9 +556,8 @@ class IJB_test:
         )
         self.face_scores = face_scores.astype(self.embs.dtype)
         self.evaluation_1N_function = evaluation_1N_function
-        self.aggregate_gallery_templates_with_confidence = (
-            aggregate_gallery_templates_with_confidence
-        )
+        self.template_pooling_strategy = template_pooling_strategy
+
         self.use_detector_score = use_detector_score
         self.far_range = far_range
 
@@ -628,20 +628,26 @@ class IJB_test:
             use_detector_score=self.use_detector_score,
             face_scores=self.face_scores,
         )
+        # get template pooling function
+        module_name_parts = self.template_pooling_strategy.function_path.split(".")
+        module_path = ".".join(module_name_parts[:-1])
+        class_name = module_name_parts[-1]
+
+        template_pooling_function = getattr(
+            importlib.import_module(module_path), class_name
+        )
         (
             g1_templates_feature,
             g1_template_unc,
             g1_unique_templates,
             g1_unique_ids,
-        ) = image2template_feature(
+        ) = template_pooling_function(
             img_input_feats,
             self.unc,
             self.templates,
             self.medias,
             g1_templates,
             g1_ids,
-            self.aggregate_gallery_templates_with_confidence,
-            self.features,
         )
         if self.use_two_galleries:
             (
@@ -649,18 +655,20 @@ class IJB_test:
                 g2_template_unc,
                 g2_unique_templates,
                 g2_unique_ids,
-            ) = image2template_feature(
+            ) = template_pooling_function(
                 img_input_feats,
                 self.unc,
                 self.templates,
                 self.medias,
                 g2_templates,
                 g2_ids,
-                self.aggregate_gallery_templates_with_confidence,
-                self.features,
             )
-
-        probe_mixed_templates_feature_path = f"/app/cache/template_cache/probe_aggr_{str(self.aggregate_gallery_templates_with_confidence)}_{str(self.use_detector_score)}_{self.features}_{self.subset}"
+        cache_dir = Path("/app/cache/template_cache")
+        cache_dir.mkdir(parents=True, exist_ok=True)
+        probe_mixed_templates_feature_path = str(
+            cache_dir
+            / f"probe_aggr_{class_name}_{str(self.use_detector_score)}_{self.subset}"
+        )
 
         if (
             Path(probe_mixed_templates_feature_path + "_unc.npy").is_file()
@@ -681,15 +689,13 @@ class IJB_test:
                 probe_template_unc,
                 probe_mixed_unique_templates,
                 probe_mixed_unique_subject_ids,
-            ) = image2template_feature(
+            ) = template_pooling_function(
                 img_input_feats,
                 self.unc,
                 self.templates,
                 self.medias,
                 probe_mixed_templates,
                 probe_mixed_ids,
-                self.aggregate_gallery_templates_with_confidence,
-                self.features,
             )
             np.save(
                 probe_mixed_templates_feature_path + "_feature.npy",
@@ -901,7 +907,7 @@ def main(cfg):
             batch_size=cfg.batch_size,
             force_reload=False,
             restore_embs=method.restore_embs,
-            aggregate_gallery_templates_with_confidence=method.aggregate_gallery_templates_with_confidence,
+            template_pooling_strategy=method.template_pooling_strategy,
             use_detector_score=method.use_detector_score,
             use_two_galleries=cfg.use_two_galleries,
             recompute_template_pooling=cfg.recompute_template_pooling,

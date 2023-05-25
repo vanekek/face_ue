@@ -24,19 +24,20 @@ open_set_recognition_methods:
     features: scf
     use_detector_score: True
     save_result: "${exp_dir}/${subset}_CosineSim_det_and_scf_score_.npz"
-    
-  - evaluation_1N_function: 
-      class_path: evaluation.one_to_N_eval_functions.CosineSim
-      init_args:
-        confidence_function: 
-          class_name: MaxSimilarity_confidence
-          init_args:
-            foo: bar
-    restore_embs: /app/cache/features/pfe_ijb_embs_${subset}.npz
-    aggregate_gallery_templates_with_confidence: True
-    features: pfe
-    use_detector_score: True
-    save_result: "${exp_dir}/${subset}_CosineSim_det_and_pfe_score_.npz"
+
+  # - evaluation_1N_function: 
+  #     class_path: evaluation.one_to_N_eval_functions.CosineSim
+  #     init_args:
+  #       confidence_function: 
+  #         class_name: MaxSimilarity_confidence
+  #         init_args:
+  #           foo: bar
+  #   restore_embs: /app/cache/features/pfe_ijb_embs_${subset}.npz
+  #   aggregate_gallery_templates_with_confidence: True
+  #   features: pfe
+  #   use_detector_score: True
+  #   save_result: "${exp_dir}/${subset}_CosineSim_det_and_pfe_score_.npz"
+
   - evaluation_1N_function: 
       class_path: evaluation.one_to_N_eval_functions.CosineSim
       init_args:
@@ -52,42 +53,42 @@ open_set_recognition_methods:
     
 
 
-  - evaluation_1N_function: 
-      class_path: evaluation.one_to_N_eval_functions.CosineSim
-      init_args:
-        confidence_function: 
-          class_name: MaxSimilarity_confidence
-          init_args:
-            foo: bar
-    restore_embs: /app/cache/features/scf_ijb_embs_${subset}.npz
-    aggregate_gallery_templates_with_confidence: False
-    features: scf
-    use_detector_score: False
-    save_result: "${exp_dir}/${subset}_CosineSim.npz"
-  - evaluation_1N_function: 
-      class_path: evaluation.one_to_N_eval_functions.CosineSim
-      init_args:
-        confidence_function: 
-          class_name: MaxSimilarity_confidence
-          init_args:
-            foo: bar
-    restore_embs: /app/cache/features/scf_ijb_embs_${subset}.npz
-    aggregate_gallery_templates_with_confidence: False
-    features: scf
-    use_detector_score: True
-    save_result: "${exp_dir}/${subset}_CosineSim_det_score.npz"
-  - evaluation_1N_function: 
-      class_path: evaluation.one_to_N_eval_functions.CosineSim
-      init_args:
-        confidence_function: 
-          class_name: MaxSimilarity_confidence
-          init_args:
-            foo: bar
-    restore_embs: /app/cache/features/scf_ijb_embs_${subset}.npz
-    aggregate_gallery_templates_with_confidence: True
-    features: scf
-    use_detector_score: False
-    save_result: "${exp_dir}/${subset}_CosineSim_scf_score.npz"
+  # - evaluation_1N_function: 
+  #     class_path: evaluation.one_to_N_eval_functions.CosineSim
+  #     init_args:
+  #       confidence_function: 
+  #         class_name: MaxSimilarity_confidence
+  #         init_args:
+  #           foo: bar
+  #   restore_embs: /app/cache/features/scf_ijb_embs_${subset}.npz
+  #   aggregate_gallery_templates_with_confidence: False
+  #   features: scf
+  #   use_detector_score: False
+  #   save_result: "${exp_dir}/${subset}_CosineSim.npz"
+  # - evaluation_1N_function: 
+  #     class_path: evaluation.one_to_N_eval_functions.CosineSim
+  #     init_args:
+  #       confidence_function: 
+  #         class_name: MaxSimilarity_confidence
+  #         init_args:
+  #           foo: bar
+  #   restore_embs: /app/cache/features/scf_ijb_embs_${subset}.npz
+  #   aggregate_gallery_templates_with_confidence: False
+  #   features: scf
+  #   use_detector_score: True
+  #   save_result: "${exp_dir}/${subset}_CosineSim_det_score.npz"
+  # - evaluation_1N_function: 
+  #     class_path: evaluation.one_to_N_eval_functions.CosineSim
+  #     init_args:
+  #       confidence_function: 
+  #         class_name: MaxSimilarity_confidence
+  #         init_args:
+  #           foo: bar
+  #   restore_embs: /app/cache/features/scf_ijb_embs_${subset}.npz
+  #   aggregate_gallery_templates_with_confidence: True
+  #   features: scf
+  #   use_detector_score: False
+  #   save_result: "${exp_dir}/${subset}_CosineSim_scf_score.npz"
 
 
 

@@ -6,6 +6,7 @@ from metrics import compute_detection_and_identification_rate
 import confidence_functions
 from multiprocessing import Pool
 
+
 class TcmNN:
     def __init__(self, number_of_nearest_neighbors, scale, p_value_cache_path) -> None:
         """
@@ -300,9 +301,13 @@ class SCF:  # Не работает, в статье эту меру близо�
 
 
 def compute_pfe(pfe_similarity, d, probe_feats, probe_unc, gallery_feats, gallery_unc):
-    sigma_sum = probe_unc[:, :,d] + gallery_unc[:,:,d]
-    slice = (probe_feats[:, :,d] - gallery_feats[:,:,d])**2 / sigma_sum + np.log(sigma_sum)
+    sigma_sum = probe_unc[:, :, d] + gallery_unc[:, :, d]
+    slice = (probe_feats[:, :, d] - gallery_feats[:, :, d]) ** 2 / sigma_sum + np.log(
+        sigma_sum
+    )
     pfe_similarity += slice
+
+
 class PFE:
     def __init__(self, confidence_function: dict) -> None:
         """
@@ -331,22 +336,24 @@ class PFE:
 
         # compute pfe likelihood
         probe_feats = probe_feats[:, np.newaxis, :]
-        probe_unc = probe_unc[:, np.newaxis, :]**2
+        probe_unc = probe_unc[:, np.newaxis, :] ** 2
 
         gallery_feats = gallery_feats[np.newaxis, :, :]
-        gallery_unc = gallery_unc[np.newaxis, :, :]**2
+        gallery_unc = gallery_unc[np.newaxis, :, :] ** 2
 
         pfe_similarity = np.zeros_like(similarity)
-        #pfe_arguments = [(pfe_similarity, d, probe_feats, probe_unc, gallery_feats, gallery_unc) for d in range(probe_feats.shape[2])]
-        
+        # pfe_arguments = [(pfe_similarity, d, probe_feats, probe_unc, gallery_feats, gallery_unc) for d in range(probe_feats.shape[2])]
+
         for d in tqdm(range(probe_feats.shape[2])):
-            compute_pfe(pfe_similarity, d, probe_feats, probe_unc, gallery_feats, gallery_unc)
-            
+            compute_pfe(
+                pfe_similarity, d, probe_feats, probe_unc, gallery_feats, gallery_unc
+            )
+        pfe_similarity = -0.5 * pfe_similarity
         # compute confidences
         confidence_function = getattr(
             confidence_functions, self.confidence_function.class_name
         )(**self.confidence_function.init_args)
-        probe_score = confidence_function(similarity)
+        probe_score = confidence_function(pfe_similarity)
 
         # Compute Detection & identification rate for open set recognition
         (
