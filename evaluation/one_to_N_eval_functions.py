@@ -8,6 +8,7 @@ import confidence_functions
 
 from sklearn.metrics import top_k_accuracy_score, accuracy_score
 from sklearn.base import ClassifierMixin, BaseEstimator
+import joblib
 from collections import Counter
 
 
@@ -350,11 +351,10 @@ class PFE:
         return top_1_count, top_5_count, top_10_count, threshes, recalls, cmc_scores
 
 
-from sklearn.svm import LinearSVC
 
 class OVRSVM:
-    def __init__(self, **args):
-        pass
+    def __init__(self, **kwargs):
+        self.kwargs = kwargs
     
     def __call__(
         self, 
@@ -366,11 +366,20 @@ class OVRSVM:
         gallery_ids, 
         fars
     ) -> Any:
-        self.model = LinearSVC()
-        self.model.fit(gallery_feats, gallery_ids)
+        from sklearn.svm import SVC
+        from sklearn.multiclass import OneVsRestClassifier
         
-        decision_scores = self.model.decision_function(probe_feats)
-        is_seen = np.isin(probe_ids, gallery_ids)
+        with joblib.parallel_backend('loky'):
+            model = OneVsRestClassifier(SVC(**self.kwargs)).fit(gallery_feats, gallery_ids)
+        
+        print("SVM: Fit done, starting prediction")
+        probe_feats_chunks = np.array_split(probe_feats, 16)
+        decision_scores = np.stack(
+            joblib.Parallel(-1)(
+                joblib.delayed(model.decision_function)(chunk)
+                for chunk in probe_feats_chunks
+            )
+        )
         
         return compute_detection_and_identification_rate(
             fars,
@@ -379,3 +388,4 @@ class OVRSVM:
             decision_scores,
             decision_scores.max(1)
         )
+        

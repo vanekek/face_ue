@@ -70,8 +70,7 @@ open_set_recognition_methods:
   - evaluation_1N_function:
       class_path: evaluation.one_to_N_eval_functions.OVRSVM
       init_args:
-        penalty: l2
-        loss: squared_hinge
+        kernel: poly
     restore_embs: /app/cache/features/scf_ijb_embs_${subset}.npz
     aggregate_gallery_templates_with_confidence: True
     features: scf
