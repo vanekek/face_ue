@@ -219,7 +219,7 @@ class CosineSim:
         return top_1_count, top_5_count, top_10_count, threshes, recalls, cmc_scores
 
 
-class SCF:  # Не работает, в статье эту меру близости тоже не используют
+class SCF:
     def __init__(self, confidence_function: dict, k_shift: float) -> None:
         """
         Implements SCF mutual “likelihood” of distributions belonging to the same person (sharing the same latent code)
@@ -300,16 +300,18 @@ class SCF:  # Не работает, в статье эту меру близо�
         return top_1_count, top_5_count, top_10_count, threshes, recalls, cmc_scores
 
 
-def compute_pfe(pfe_similarity, d, probe_feats, probe_unc, gallery_feats, gallery_unc):
-    sigma_sum = probe_unc[:, :, d] + gallery_unc[:, :, d]
-    slice = (probe_feats[:, :, d] - gallery_feats[:, :, d]) ** 2 / sigma_sum + np.log(
-        sigma_sum
-    )
+def compute_pfe(
+    pfe_similarity, d, probe_feats, probe_sigma_sq, gallery_feats, gallery_sigma_sq
+):
+    sigma_sq_sum = probe_sigma_sq[:, :, d] + gallery_sigma_sq[:, :, d]
+    slice = (
+        probe_feats[:, :, d] - gallery_feats[:, :, d]
+    ) ** 2 / sigma_sq_sum + np.log(sigma_sq_sum)
     pfe_similarity += slice
 
 
 class PFE:
-    def __init__(self, confidence_function: dict) -> None:
+    def __init__(self, confidence_function: dict, variance_scale: float) -> None:
         """
         Implements PFE “likelihood” of distributions belonging to the same person (sharing the same latent code)
 
@@ -317,6 +319,7 @@ class PFE:
         Eq. (3)
         """
         self.confidence_function = confidence_function
+        self.variance_scale = variance_scale
 
     def __call__(
         self,
@@ -336,19 +339,36 @@ class PFE:
 
         # compute pfe likelihood
         probe_feats = probe_feats[:, np.newaxis, :]
-        probe_unc = probe_unc[:, np.newaxis, :] ** 2
+        probe_sigma_sq = probe_unc[:, np.newaxis, :] * self.variance_scale
 
         gallery_feats = gallery_feats[np.newaxis, :, :]
-        gallery_unc = gallery_unc[np.newaxis, :, :] ** 2
+        gallery_sigma_sq = gallery_unc[np.newaxis, :, :] * self.variance_scale
 
-        pfe_similarity = np.zeros_like(similarity)
-        # pfe_arguments = [(pfe_similarity, d, probe_feats, probe_unc, gallery_feats, gallery_unc) for d in range(probe_feats.shape[2])]
+        pfe_cache_path = Path("/app/cache/pfe_cache") / (
+            "default_pfe_variance_shift_"
+            + str(self.variance_scale)
+            + f"_gallery_size_{gallery_feats.shape[1]}"
+            + ".npy"
+        )
 
-        for d in tqdm(range(probe_feats.shape[2])):
-            compute_pfe(
-                pfe_similarity, d, probe_feats, probe_unc, gallery_feats, gallery_unc
-            )
-        pfe_similarity = -0.5 * pfe_similarity
+        if pfe_cache_path.is_file():
+            pfe_similarity = np.load(pfe_cache_path)
+        else:
+            pfe_similarity = np.zeros_like(similarity)
+            # pfe_arguments = [(pfe_similarity, d, probe_feats, probe_unc, gallery_feats, gallery_unc) for d in range(probe_feats.shape[2])]
+
+            for d in tqdm(range(probe_feats.shape[2])):
+                compute_pfe(
+                    pfe_similarity,
+                    d,
+                    probe_feats,
+                    probe_sigma_sq,
+                    gallery_feats,
+                    gallery_sigma_sq,
+                )
+            pfe_similarity = -0.5 * pfe_similarity
+            np.save(pfe_cache_path, pfe_similarity)
+
         # compute confidences
         confidence_function = getattr(
             confidence_functions, self.confidence_function.class_name
