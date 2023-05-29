@@ -2,6 +2,10 @@
 
 seed_everything: 7
 trainer:
+  logger:
+    class_path: pytorch_lightning.loggers.WandbLogger
+    init_args:
+      project: "face_incertainty_train"
   log_every_n_steps: 3
   default_root_dir: outputs/scf_train
   enable_checkpointing: true
@@ -15,7 +19,7 @@ trainer:
       output_dir: /app/cache/features
       subset: ${data.init_args.data_predict_subset}
       write_interval: epoch
-  max_epochs: 4
+  max_epochs: 10
   accelerator: gpu
   devices: 2
 model:
@@ -64,7 +68,7 @@ data:
     init_args:
         data_train_dir: /app/data/ms1m/
         data_predict_dir: /app/datasets/arcface_ijb
-        data_predict_subset: IJBB
+        data_predict_subset: IJBC
         batch_size: 128
         num_workers: 20
 

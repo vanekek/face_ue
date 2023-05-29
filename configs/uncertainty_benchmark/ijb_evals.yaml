@@ -21,7 +21,7 @@ open_set_recognition_methods:
           init_args:
             foo: bar
         k_shift: 150
-        use_cosine_sim_match: True
+        use_cosine_sim_match: False
     restore_embs: /app/cache/features/scf_ijb_embs_${subset}.npz
     template_pooling_strategy:
       function_path: evaluation.template_pooling_strategies.pooling_SCF
