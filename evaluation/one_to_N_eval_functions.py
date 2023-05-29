@@ -224,7 +224,9 @@ class CosineSim:
 
 
 class SCF:
-    def __init__(self, confidence_function: dict, k_shift: float, use_cosine_sim_match: bool) -> None:
+    def __init__(
+        self, confidence_function: dict, k_shift: float, use_cosine_sim_match: bool
+    ) -> None:
         """
         Implements SCF mutual “likelihood” of distributions belonging to the same person (sharing the same latent code)
 
@@ -287,7 +289,6 @@ class SCF:
             similarity = mu_ij / 2
         else:
             similarity = scf_similarity
-
 
         # compute confidences
         confidence_function = getattr(

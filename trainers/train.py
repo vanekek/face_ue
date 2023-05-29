@@ -10,7 +10,10 @@ sys.path.append("/app")
 
 
 def cli_main():
-    cli = LightningCLI(parser_kwargs={"parser_mode": "omegaconf"})
+    cli = LightningCLI(
+        parser_kwargs={"parser_mode": "omegaconf"},
+        save_config_kwargs={"overwrite": True},
+    )
 
 
 if __name__ == "__main__":

@@ -14,6 +14,9 @@ trainer:
     init_args: 
       every_n_train_steps: 5000
       dirpath: outputs/scf_train/weights
+  - class_path: pytorch_lightning.callbacks.LearningRateMonitor
+    init_args: 
+      logging_interval: "step"
   - class_path: face_lib.models.scf.IJB_writer
     init_args: 
       output_dir: /app/cache/features
@@ -26,7 +29,7 @@ model:
     class_path: face_lib.models.scf.SphereConfidenceFace
     init_args:
         backbone:
-            class_path: face_lib.models.lightning_resnet.ResNet
+            class_path: face_lib.models.lightning_wrappers.ResNet
             init_args:
                 resnet_name: iresnet50_normalized
                 weights: /app/models/backbone/ms1mv3_arcface_r50/backbone.pth
@@ -45,28 +48,40 @@ model:
             class_path: face_lib.models.scf.SoftmaxWeights
             init_args:
                 softmax_weights_path: /app/models/backbone/ms1mv3_arcface_r50/softmax_weight.pt
-                radius: ${model.scf_loss.init_args.radius}
+                radius: 64 #${model.scf_loss.init_args.radius}
         optimizer_params:
             optimizer: Adam
             params:
-                lr: 3e-5
+                lr: 1e-3
                 weight_decay: 5e-4
         # scheduler_params:
-        #     scheduler: StepLR
+        #     scheduler: CyclicLR
         #     params:
-        #         step_size: 1
-        #         gamma: 0.5
+        #         base_lr: 3e-8
+        #         max_lr: 3e-5
+        #         step_size_up: 1000
+        #         cycle_momentum: False
+        #         mode: "triangular2"
+        #     interval: "step"
+        #     frequency: 1
         scheduler_params:
-            scheduler: CosineAnnealingWarmRestarts
+            scheduler: StepLR
             params:
-                T_0: 5000
-                eta_min: 3e-8
+                step_size: 5000
+                gamma: 0.5
+            interval: "step"
+            frequency: 1
+        # scheduler_params:
+        #     scheduler: CosineAnnealingWarmRestarts
+        #     params:
+        #         T_0: 5000
+        #         eta_min: 3e-8
 
 
 data:
     class_path: face_lib.datasets.lightning_scf.SCF_DataModule
     init_args:
-        data_train_dir: /app/data/ms1m/
+        data_train_dir: /app/datasets/ms1m/
         data_predict_dir: /app/datasets/arcface_ijb
         data_predict_subset: IJBC
         batch_size: 128
