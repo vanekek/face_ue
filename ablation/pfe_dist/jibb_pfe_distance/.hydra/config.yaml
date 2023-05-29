@@ -1,6 +1,6 @@
 exp_dir: outputs/ijb_evals/ijb_evals_${now:%Y-%m-%d_%H-%M-%S}
 data_path: datasets/arcface_ijb/
-subset: IJBC
+subset: IJBB
 use_two_galleries: true
 recompute_template_pooling: false
 batch_size: 16
