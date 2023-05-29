@@ -4,8 +4,10 @@ from pathlib import Path
 import scipy
 from metrics import compute_detection_and_identification_rate
 import confidence_functions
-from multiprocessing import Pool
-
+import os
+os.environ['NUMEXPR_MAX_THREADS'] = "16"
+os.environ['NUMEXPR_NUM_THREADS'] = "16"
+import numexpr as ne
 
 class TcmNN:
     def __init__(self, number_of_nearest_neighbors, scale, p_value_cache_path) -> None:
@@ -303,11 +305,18 @@ class SCF:
 def compute_pfe(
     pfe_similarity, chunck_slice, probe_feats, probe_sigma_sq, gallery_feats, gallery_sigma_sq
 ):
-    sigma_sq_sum = probe_sigma_sq[:, :, chunck_slice] + gallery_sigma_sq[:, :, chunck_slice]
-    slice = np.sum((
-        probe_feats[:, :, chunck_slice] - gallery_feats[:, :, chunck_slice]
-    ) ** 2 / sigma_sq_sum + np.log(sigma_sq_sum), axis=2)
-    pfe_similarity += slice
+    probe_sigma_sq_slice = probe_sigma_sq[:, :, chunck_slice]
+    gallery_sigma_sq_slice = gallery_sigma_sq[:, :, chunck_slice]
+    probe_feats_slice = probe_feats[:, :, chunck_slice]
+    gallery_feats_slice = gallery_feats[:, :, chunck_slice]
+    sigma_sq_sum = ne.evaluate('probe_sigma_sq_slice + gallery_sigma_sq_slice')
+    slice = ne.evaluate('(probe_feats_slice - gallery_feats_slice)**2 / sigma_sq_sum + log(sigma_sq_sum)')
+    slice_sum = ne.evaluate('sum(slice, axis=2)')
+    ne.evaluate('slice_sum + pfe_similarity', out=pfe_similarity)
+    # slice = np.sum((
+    #     probe_feats_slice - gallery_feats_slice
+    # ) ** 2 / sigma_sq_sum + np.log(sigma_sq_sum), axis=2)
+    #pfe_similarity += slice
 
 
 class PFE:
@@ -355,8 +364,10 @@ class PFE:
             pfe_similarity = np.load(pfe_cache_path)
         else:
             pfe_similarity = np.zeros_like(similarity)
+
+
             # pfe_arguments = [(pfe_similarity, d, probe_feats, probe_unc, gallery_feats, gallery_unc) for d in range(probe_feats.shape[2])]
-            chunck_size = 64
+            chunck_size = 128
             for d in tqdm(range(probe_feats.shape[2]// chunck_size)):
                 compute_pfe(
                     pfe_similarity,
