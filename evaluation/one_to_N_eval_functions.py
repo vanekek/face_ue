@@ -301,12 +301,12 @@ class SCF:
 
 
 def compute_pfe(
-    pfe_similarity, d, probe_feats, probe_sigma_sq, gallery_feats, gallery_sigma_sq
+    pfe_similarity, chunck_slice, probe_feats, probe_sigma_sq, gallery_feats, gallery_sigma_sq
 ):
-    sigma_sq_sum = probe_sigma_sq[:, :, d] + gallery_sigma_sq[:, :, d]
-    slice = (
-        probe_feats[:, :, d] - gallery_feats[:, :, d]
-    ) ** 2 / sigma_sq_sum + np.log(sigma_sq_sum)
+    sigma_sq_sum = probe_sigma_sq[:, :, chunck_slice] + gallery_sigma_sq[:, :, chunck_slice]
+    slice = np.sum((
+        probe_feats[:, :, chunck_slice] - gallery_feats[:, :, chunck_slice]
+    ) ** 2 / sigma_sq_sum + np.log(sigma_sq_sum), axis=2)
     pfe_similarity += slice
 
 
@@ -356,11 +356,11 @@ class PFE:
         else:
             pfe_similarity = np.zeros_like(similarity)
             # pfe_arguments = [(pfe_similarity, d, probe_feats, probe_unc, gallery_feats, gallery_unc) for d in range(probe_feats.shape[2])]
-
-            for d in tqdm(range(probe_feats.shape[2])):
+            chunck_size = 64
+            for d in tqdm(range(probe_feats.shape[2]// chunck_size)):
                 compute_pfe(
                     pfe_similarity,
-                    d,
+                    slice(d*chunck_size, (d + 1) * chunck_size),
                     probe_feats,
                     probe_sigma_sq,
                     gallery_feats,
