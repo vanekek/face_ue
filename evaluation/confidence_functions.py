@@ -4,7 +4,7 @@ from scipy.special import softmax
 
 
 class NAC_confidence:
-    def __init__(self, k: int, s: float) -> None:
+    def __init__(self, k: int, s: float, shift: float, normalize: bool) -> None:
         """
         Implemetns Neighborhood Aware Cosine (NAC) that computes
         similarity based on neighborhood information
@@ -14,8 +14,10 @@ class NAC_confidence:
         :param k: for kNN
         :param s: scale (=1/T)
         """
-        self.k = k
-        self.s = s
+        self.k = k  # 15 is a good value
+        self.s = s  # 1 is a good value
+        self.shift = shift
+        self.normalize = normalize
 
     def __call__(self, similarity_matrix: np.ndarray) -> Any:
         """
@@ -24,7 +26,11 @@ class NAC_confidence:
             image's probe_score is less than operating threshold τ, then this image get rejected as imposter
         """
         top_k_logits = np.sort(similarity_matrix, axis=1)[:, -self.k :]
-        return softmax(top_k_logits * self.s, axis=1)[:, -1]
+        if self.normalize:
+            top_k_logits = (
+                top_k_logits - np.mean(top_k_logits, axis=1, keepdims=True)
+            ) / np.std(top_k_logits, axis=1, keepdims=True)
+        return softmax((top_k_logits) * self.s, axis=1)[:, -1]
 
 
 class MaxSimilarity_confidence:

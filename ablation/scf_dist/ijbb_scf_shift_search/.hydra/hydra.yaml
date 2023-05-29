@@ -118,7 +118,7 @@ hydra:
     override_dirname: ''
     id: ???
     num: ???
-    config_name: ijb_evals_scf_shift_search_no_det
+    config_name: ijb_evals_scf_shift_search
     env_set: {}
     env_copy: []
     config:
@@ -140,7 +140,7 @@ hydra:
     - path: ''
       schema: structured
       provider: schema
-    output_dir: /app/outputs/ijb_evals/ijb_evals_2023-05-23_11-10-54
+    output_dir: /app/outputs/ijb_evals/ijb_evals_2023-05-25_12-58-05
     choices:
       hydra/env: default
       hydra/callbacks: null

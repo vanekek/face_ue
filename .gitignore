@@ -4,6 +4,7 @@ cache
 datasets
 unsorted_data
 models
+wandb
 IJB_result
 # Byte-compiled / optimized / DLL files
 __pycache__/
