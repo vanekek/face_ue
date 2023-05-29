@@ -366,20 +366,15 @@ class OVRSVM:
         gallery_ids, 
         fars
     ) -> Any:
-        from sklearn.svm import SVC
-        from sklearn.multiclass import OneVsRestClassifier
-        
-        with joblib.parallel_backend('loky'):
-            model = OneVsRestClassifier(SVC(**self.kwargs)).fit(gallery_feats, gallery_ids)
+        from sklearn.svm import LinearSVC
+        from sklearn.preprocessing import PolynomialFeatures
+        t = PolynomialFeatures()
+        gallery_feats = t.fit_transform(gallery_feats)
+        probe_feats = t.transform(probe_feats)
+        model = LinearSVC().fit(gallery_feats, gallery_ids)
         
         print("SVM: Fit done, starting prediction")
-        probe_feats_chunks = np.array_split(probe_feats, 16)
-        decision_scores = np.stack(
-            joblib.Parallel(-1)(
-                joblib.delayed(model.decision_function)(chunk)
-                for chunk in probe_feats_chunks
-            )
-        )
+        decision_scores = model.decision_function(probe_feats)
         
         return compute_detection_and_identification_rate(
             fars,
