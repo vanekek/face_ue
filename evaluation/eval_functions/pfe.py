@@ -1,9 +1,8 @@
 from pathlib import Path
 
-import confidence_functions
 import numexpr as ne
 import numpy as np
-from metrics import compute_detection_and_identification_rate
+from ..metrics import compute_detection_and_identification_rate
 from tqdm import tqdm
 
 
@@ -28,7 +27,7 @@ def compute_pfe(
 
 
 class PFE:
-    def __init__(self, confidence_function: dict, variance_scale: float) -> None:
+    def __init__(self, confidence_function: callable, variance_scale: float) -> None:
         """
         Implements PFE “likelihood” of distributions belonging to the same person (sharing the same latent code)
 
@@ -87,10 +86,7 @@ class PFE:
             np.save(pfe_cache_path, pfe_similarity)
 
         # compute confidences
-        confidence_function = getattr(
-            confidence_functions, self.confidence_function.class_name
-        )(**self.confidence_function.init_args)
-        probe_score = confidence_function(pfe_similarity)
+        probe_score = self.confidence_function(pfe_similarity)
 
         # Compute Detection & identification rate for open set recognition
         (

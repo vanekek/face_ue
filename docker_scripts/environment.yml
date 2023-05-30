@@ -12,6 +12,7 @@ dependencies:
   - conda-forge::tensorboard
   - conda-forge::black
   - conda-forge::hydra-core
+  - conda-forge::numexpr
   - anaconda::ipython
   - anaconda::path
   - pip

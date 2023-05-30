@@ -1,15 +1,8 @@
-import os
 import cv2
 import numpy as np
-import pandas as pd
 from tqdm import tqdm
 from skimage import transform
 from sklearn.preprocessing import normalize
-from sklearn.metrics import roc_curve, auc
-from pathlib import Path
-import importlib
-import sys
-import scipy
 
 
 def face_align_landmark(img, landmark, image_size=(112, 112), method="similar"):

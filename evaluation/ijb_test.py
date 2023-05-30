@@ -146,19 +146,12 @@ class IJB_test:
             face_scores=self.face_scores,
         )
         # get template pooling function
-        module_name_parts = self.template_pooling_strategy.function_path.split(".")
-        module_path = ".".join(module_name_parts[:-1])
-        class_name = module_name_parts[-1]
-
-        template_pooling_function = getattr(
-            importlib.import_module(module_path), class_name
-        )
         (
             g1_templates_feature,
             g1_template_unc,
             g1_unique_templates,
             g1_unique_ids,
-        ) = template_pooling_function(
+        ) = self.template_pooling_strategy(
             img_input_feats,
             self.unc,
             self.templates,
@@ -172,7 +165,7 @@ class IJB_test:
                 g2_template_unc,
                 g2_unique_templates,
                 g2_unique_ids,
-            ) = template_pooling_function(
+            ) = self.template_pooling_strategy(
                 img_input_feats,
                 self.unc,
                 self.templates,
@@ -182,6 +175,7 @@ class IJB_test:
             )
         cache_dir = Path("/app/cache/template_cache")
         cache_dir.mkdir(parents=True, exist_ok=True)
+        class_name = self.template_pooling_strategy.__class__.__name__
         probe_mixed_templates_feature_path = str(
             cache_dir
             / f"probe_aggr_{class_name}_{str(self.use_detector_score)}_{self.subset}"
@@ -206,7 +200,7 @@ class IJB_test:
                 probe_template_unc,
                 probe_mixed_unique_templates,
                 probe_mixed_unique_subject_ids,
-            ) = template_pooling_function(
+            ) = self.template_pooling_strategy(
                 img_input_feats,
                 self.unc,
                 self.templates,

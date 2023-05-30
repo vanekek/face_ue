@@ -29,6 +29,7 @@ def main(cfg):
 
         print(dir(method))
         one_to_N_eval_function = instantiate(method.evaluation_1N_function)
+        template_pooling = instantiate(method.template_pooling_strategy)
         tt = IJB_test(
             model_file=None,
             data_path=cfg.data_path,
@@ -37,7 +38,7 @@ def main(cfg):
             batch_size=cfg.batch_size,
             force_reload=False,
             restore_embs=method.restore_embs,
-            template_pooling_strategy=method.template_pooling_strategy,
+            template_pooling_strategy=template_pooling,
             use_detector_score=method.use_detector_score,
             use_two_galleries=cfg.use_two_galleries,
             recompute_template_pooling=cfg.recompute_template_pooling,

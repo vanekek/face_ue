@@ -1,1 +1,1 @@
-docker exec face_eval_new pip install -e . && python -m evaluation.ijb_evals
+docker exec face_eval_new python -m evaluation.ijb_evals

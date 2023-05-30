@@ -1,10 +1,9 @@
-import confidence_functions
 import numpy as np
-from metrics import compute_detection_and_identification_rate
+from ..metrics import compute_detection_and_identification_rate
 
 
 class CosineSim:
-    def __init__(self, confidence_function: dict) -> None:
+    def __init__(self, confidence_function: callable) -> None:
         self.confidence_function = confidence_function
 
     def __call__(
@@ -22,12 +21,7 @@ class CosineSim:
             % (probe_feats.shape, gallery_feats.shape)
         )
         similarity = np.dot(probe_feats, gallery_feats.T)  # (19593, 1772)
-
-        # compute confidences
-        confidence_function = getattr(
-            confidence_functions, self.confidence_function.class_name
-        )(**self.confidence_function.init_args)
-        probe_score = confidence_function(similarity)
+        probe_score = self.confidence_function(similarity)
 
         # Compute Detection & identification rate for open set recognition
         (

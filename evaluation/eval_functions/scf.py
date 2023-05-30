@@ -1,12 +1,11 @@
-import confidence_functions
 import numpy as np
 import scipy
-from metrics import compute_detection_and_identification_rate
+from ..metrics import compute_detection_and_identification_rate
 
 
 class SCF:
     def __init__(
-        self, confidence_function: dict, k_shift: float, use_cosine_sim_match: bool
+        self, confidence_function: callable, k_shift: float, use_cosine_sim_match: bool
     ) -> None:
         """
         Implements SCF mutual “likelihood” of distributions belonging to the same person (sharing the same latent code)
@@ -72,10 +71,7 @@ class SCF:
             similarity = scf_similarity
 
         # compute confidences
-        confidence_function = getattr(
-            confidence_functions, self.confidence_function.class_name
-        )(**self.confidence_function.init_args)
-        probe_score = confidence_function(scf_similarity)
+        probe_score = self.confidence_function(scf_similarity)
 
         # Compute Detection & identification rate for open set recognition
         (
