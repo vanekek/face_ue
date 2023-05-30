@@ -2,8 +2,10 @@ from pathlib import Path
 
 import numexpr as ne
 import numpy as np
-from ..metrics import compute_detection_and_identification_rate
 from tqdm import tqdm
+from ..metrics import compute_detection_and_identification_rate
+from .abc import Abstract1NEval
+from ..confidence_functions import AbstractConfidence
 
 
 def compute_pfe(
@@ -26,8 +28,8 @@ def compute_pfe(
     ne.evaluate("slice_sum + pfe_similarity", out=pfe_similarity)
 
 
-class PFE:
-    def __init__(self, confidence_function: callable, variance_scale: float) -> None:
+class PFE(Abstract1NEval):
+    def __init__(self, confidence_function: AbstractConfidence, variance_scale: float) -> None:
         """
         Implements PFE “likelihood” of distributions belonging to the same person (sharing the same latent code)
 

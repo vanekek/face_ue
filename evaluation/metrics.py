@@ -1,15 +1,17 @@
+from typing import List, Tuple
 import numpy as np
 from scipy.stats import rankdata
 import tqdm
 
 
+EvalMetricsT = Tuple[int, int, int, List[float], List[float], List[Tuple[float, float]]]
 def compute_detection_and_identification_rate(
     fars: np.ndarray,
     probe_ids: np.ndarray,
     gallery_ids: np.ndarray,
     similarity: np.ndarray,
     probe_score: np.ndarray,
-):
+) -> EvalMetricsT:
     """
     Computes Detection & identification rate for open set recognition
     Operating thresholds τ for rejecting imposter images are computed to match particular far in fars list

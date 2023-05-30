@@ -1,4 +1,7 @@
-class EVM:
+from .abc import Abstract1NEval
+
+
+class EVM(Abstract1NEval):
     def __init__(self, confidence_function_name: str) -> None:
         """
         Implemetns Extreme Value Machine (EVM) and uses it for open set recognition

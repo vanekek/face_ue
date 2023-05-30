@@ -7,19 +7,21 @@ from .interfaces import keras_model_interf, Torch_model_interf, ONNX_model_inter
 from .embeddings import get_embeddings, process_embeddings
 from .image2template import image2template_feature
 from .metrics import verification_11
+from .template_pooling_strategies import AbstractTemplatePooling
+from .eval_functions.abc import Abstract1NEval
 
 
 class IJB_test:
     def __init__(
         self,
-        model_file,
-        data_path,
+        model_file: str,
+        data_path: str,
         subset,
-        evaluation_1N_function,
+        evaluation_1N_function: Abstract1NEval,
         batch_size,
         force_reload,
         restore_embs,
-        template_pooling_strategy,
+        template_pooling_strategy: AbstractTemplatePooling,
         use_detector_score,
         use_two_galleries,
         recompute_template_pooling,

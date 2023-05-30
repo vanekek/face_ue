@@ -1,9 +1,24 @@
+from typing import Tuple
+from abc import ABC
+from typing import Any
 import numpy as np
 from tqdm import tqdm
 from sklearn.preprocessing import normalize
 import scipy
 
-class PoolingDefault:
+class AbstractTemplatePooling(ABC):
+    def __call__(
+        self,
+        img_feats: np.ndarray,
+        raw_unc: np.ndarray,
+        templates: np.ndarray,
+        medias: np.ndarray,
+        choose_templates: np.ndarray,
+        choose_ids: np.ndarray,
+    ) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+        raise NotImplementedError
+
+class PoolingDefault(AbstractTemplatePooling):
     def __call__(
         self,
         img_feats: np.ndarray,
@@ -41,7 +56,7 @@ class PoolingDefault:
         return template_norm_feats, np.zeros(6), unique_templates, unique_subjectids
 
 
-class PoolingSCF:
+class PoolingSCF(AbstractTemplatePooling):
     def __call__(
         self,
         img_feats: np.ndarray,
@@ -100,7 +115,7 @@ class PoolingSCF:
         return template_norm_feats, templates_kappa, unique_templates, unique_subjectids
 
 
-class PoolingPFEHarmonicMean:
+class PoolingPFEHarmonicMean(AbstractTemplatePooling):
     def __call__(
         self,
         img_feats: np.ndarray,
@@ -175,7 +190,7 @@ class PoolingPFEHarmonicMean:
         template_norm_feats = normalize(template_feats)
         return template_norm_feats, templates_sigma_sq, unique_templates, unique_subjectids
 
-class PoolingPFE:
+class PoolingPFE(AbstractTemplatePooling):
     def __call__(
         self,
         img_feats: np.ndarray,

@@ -3,12 +3,10 @@ from pathlib import Path
 
 import numpy as np
 from tqdm import tqdm
-
-os.environ["NUMEXPR_MAX_THREADS"] = "16"
-os.environ["NUMEXPR_NUM_THREADS"] = "16"
+from .abc import Abstract1NEval
 
 
-class TcmNN:
+class TcmNN(Abstract1NEval):
     def __init__(self, number_of_nearest_neighbors, scale, p_value_cache_path) -> None:
         """
         implemets knn based open-set face identification algorithm.

@@ -1,11 +1,14 @@
 import numpy as np
 import scipy
+from scipy.special import ive
 from ..metrics import compute_detection_and_identification_rate
+from .abc import Abstract1NEval
+from ..confidence_functions import AbstractConfidence
 
 
-class SCF:
+class SCF(Abstract1NEval):
     def __init__(
-        self, confidence_function: callable, k_shift: float, use_cosine_sim_match: bool
+        self, confidence_function: AbstractConfidence, k_shift: float, use_cosine_sim_match: bool
     ) -> None:
         """
         Implements SCF mutual “likelihood” of distributions belonging to the same person (sharing the same latent code)
@@ -43,19 +46,19 @@ class SCF:
 
         log_iv_i = (
             np.log(
-                1e-6 + scipy.special.ive(d / 2 - 1, probe_unc, dtype=probe_unc.dtype)
+                1e-6 + ive(d / 2 - 1, probe_unc, dtype=probe_unc.dtype)
             )
             + probe_unc
         )
         log_iv_j = (
             np.log(
                 1e-6
-                + scipy.special.ive(d / 2 - 1, gallery_unc, dtype=gallery_unc.dtype)
+                + ive(d / 2 - 1, gallery_unc, dtype=gallery_unc.dtype)
             )
             + gallery_unc
         )
         log_iv_ij = (
-            np.log(1e-6 + scipy.special.ive(d / 2 - 1, k_ij, dtype=k_ij.dtype)) + k_ij
+            np.log(1e-6 + ive(d / 2 - 1, k_ij, dtype=k_ij.dtype)) + k_ij
         )
 
         scf_similarity = (

@@ -1,9 +1,11 @@
 import numpy as np
 from ..metrics import compute_detection_and_identification_rate
+from .abc import Abstract1NEval
+from ..confidence_functions import AbstractConfidence
 
 
-class CosineSim:
-    def __init__(self, confidence_function: callable) -> None:
+class CosineSim(Abstract1NEval):
+    def __init__(self, confidence_function: AbstractConfidence) -> None:
         self.confidence_function = confidence_function
 
     def __call__(
