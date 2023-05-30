@@ -10,35 +10,36 @@ def compute_scf_sim(
     Y_unc: np.ndarray, 
     d: int
 ):
-        from scipy.special import ive
-        k_i_times_k_j = Y_unc * X_unc
-        k_ij = np.sqrt(Y_unc**2 + X_unc**2 + mu_ij * k_i_times_k_j)
+    from scipy.special import ive
+    X_unc = X_unc[None, :, 0]
+    k_i_times_k_j = Y_unc * X_unc
+    k_ij = np.sqrt(Y_unc**2 + X_unc**2 + mu_ij * k_i_times_k_j)
 
-        log_iv_i = (
-            np.log(
-                1e-6 + ive(d / 2 - 1, Y_unc, dtype=Y_unc.dtype)
-            )
-            + Y_unc
+    log_iv_i = (
+        np.log(
+            1e-6 + ive(d / 2 - 1, Y_unc, dtype=Y_unc.dtype)
         )
-        log_iv_j = (
-            np.log(
-                1e-6
-                + ive(d / 2 - 1, X_unc, dtype=X_unc.dtype)
-            )
-            + X_unc
+        + Y_unc
+    )
+    log_iv_j = (
+        np.log(
+            1e-6
+            + ive(d / 2 - 1, X_unc, dtype=X_unc.dtype)
         )
-        log_iv_ij = (
-            np.log(1e-6 + ive(d / 2 - 1, k_ij, dtype=k_ij.dtype)) + k_ij
-        )
+        + X_unc
+    )
+    log_iv_ij = (
+        np.log(1e-6 + ive(d / 2 - 1, k_ij, dtype=k_ij.dtype)) + k_ij
+    )
 
-        scf_similarity = (
-            (d / 2 - 1) * (np.log(Y_unc) + np.log(X_unc) - np.log(k_ij)) # type: ignore
-            - (log_iv_i + log_iv_j - log_iv_ij)
-            - d / 2 * np.log(2 * np.pi)
-            - d * np.log(64)
-        )
-        
-        return scf_similarity
+    scf_similarity = (
+        (d / 2 - 1) * (np.log(Y_unc) + np.log(X_unc) - np.log(k_ij)) # type: ignore
+        - (log_iv_i + log_iv_j - log_iv_ij)
+        - d / 2 * np.log(2 * np.pi)
+        - d * np.log(64)
+    )
+    
+    return scf_similarity
 
 
 class SCF(Abstract1NEval):
@@ -69,8 +70,7 @@ class SCF(Abstract1NEval):
             "probe_feats: %s, gallery_feats: %s"
             % (probe_feats.shape, gallery_feats.shape)
         )
-        gallery_unc = gallery_unc[np.newaxis, :, 0]
-
+        
         gallery_unc = gallery_unc + self.k_shift
         probe_unc = probe_unc + self.k_shift
 

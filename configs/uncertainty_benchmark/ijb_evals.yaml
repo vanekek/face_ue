@@ -14,6 +14,16 @@ far_range: [-4, 0, 100]
 open_set_recognition_methods:
 
   - evaluation_1N_function: 
+      _target_: evaluation.eval_functions.SVM
+      use_unc: True
+    restore_embs: /app/cache/features/scf_ijb_embs_${subset}.npz
+    template_pooling_strategy:
+      _target_: evaluation.template_pooling_strategies.PoolingSCF
+    features: scf
+    use_detector_score: True
+    save_result: "${exp_dir}/${subset}_unc_SVM_det_and_scf_score.npz"
+    
+  - evaluation_1N_function: 
       _target_: evaluation.eval_functions.scf.SCF
       confidence_function: 
         _target_: evaluation.confidence_functions.MaxSimilarity_confidence
@@ -47,4 +57,4 @@ open_set_recognition_methods:
       _target_: evaluation.template_pooling_strategies.PoolingSCF
     features: scf
     use_detector_score: True
-    save_result: "${exp_dir}/${subset}_basic_SVM_det_and_scf_score_.npz"
+    save_result: "${exp_dir}/${subset}_basic_SVM_det_and_scf_score.npz"

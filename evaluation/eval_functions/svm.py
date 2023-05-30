@@ -1,4 +1,6 @@
 import numpy as np
+from joblib import Parallel, delayed
+from tqdm import tqdm
 
 from ..metrics import EvalMetricsT, compute_detection_and_identification_rate
 from .abc import Abstract1NEval
@@ -18,23 +20,38 @@ class SVM(Abstract1NEval):
         gallery_ids: np.ndarray,
         fars: np.ndarray,
     ) -> EvalMetricsT:
+        try:
+            from sklearnex import patch_sklearn
+            patch_sklearn("SVC")
+        except ImportError:
+            pass
+        
         from sklearn.svm import SVC, LinearSVC
+            
         if self.use_unc:
+            
+            d = probe_feats.shape[1]
             XX = compute_scf_sim(
                 mu_ij=2 * np.dot(gallery_feats, gallery_feats.T),
-                Y_unc=probe_unc,
                 X_unc=gallery_unc,
-                d=probe_feats.shape[1]
+                Y_unc=gallery_unc,
+                d=d
                 )
             
-            XY = compute_scf_sim(
+            YX = compute_scf_sim(
                 mu_ij=2 * np.dot(probe_feats, gallery_feats.T),
                 X_unc=gallery_unc,
                 Y_unc=probe_unc,
-                d=probe_feats.shape[1]
-            )
+                d=d
+            ) # (test, train)
             
-            decision_scores = SVC(kernel='precomputed').fit(XX, gallery_ids).decision_function(XY)
+            svc = SVC(C=100, kernel='precomputed').fit(XX, gallery_ids)
+            def calc_decision_scores(YX):
+                return svc.decision_function(YX)
+            
+            num_parts = 256
+            parts = np.array_split(YX, num_parts, axis=0)
+            decision_scores = np.concatenate([calc_decision_scores(p) for p in tqdm(parts)]) # type: ignore
         else:
             decision_scores = LinearSVC().fit(gallery_feats, gallery_ids).decision_function(probe_feats)
             
