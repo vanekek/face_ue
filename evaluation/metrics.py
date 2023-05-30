@@ -1,6 +1,6 @@
 from typing import List, Tuple
 import numpy as np
-from scipy.stats import rankdata
+from sklearn.metrics import top_k_accuracy_score
 import tqdm
 
 
@@ -11,6 +11,7 @@ def compute_detection_and_identification_rate(
     gallery_ids: np.ndarray,
     similarity: np.ndarray,
     probe_score: np.ndarray,
+    labels_sorted: bool = False
 ) -> EvalMetricsT:
     """
     Computes Detection & identification rate for open set recognition
@@ -28,44 +29,35 @@ def compute_detection_and_identification_rate(
     :param similarity: (probe_size, gallery_size) marix, which specifies closeness of all test images to each gallery class
     :param probe_score: specifies confinence that particular test image belongs to predicted class
         image's probe_score is less than operating threshold τ, then this image get rejected as imposter
+    :param labels_sorted: specifies the order of labels in similarity matrix. 
+        If True, assumes the order is ascending, else assumes order is the same as in gallery_ids
     :return: Detection & identification (DI) rate at each FAR
     """
+    gallery_ids_argsort = np.argsort(gallery_ids)
+    if not labels_sorted:
+        similarity = similarity[:, gallery_ids_argsort]
+        
+    is_seen = np.isin(probe_ids, gallery_ids)
+    
+    top_1_count: int
+    top_5_count: int
+    top_10_count: int
+    
+    seen_sim: np.ndarray = similarity[is_seen]
+    seen_probe_ids = probe_ids[is_seen]
+    def topk(k) -> int: 
+        return top_k_accuracy_score(seen_probe_ids, seen_sim, k=k, normalize=False) # type: ignore
+    top_1_count, top_5_count, top_10_count = map(topk, [1, 5, 10])
+    
+    # Boolean mask (seen_probes, gallery_ids), 1 where the probe matches gallery sample
+    pos_mask: np.ndarray = probe_ids[is_seen, None] == gallery_ids[None, gallery_ids_argsort]
+    
+    pos_sims = seen_sim[pos_mask]
+    neg_sims = seen_sim[~pos_mask].reshape(*pos_sims.shape, -1)
+    pos_score = probe_score[is_seen]
+    neg_score = probe_score[~is_seen]
+    non_gallery_sims = similarity[~is_seen]
 
-    top_1_count, top_5_count, top_10_count = 0, 0, 0
-    pos_sims, pos_score, neg_sims, non_gallery_sims, neg_score = [], [], [], [], []
-    gallery_ranks = rankdata(gallery_ids) - 1
-    for index, query_id in enumerate(probe_ids):
-        if (gallery_index := np.argwhere(gallery_ids == query_id)):
-            # gallery test image
-
-            index_sorted = np.argsort(similarity[index])[::-1]
-            rank = gallery_ranks[gallery_index]
-
-            top_1_count += rank in index_sorted[:1]
-            top_5_count += rank in index_sorted[:5]
-            top_10_count += rank in index_sorted[:10]
-
-            # closeness of test image to true class in gallery
-            pos_sims.append(similarity[index][gallery_ids == query_id][0])
-            # confidence score of test image classification. If it's low, then
-            # this gallery test image gets rejected, lowering the DI rate
-            pos_score.append(probe_score[index])
-            # closeness of test image to wrong classes in gallery
-            neg_sims.append(similarity[index][gallery_ids != query_id])
-        else:
-            # imposter test image
-
-            # closeness of imposter test image to classes in gallery
-            non_gallery_sims.append(similarity[index])
-            # confidence score of imposter test image classification. If it's high, then
-            # this gallery test image gets accepted, rasing the FAR rate at given operating threshold τ
-            neg_score.append(probe_score[index])
-
-    pos_sims, neg_sims, non_gallery_sims = (
-        np.array(pos_sims),
-        np.array(neg_sims),
-        np.array(non_gallery_sims),
-    )
     # see which test gallery images have higher closeness to true class in gallery than
     # to the wrong classes
     correct_pos_cond = pos_sims > np.max(neg_sims, axis=1)

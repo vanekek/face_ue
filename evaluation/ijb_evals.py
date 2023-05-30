@@ -27,7 +27,6 @@ def main(cfg):
         if len(save_path) != 0 and not os.path.exists(save_path):
             os.makedirs(save_path)
 
-        print(dir(method))
         one_to_N_eval_function = instantiate(method.evaluation_1N_function)
         template_pooling = instantiate(method.template_pooling_strategy)
         tt = IJB_test(
