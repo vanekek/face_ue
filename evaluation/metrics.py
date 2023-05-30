@@ -1,5 +1,6 @@
 import numpy as np
 from scipy.stats import rankdata
+import tqdm
 
 
 def compute_detection_and_identification_rate(
@@ -86,3 +87,34 @@ def compute_detection_and_identification_rate(
     )
 
     return top_1_count, top_5_count, top_10_count, threshes, recalls, cmc_scores
+
+
+def verification_11(
+    template_norm_feats=None, unique_templates=None, p1=None, p2=None, batch_size=10000
+):
+    try:
+        print(">>>> Trying cupy.")
+        import cupy as cp
+
+        template_norm_feats = cp.array(template_norm_feats)
+        score_func = lambda feat1, feat2: cp.sum(feat1 * feat2, axis=-1).get()
+        test = score_func(
+            template_norm_feats[:batch_size], template_norm_feats[:batch_size]
+        )
+    except:
+        score_func = lambda feat1, feat2: np.sum(feat1 * feat2, -1)
+
+    template2id = np.zeros(max(unique_templates) + 1, dtype=int)
+    template2id[unique_templates] = np.arange(len(unique_templates))
+
+    steps = int(np.ceil(len(p1) / batch_size))
+    score = []
+    for id in tqdm(range(steps), "Verification"):
+        feat1 = template_norm_feats[
+            template2id[p1[id * batch_size : (id + 1) * batch_size]]
+        ]
+        feat2 = template_norm_feats[
+            template2id[p2[id * batch_size : (id + 1) * batch_size]]
+        ]
+        score.extend(score_func(feat1, feat2))
+    return np.array(score)

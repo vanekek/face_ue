@@ -53,4 +53,5 @@ RUN curl -sLo ~/miniconda.sh https://repo.anaconda.com/miniconda/Miniconda3-late
  && conda env update -n base -f /app/environment.yml \
  && rm /app/environment.yml \
  && conda clean -ya
-
+ 
+ ENV PYTHONPATH=/app/:$PYTHONPATH
