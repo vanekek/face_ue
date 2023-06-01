@@ -5,7 +5,7 @@ exp_dir: outputs/ijb_evals/ijb_evals_${now:%Y-%m-%d_%H-%M-%S}
 
 
 data_path: datasets/arcface_ijb/ # Dataset path containing IJBB and IJBC sub folder
-subset: IJBC # Subset test target, could be IJBB / IJBC
+subset: IJBB # Subset test target, could be IJBB / IJBC
 use_two_galleries: True
 recompute_template_pooling: False
 batch_size: 16
@@ -119,7 +119,62 @@ open_set_recognition_methods:
     features: scf
     use_detector_score: True
     save_result: "${exp_dir}/${subset}_SCF_NAC_k_120_det_and_scf_score_shift_0.npz"
+
+  - evaluation_1N_function: 
+      class_path: evaluation.one_to_N_eval_functions.SCF
+      init_args:
+        confidence_function: 
+          class_name: NAC_confidence
+          init_args:
+            k: 240
+            s: 1
+            shift: 0
+            normalize: True
+        k_shift: 0
+        use_cosine_sim_match: False
+    restore_embs: /app/cache/features/scf_ijb_embs_${subset}.npz
+    template_pooling_strategy:
+      function_path: evaluation.template_pooling_strategies.pooling_SCF
+    features: scf
+    use_detector_score: True
+    save_result: "${exp_dir}/${subset}_SCF_NAC_k_240_det_and_scf_score_shift_0.npz"
  
 
+  - evaluation_1N_function: 
+      class_path: evaluation.one_to_N_eval_functions.SCF
+      init_args:
+        confidence_function: 
+          class_name: NAC_confidence
+          init_args:
+            k: 480
+            s: 1
+            shift: 0
+            normalize: True
+        k_shift: 0
+        use_cosine_sim_match: False
+    restore_embs: /app/cache/features/scf_ijb_embs_${subset}.npz
+    template_pooling_strategy:
+      function_path: evaluation.template_pooling_strategies.pooling_SCF
+    features: scf
+    use_detector_score: True
+    save_result: "${exp_dir}/${subset}_SCF_NAC_k_480_det_and_scf_score_shift_0.npz"
 
+  - evaluation_1N_function: 
+      class_path: evaluation.one_to_N_eval_functions.SCF
+      init_args:
+        confidence_function: 
+          class_name: NAC_confidence
+          init_args:
+            k: 1000
+            s: 1
+            shift: 0
+            normalize: True
+        k_shift: 0
+        use_cosine_sim_match: False
+    restore_embs: /app/cache/features/scf_ijb_embs_${subset}.npz
+    template_pooling_strategy:
+      function_path: evaluation.template_pooling_strategies.pooling_SCF
+    features: scf
+    use_detector_score: True
+    save_result: "${exp_dir}/${subset}_SCF_NAC_k_1000_det_and_scf_score_shift_0.npz"
  
