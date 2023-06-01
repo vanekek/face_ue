@@ -1,6 +1,14 @@
+from typing import Literal, Optional, List
 import numpy as np
 from joblib import Parallel, delayed
-from tqdm import tqdm
+from sklearnex.decomposition import PCA
+from sklearn.preprocessing import StandardScaler, FunctionTransformer
+from sklearn.base import TransformerMixin
+from sklearn.exceptions import ConvergenceWarning
+from sklearn.pipeline import make_pipeline
+from sklearn.svm import LinearSVC
+from sklearn.multiclass import OneVsRestClassifier
+import warnings
 
 from ..metrics import EvalMetricsT, compute_detection_and_identification_rate
 from .abc import Abstract1NEval
@@ -8,8 +16,38 @@ from .scf import compute_scf_sim
 
 
 class SVM(Abstract1NEval):
-    def __init__(self, use_unc: bool) -> None:
+    def __init__(
+        self,
+        use_unc: bool,
+        C: float,
+        loss: Literal['squared_hinge', 'hinge'] = "squared_hinge",
+        scale: bool = True,
+        frac_pca_components: Optional[float] = None,
+        shift: int = 0,
+    ) -> None:
         self.use_unc = use_unc
+        self.C = C
+        self.shift = shift
+        self.scale = scale
+        self.loss: Literal['squared_hinge', 'hinge'] = loss
+        self.frac_pca_components = frac_pca_components
+    
+    @property
+    def __name__(self):
+        attrs = [
+            "SVM",
+            "unc" if self.use_unc else "basic",
+            "C" + str(self.C),
+            "shift" + str(self.shift),
+        ]
+        if self.frac_pca_components:
+            attrs.append("pca" + str(self.frac_pca_components))
+
+        if self.scale:
+            attrs.append("scaled")
+            
+        return "_".join(attrs)
+
     def __call__(
         self,
         probe_feats: np.ndarray,
@@ -20,46 +58,57 @@ class SVM(Abstract1NEval):
         gallery_ids: np.ndarray,
         fars: np.ndarray,
     ) -> EvalMetricsT:
-        try:
-            from sklearnex import patch_sklearn
-            patch_sklearn("SVC")
-        except ImportError:
-            pass
-        
-        from sklearn.svm import SVC, LinearSVC
-            
         if self.use_unc:
-            
             d = probe_feats.shape[1]
             XX = compute_scf_sim(
                 mu_ij=2 * np.dot(gallery_feats, gallery_feats.T),
-                X_unc=gallery_unc,
-                Y_unc=gallery_unc,
-                d=d
-                )
-            
+                X_unc=gallery_unc + self.shift,
+                Y_unc=gallery_unc + self.shift,
+                d=d,
+            )
+
             YX = compute_scf_sim(
                 mu_ij=2 * np.dot(probe_feats, gallery_feats.T),
-                X_unc=gallery_unc,
-                Y_unc=probe_unc,
-                d=d
-            ) # (test, train)
-            
-            svc = SVC(C=100, kernel='precomputed').fit(XX, gallery_ids)
-            def calc_decision_scores(YX):
-                return svc.decision_function(YX)
-            
-            num_parts = 256
-            parts = np.array_split(YX, num_parts, axis=0)
-            decision_scores = np.concatenate([calc_decision_scores(p) for p in tqdm(parts)]) # type: ignore
+                X_unc=gallery_unc + self.shift,
+                Y_unc=probe_unc + self.shift,
+                d=d,
+            )  # (test, train)
+
+            transforms: List[TransformerMixin] = [FunctionTransformer()]
+
+            if self.frac_pca_components is not None:
+                transforms.append(PCA(n_components=int(d * self.frac_pca_components)))
+
+            if self.scale:
+                transforms.append(StandardScaler())
+
+            pipeline = make_pipeline(
+                *transforms,
+                OneVsRestClassifier(LinearSVC(C=self.C, loss=self.loss))
+            )
+
+            warnings.filterwarnings("error")
+            try:
+                with Parallel(-1) as backend:
+                    pipeline.fit(XX, gallery_ids)
+                    decision_scores = np.concatenate(backend(map(
+                            delayed(pipeline.decision_function),
+                            np.array_split(YX, 16),
+                    ))) # type: ignore
+            except ConvergenceWarning:
+                print("SVM didn't converge with given parameters, returning nans")
+                return 0, 0, 0, [np.nan] * len(fars), [np.nan] * len(fars), [(np.nan, np.nan)] * len(fars)
+            finally:
+                warnings.resetwarnings()
         else:
-            decision_scores = LinearSVC().fit(gallery_feats, gallery_ids).decision_function(probe_feats)
-            
+            model = LinearSVC(C=self.C).fit(gallery_feats, gallery_ids)
+            decision_scores = model.decision_function(probe_feats)
+
         return compute_detection_and_identification_rate(
             fars,
             probe_ids,
             gallery_ids,
             decision_scores,
             decision_scores.max(1),
-            labels_sorted=True
+            labels_sorted=True,
         )

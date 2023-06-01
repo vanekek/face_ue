@@ -21,13 +21,18 @@ sys.path.insert(1, path)
 def main(cfg):
     method_scores, method_names = [], []
     for method in cfg.open_set_recognition_methods:
-        save_name = os.path.splitext(os.path.basename(method.save_result))[0]
-        save_items = {}
+        one_to_N_eval_function = instantiate(method.evaluation_1N_function)
+        
+        if hasattr(one_to_N_eval_function, '__name__'):
+            save_name = one_to_N_eval_function.__name__
+        else:
+            save_name = os.path.splitext(os.path.basename(method.save_result))[0]
+            
         save_path = os.path.dirname(method.save_result)
+        save_items = {}
         if len(save_path) != 0 and not os.path.exists(save_path):
             os.makedirs(save_path)
 
-        one_to_N_eval_function = instantiate(method.evaluation_1N_function)
         template_pooling = instantiate(method.template_pooling_strategy)
         tt = IJB_test(
             model_file=None,
@@ -62,7 +67,7 @@ def main(cfg):
             scores, names, label = [score], [save_name], tt.label
             save_items.update({"scores": scores, "names": names})
 
-        np.savez(method.save_result, **save_items)
+        np.savez(os.path.join(save_path, save_name + '.npz'), **save_items)
 
     fig = plot_dir_far_cmc_scores(scores=method_scores, names=method_names)
     fig.savefig(Path(cfg.exp_dir) / "di_far_plot.png", dpi=300)
