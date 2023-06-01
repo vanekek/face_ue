@@ -331,7 +331,7 @@ def compute_pfe(
 
 
 class PFE:
-    def __init__(self, confidence_function: dict, variance_scale: float) -> None:
+    def __init__(self, confidence_function: dict, variance_scale: float, use_cosine_sim_match: bool) -> None:
         """
         Implements PFE “likelihood” of distributions belonging to the same person (sharing the same latent code)
 
@@ -340,6 +340,7 @@ class PFE:
         """
         self.confidence_function = confidence_function
         self.variance_scale = variance_scale
+        self.use_cosine_sim_match = use_cosine_sim_match
 
     def __call__(
         self,
@@ -355,7 +356,7 @@ class PFE:
             "probe_feats: %s, gallery_feats: %s"
             % (probe_feats.shape, gallery_feats.shape)
         )
-        similarity = np.dot(probe_feats, gallery_feats.T)  # (19593, 1772)
+        
 
         # compute pfe likelihood
         probe_feats = probe_feats[:, np.newaxis, :]
@@ -367,14 +368,14 @@ class PFE:
         pfe_cache_path = Path("/app/cache/pfe_cache") / (
             "default_pfe_variance_shift_"
             + str(self.variance_scale)
-            + f"_gallery_size_{gallery_feats.shape[1]}"
+            + f"_gallery_size_{gallery_feats.shape[1]}_{self.use_cosine_sim_match}"
             + ".npy"
         )
 
         if pfe_cache_path.is_file():
             pfe_similarity = np.load(pfe_cache_path)
         else:
-            pfe_similarity = np.zeros_like(similarity)
+            pfe_similarity = np.zeros((probe_feats.shape[0], gallery_feats.shape[1]))
 
             chunck_size = 128
             for d in tqdm(range(probe_feats.shape[2] // chunck_size)):
@@ -394,7 +395,10 @@ class PFE:
             confidence_functions, self.confidence_function.class_name
         )(**self.confidence_function.init_args)
         probe_score = confidence_function(pfe_similarity)
-
+        if self.use_cosine_sim_match is False:
+            similarity = pfe_similarity
+        else:
+            similarity = np.dot(probe_feats, gallery_feats.T)  # (19593, 1772)
         # Compute Detection & identification rate for open set recognition
         (
             top_1_count,

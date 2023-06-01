@@ -14,56 +14,6 @@ far_range: [-4, 0, 100]
 open_set_recognition_methods:
 
   - evaluation_1N_function: 
-      class_path: evaluation.one_to_N_eval_functions.CosineSim
-      init_args:
-        confidence_function: 
-          class_name: MaxSimilarity_confidence
-          init_args:
-            foo: bar
-    restore_embs: /app/cache/features/scf_ijb_embs_${subset}.npz
-    template_pooling_strategy:
-      function_path: evaluation.template_pooling_strategies.pooling_SCF
-    features: scf
-    use_detector_score: True
-    save_result: "${exp_dir}/${subset}_CosineSim_det_and_scf_score.npz"
-
-  - evaluation_1N_function: 
-      class_path: evaluation.one_to_N_eval_functions.SCF
-      init_args:
-        confidence_function: 
-          class_name: MaxSimilarity_confidence
-          init_args:
-            foo: bar
-        k_shift: 0
-        use_cosine_sim_match: False
-    restore_embs: /app/cache/features/scf_ijb_embs_${subset}.npz
-    template_pooling_strategy:
-      function_path: evaluation.template_pooling_strategies.pooling_SCF
-    features: scf
-    use_detector_score: True
-    save_result: "${exp_dir}/${subset}_SCF_det_and_scf_score_shift_0.npz"
-
-  - evaluation_1N_function: 
-      class_path: evaluation.one_to_N_eval_functions.SCF
-      init_args:
-        confidence_function: 
-          class_name: NAC_confidence
-          init_args:
-            k: 15
-            s: 1
-            shift: 0
-            normalize: True
-        k_shift: 0
-        use_cosine_sim_match: False
-    restore_embs: /app/cache/features/scf_ijb_embs_${subset}.npz
-    template_pooling_strategy:
-      function_path: evaluation.template_pooling_strategies.pooling_SCF
-    features: scf
-    use_detector_score: True
-    save_result: "${exp_dir}/${subset}_SCF_NAC_k_15_det_and_scf_score_shift_0.npz"
-
-
-  - evaluation_1N_function: 
       class_path: evaluation.one_to_N_eval_functions.SCF
       init_args:
         confidence_function: 
@@ -100,17 +50,14 @@ open_set_recognition_methods:
     features: scf
     use_detector_score: True
     save_result: "${exp_dir}/${subset}_SCF_NAC_k_60_det_and_scf_score_shift_0.npz"
-
+ 
   - evaluation_1N_function: 
       class_path: evaluation.one_to_N_eval_functions.SCF
       init_args:
         confidence_function: 
-          class_name: NAC_confidence
+          class_name: MaxSimilarity_confidence
           init_args:
-            k: 120
-            s: 1
-            shift: 0
-            normalize: True
+            foo: bar
         k_shift: 0
         use_cosine_sim_match: False
     restore_embs: /app/cache/features/scf_ijb_embs_${subset}.npz
@@ -118,8 +65,6 @@ open_set_recognition_methods:
       function_path: evaluation.template_pooling_strategies.pooling_SCF
     features: scf
     use_detector_score: True
-    save_result: "${exp_dir}/${subset}_SCF_NAC_k_120_det_and_scf_score_shift_0.npz"
- 
-
+    save_result: "${exp_dir}/${subset}_SCF_det_and_scf_score_shift_0.npz"
 
  
