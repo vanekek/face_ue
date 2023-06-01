@@ -776,11 +776,11 @@ def plot_tar_far_scores(scores, names=None):
         name = name if name is not None else str(id)
 
         auc_value = auc(fars, tpirs)
-        label = "[%s (AUC = %0.4f%%)]" % (name, auc_value * 100)
+        label = "[%s (AUC = %0.4f%%), tar %0.4f%% at far %.1E]" % (name, auc_value * 100, tpirs[0], fars[0])
         plt.plot(fars, tpirs, lw=1, label=label)
 
     plt.xlabel("False Acceptance Rate")
-    plt.xlim([0.0001, 1])
+    plt.xlim([0.00001, 1])
     plt.xscale("log")
     plt.ylabel("True Acceptance Rate (%)")
     plt.ylim([0, 1])
