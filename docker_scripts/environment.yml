@@ -21,6 +21,7 @@ dependencies:
   - cython
   - pysoundfile
   - pip:
+    - numexpr
     - wandb
     - tabulate
     - onnxruntime-gpu

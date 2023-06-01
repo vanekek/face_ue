@@ -348,117 +348,33 @@ def process_embeddings(
     return embs
 
 
-def image2template_feature(
-    img_feats,
-    raw_unc,
-    templates,
-    medias,
-    choose_templates,
-    choose_ids,
-    conf_pool: bool,
-    unc_type: str,
-):
+def image2template_feature_legacy(img_feats=None, templates=None, medias=None, choose_templates=None, choose_ids=None):
     if choose_templates is not None:  # 1:N
         unique_templates, indices = np.unique(choose_templates, return_index=True)
         unique_subjectids = choose_ids[indices]
     else:  # 1:1
         unique_templates = np.unique(templates)
         unique_subjectids = None
-    if unc_type == "pfe":
-        # compute harmonic mean of unc
-        # raise NotImplemented
-        # need to use aggregation as in Eqn. (6-7) and min variance pool, when media type is the same
-        # across pooled images
-        sigma_sq = np.exp(raw_unc)
-        # conf = 1 / scipy.stats.hmean(raw_unc, axis=1)
-        conf = sigma_sq
-    elif unc_type == "scf":
-        conf = np.exp(raw_unc)
-    else:
-        raise ValueError
+
     # template_feats = np.zeros((len(unique_templates), img_feats.shape[1]), dtype=img_feats.dtype)
     template_feats = np.zeros((len(unique_templates), img_feats.shape[1]))
-    templates_conf = np.zeros((len(unique_templates), raw_unc.shape[1]))
-    for count_template, uqt in tqdm(
-        enumerate(unique_templates),
-        "Extract template feature",
-        total=len(unique_templates),
-    ):
+    for count_template, uqt in tqdm(enumerate(unique_templates), "Extract template feature", total=len(unique_templates)):
         (ind_t,) = np.where(templates == uqt)
         face_norm_feats = img_feats[ind_t]
-        conf_template = conf[ind_t]
         face_medias = medias[ind_t]
         unique_medias, unique_media_counts = np.unique(face_medias, return_counts=True)
         media_norm_feats = []
-        template_conf = []
         for u, ct in zip(unique_medias, unique_media_counts):
             (ind_m,) = np.where(face_medias == u)
             if ct == 1:
                 media_norm_feats += [face_norm_feats[ind_m]]
-                template_conf += [conf_template[ind_m]]
             else:  # image features from the same video will be aggregated into one feature
-                if conf_pool:
-                    if unc_type == "scf":
-                        template_conf += [
-                            np.mean(conf_template[ind_m], 0, keepdims=True)
-                        ]
-                        media_norm_feats += [
-                            np.sum(
-                                face_norm_feats[ind_m] * conf_template[ind_m],
-                                axis=0,
-                                keepdims=True,
-                            )
-                            / np.sum(conf_template[ind_m])
-                        ]
-                    elif unc_type == "pfe":
-                        # here we pool variance by taking minimum value
-                        media_var = conf_template[ind_m]
-                        result_media_variance = np.min(media_var, 0, keepdims=True)
-                        # result_media_variance = 1 / np.sum(1 / media_var, axis=0, keepdims=True)
-                        template_conf += [result_media_variance]
-                        media_norm_feats += [
-                            np.sum(
-                                (face_norm_feats[ind_m] / media_var),
-                                axis=0,
-                                keepdims=True,
-                            )
-                            * result_media_variance
-                        ]
-                    else:
-                        raise ValueError
-                else:
-                    media_norm_feats += [
-                        np.mean(face_norm_feats[ind_m], 0, keepdims=True)
-                    ]
-        media_norm_feats = np.concatenate(media_norm_feats)
-        template_conf = np.concatenate(template_conf)
-
-        if conf_pool:
-            if unc_type == "scf":
-                template_feats[count_template] = np.sum(
-                    media_norm_feats * template_conf[:, np.newaxis], axis=0
-                ) / np.sum(template_conf)
-                final_template_conf = np.mean(template_conf, axis=0)
-            elif unc_type == "pfe":
-                pfe_template_variance = 1 / np.sum(
-                    1 / template_conf, axis=0
-                )  # Eqn. (7) https://ieeexplore.ieee.org/document/9008376
-                template_feats[count_template] = (
-                    np.sum(media_norm_feats / template_conf, axis=0)  # Eqn. (6)
-                    * pfe_template_variance
-                )
-                final_template_conf = pfe_template_variance
-            else:
-                raise ValueError
-
-            templates_conf[
-                count_template
-            ] = final_template_conf  # np.mean(template_conf, axis=0)
-        else:
-            template_feats[count_template] = np.sum(media_norm_feats, axis=0)
-
+                media_norm_feats += [np.mean(face_norm_feats[ind_m], 0, keepdims=True)]
+        media_norm_feats = np.array(media_norm_feats)
+        # media_norm_feats = media_norm_feats / np.sqrt(np.sum(media_norm_feats ** 2, -1, keepdims=True))
+        template_feats[count_template] = np.sum(media_norm_feats, 0)
     template_norm_feats = normalize(template_feats)
-    return template_norm_feats, templates_conf, unique_templates, unique_subjectids
+    return template_norm_feats, unique_templates, unique_subjectids
 
 
 def verification_11(
@@ -572,7 +488,7 @@ class IJB_test:
             use_detector_score=use_detector_score,
             face_scores=self.face_scores,
         )
-        template_norm_feats, template_unc, unique_templates, _ = image2template_feature(
+        template_norm_feats, unique_templates, _ = image2template_feature_legacy(
             img_input_feats, self.templates, self.medias
         )
         score = verification_11(template_norm_feats, unique_templates, self.p1, self.p2)
@@ -847,6 +763,36 @@ def plot_roc_and_calculate_tpr(scores, names=None, label=None):
 
     return tpr_result_df, fig
 
+def plot_tar_far_scores(scores, names=None):
+    import matplotlib.pyplot as plt
+
+    fig = plt.figure()
+    for id, score in enumerate(scores):
+        name = None if names is None else names[id]
+        if isinstance(score, str) and score.endswith(".npz"):
+            aa = np.load(score)
+            score, name = aa.get("scores")[0], aa.get("names")[0]
+        fars, tpirs = score[0], score[1]
+        name = name if name is not None else str(id)
+
+        auc_value = auc(fars, tpirs)
+        label = "[%s (AUC = %0.4f%%)]" % (name, auc_value * 100)
+        plt.plot(fars, tpirs, lw=1, label=label)
+
+    plt.xlabel("False Acceptance Rate")
+    plt.xlim([0.0001, 1])
+    plt.xscale("log")
+    plt.ylabel("True Acceptance Rate (%)")
+    plt.ylim([0, 1])
+
+    plt.grid(linestyle="--", linewidth=1)
+    plt.legend(fontsize="x-small")
+    plt.tight_layout()
+    # except:
+    #     print("matplotlib plot failed")
+    #     fig = None
+
+    return fig
 
 def plot_dir_far_cmc_scores(scores, names=None):
     import matplotlib.pyplot as plt
@@ -930,7 +876,7 @@ def main(cfg):
         else:  # Basic 1:1 N0D1F1 test
             score = tt.run_model_test_single()
             scores, names, label = [score], [save_name], tt.label
-            save_items.update({"scores": scores, "names": names})
+            save_items.update({"scores": scores, "names": names, "label": tt.label})
 
         np.savez(method.save_result, **save_items)
 

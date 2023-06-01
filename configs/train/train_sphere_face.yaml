@@ -12,7 +12,7 @@ trainer:
   callbacks:
   - class_path: pytorch_lightning.callbacks.ModelCheckpoint
     init_args: 
-      every_n_train_steps: 5000
+      every_n_train_steps: 1000
       dirpath: outputs/scf_train/weights
   - class_path: pytorch_lightning.callbacks.LearningRateMonitor
     init_args: 
@@ -22,7 +22,7 @@ trainer:
       output_dir: /app/cache/features
       subset: ${data.init_args.data_predict_subset}
       write_interval: epoch
-  max_epochs: 10
+  max_epochs: 5
   accelerator: gpu
   devices: 2
 model:
@@ -50,10 +50,10 @@ model:
                 softmax_weights_path: /app/models/backbone/ms1mv3_arcface_r50/softmax_weight.pt
                 radius: 64 #${model.scf_loss.init_args.radius}
         optimizer_params:
-            optimizer: Adam
+            optimizer: AdamW # Adam
             params:
                 lr: 1e-3
-                weight_decay: 5e-4
+                weight_decay: 5e-3
         # scheduler_params:
         #     scheduler: CyclicLR
         #     params:
