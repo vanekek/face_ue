@@ -34,14 +34,14 @@ open_set_recognition_methods:
           class_name: MaxSimilarity_confidence
           init_args:
             foo: bar
-        use_cosine_sim_match: True
+        use_cosine_sim_match: False
         variance_scale: 1
     template_pooling_strategy:
       function_path: evaluation.template_pooling_strategies.pooling_PFE_harmonic_mean
     restore_embs: /app/cache/features/pfe_ijb_embs_${subset}.npz
     features: pfe
     use_detector_score: True
-    save_result: "${exp_dir}/${subset}_PFE_det_and_harmonic_pfe_score_var_scale_1.npz"
+    save_result: "${exp_dir}/${subset}_PFE_det_and_harmonic_pfe_score_var_scale_1_pfe_dist.npz"
 
   - evaluation_1N_function: 
       class_path: evaluation.one_to_N_eval_functions.PFE
@@ -50,14 +50,14 @@ open_set_recognition_methods:
           class_name: MaxSimilarity_confidence
           init_args:
             foo: bar
-        use_cosine_sim_match: True
+        use_cosine_sim_match: False
         variance_scale: 1.2
     template_pooling_strategy:
       function_path: evaluation.template_pooling_strategies.pooling_PFE_harmonic_mean
     restore_embs: /app/cache/features/pfe_ijb_embs_${subset}.npz
     features: pfe
     use_detector_score: True
-    save_result: "${exp_dir}/${subset}_PFE_det_and_harmonic_pfe_score_var_scale_1.2.npz"
+    save_result: "${exp_dir}/${subset}_PFE_det_and_harmonic_pfe_score_var_scale_1.2_pfe_dist.npz"
 
   - evaluation_1N_function: 
       class_path: evaluation.one_to_N_eval_functions.PFE
@@ -66,14 +66,14 @@ open_set_recognition_methods:
           class_name: MaxSimilarity_confidence
           init_args:
             foo: bar
-        use_cosine_sim_match: True
+        use_cosine_sim_match: False
         variance_scale: 1.5
     template_pooling_strategy:
       function_path: evaluation.template_pooling_strategies.pooling_PFE_harmonic_mean
     restore_embs: /app/cache/features/pfe_ijb_embs_${subset}.npz
     features: pfe
     use_detector_score: True
-    save_result: "${exp_dir}/${subset}_PFE_det_and_harmonic_pfe_score_var_scale_1.5.npz"
+    save_result: "${exp_dir}/${subset}_PFE_det_and_harmonic_pfe_score_var_scale_1.5_pfe_dist.npz"
 
   - evaluation_1N_function: 
       class_path: evaluation.one_to_N_eval_functions.PFE
@@ -82,14 +82,14 @@ open_set_recognition_methods:
           class_name: MaxSimilarity_confidence
           init_args:
             foo: bar
-        use_cosine_sim_match: True
+        use_cosine_sim_match: False
         variance_scale: 1.6
     template_pooling_strategy:
       function_path: evaluation.template_pooling_strategies.pooling_PFE_harmonic_mean
     restore_embs: /app/cache/features/pfe_ijb_embs_${subset}.npz
     features: pfe
     use_detector_score: True
-    save_result: "${exp_dir}/${subset}_PFE_det_and_harmonic_pfe_score_var_scale_1.6.npz"
+    save_result: "${exp_dir}/${subset}_PFE_det_and_harmonic_pfe_score_var_scale_1.6_pfe_dist.npz"
 
   - evaluation_1N_function: 
       class_path: evaluation.one_to_N_eval_functions.PFE
@@ -98,14 +98,14 @@ open_set_recognition_methods:
           class_name: MaxSimilarity_confidence
           init_args:
             foo: bar
-        use_cosine_sim_match: True
+        use_cosine_sim_match: False
         variance_scale: 1.7
     template_pooling_strategy:
       function_path: evaluation.template_pooling_strategies.pooling_PFE_harmonic_mean
     restore_embs: /app/cache/features/pfe_ijb_embs_${subset}.npz
     features: pfe
     use_detector_score: True
-    save_result: "${exp_dir}/${subset}_PFE_det_and_harmonic_pfe_score_var_scale_1.7.npz"
+    save_result: "${exp_dir}/${subset}_PFE_det_and_harmonic_pfe_score_var_scale_1.7_pfe_dist.npz"
 
   - evaluation_1N_function: 
       class_path: evaluation.one_to_N_eval_functions.PFE
@@ -114,14 +114,14 @@ open_set_recognition_methods:
           class_name: MaxSimilarity_confidence
           init_args:
             foo: bar
-        use_cosine_sim_match: True
+        use_cosine_sim_match: False
         variance_scale: 1.8
     template_pooling_strategy:
       function_path: evaluation.template_pooling_strategies.pooling_PFE_harmonic_mean
     restore_embs: /app/cache/features/pfe_ijb_embs_${subset}.npz
     features: pfe
     use_detector_score: True
-    save_result: "${exp_dir}/${subset}_PFE_det_and_harmonic_pfe_score_var_scale_1.8.npz"
+    save_result: "${exp_dir}/${subset}_PFE_det_and_harmonic_pfe_score_var_scale_1.8_pfe_dist.npz"
 
   - evaluation_1N_function: 
       class_path: evaluation.one_to_N_eval_functions.PFE
@@ -130,11 +130,11 @@ open_set_recognition_methods:
           class_name: MaxSimilarity_confidence
           init_args:
             foo: bar
-        use_cosine_sim_match: True
+        use_cosine_sim_match: False
         variance_scale: 2
     template_pooling_strategy:
       function_path: evaluation.template_pooling_strategies.pooling_PFE_harmonic_mean
     restore_embs: /app/cache/features/pfe_ijb_embs_${subset}.npz
     features: pfe
     use_detector_score: True
-    save_result: "${exp_dir}/${subset}_PFE_det_and_harmonic_pfe_score_var_scale_2.npz"
+    save_result: "${exp_dir}/${subset}_PFE_det_and_harmonic_pfe_score_var_scale_2_pfe_dist.npz"

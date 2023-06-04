@@ -52,7 +52,7 @@ trainer:
       save_weights_only: false
       mode: min
       auto_insert_metric_name: true
-      every_n_train_steps: 5000
+      every_n_train_steps: 1000
       train_time_interval: null
       every_n_epochs: null
       save_on_train_epoch_end: null
@@ -66,7 +66,7 @@ trainer:
       write_interval: epoch
       subset: IJBC
   fast_dev_run: false
-  max_epochs: 10
+  max_epochs: 5
   min_epochs: null
   max_steps: -1
   min_steps: null
@@ -123,10 +123,10 @@ model:
         softmax_weights_path: /app/models/backbone/ms1mv3_arcface_r50/softmax_weight.pt
         radius: 64
     optimizer_params:
-      optimizer: Adam
+      optimizer: AdamW
       params:
         lr: 0.001
-        weight_decay: 0.0005
+        weight_decay: 0.005
     scheduler_params:
       scheduler: StepLR
       params:

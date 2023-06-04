@@ -65,7 +65,7 @@ def main(cfg):
         else:  # Basic 1:1 N0D1F1 test
             score = tt.run_model_test_single()
             scores, names, label = [score], [save_name], tt.label
-            save_items.update({"scores": scores, "names": names})
+            save_items.update({"scores": scores, "names": names, "label": tt.label})
 
         np.savez(os.path.join(save_path, save_name + '.npz'), **save_items)
 

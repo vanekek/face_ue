@@ -30,11 +30,13 @@ class NAC_confidence(AbstractConfidence):
         :return probe_score: specifies confinence that particular test image belongs to predicted class
             image's probe_score is less than operating threshold τ, then this image get rejected as imposter
         """
-        top_k_logits = np.sort(similarity_matrix, axis=1)[:, -self.k :]
         if self.normalize:
-            top_k_logits = (
-                top_k_logits - np.mean(top_k_logits, axis=1, keepdims=True)
-            ) / np.std(top_k_logits, axis=1, keepdims=True)
+            similarity_matrix = (similarity_matrix - np.mean(similarity_matrix, axis=1, keepdims=True))/ np.std(similarity_matrix, axis=1, keepdims=True)
+        top_k_logits = np.sort(similarity_matrix, axis=1)[:, -self.k :]
+        # if self.normalize:
+        #     top_k_logits = (
+        #         top_k_logits - np.mean(top_k_logits, axis=1, keepdims=True)
+        #     ) / np.std(top_k_logits, axis=1, keepdims=True)
         return softmax((top_k_logits) * self.s, axis=1)[:, -1]
 
 

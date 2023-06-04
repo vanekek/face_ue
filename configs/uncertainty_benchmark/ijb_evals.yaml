@@ -9,7 +9,8 @@ subset: IJBC # Subset test target, could be IJBB / IJBC
 use_two_galleries: True
 recompute_template_pooling: False
 batch_size: 16
-is_one_2_N: True  # Run 1:N test instead of 1
+is_one_2_N: False  # Run 1:N test instead of 1
+is_bunch: False
 far_range: [-4, 0, 100]
 open_set_recognition_methods:
   - evaluation_1N_function: 
