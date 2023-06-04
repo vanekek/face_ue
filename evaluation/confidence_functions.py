@@ -4,7 +4,7 @@ from scipy.special import softmax
 
 
 class NAC_confidence:
-    def __init__(self, k: int, s: float, shift: float, normalize: bool) -> None:
+    def __init__(self, k: int, s: float, normalize: bool) -> None:
         """
         Implemetns Neighborhood Aware Cosine (NAC) that computes
         similarity based on neighborhood information
@@ -16,7 +16,6 @@ class NAC_confidence:
         """
         self.k = k  # 15 is a good value
         self.s = s  # 1 is a good value
-        self.shift = shift
         self.normalize = normalize
 
     def __call__(self, similarity_matrix: np.ndarray) -> Any:
