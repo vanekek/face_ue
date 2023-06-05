@@ -100,7 +100,7 @@ class SphereConfidenceFace(LightningModule):
 
     def configure_optimizers(self):
         optimizer = getattr(
-            importlib.import_module("torch.optim"), self.optimizer_params["optimizer"]
+            importlib.import_module(self.optimizer_params["optimizer_path"]), self.optimizer_params["optimizer_name"]
         )(self.head.parameters(), **self.optimizer_params["params"])
         return {
             "optimizer": optimizer,

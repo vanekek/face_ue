@@ -25,7 +25,9 @@ class NAC_confidence:
             image's probe_score is less than operating threshold τ, then this image get rejected as imposter
         """
         if self.normalize:
-            similarity_matrix = (similarity_matrix - np.mean(similarity_matrix, axis=1, keepdims=True))/ np.std(similarity_matrix, axis=1, keepdims=True)
+            similarity_matrix = (
+                similarity_matrix - np.mean(similarity_matrix, axis=1, keepdims=True)
+            ) / np.std(similarity_matrix, axis=1, keepdims=True)
         top_k_logits = np.sort(similarity_matrix, axis=1)[:, -self.k :]
         # if self.normalize:
         #     top_k_logits = (

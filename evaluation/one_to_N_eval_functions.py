@@ -331,7 +331,12 @@ def compute_pfe(
 
 
 class PFE:
-    def __init__(self, confidence_function: dict, variance_scale: float, use_cosine_sim_match: bool) -> None:
+    def __init__(
+        self,
+        confidence_function: dict,
+        variance_scale: float,
+        use_cosine_sim_match: bool,
+    ) -> None:
         """
         Implements PFE “likelihood” of distributions belonging to the same person (sharing the same latent code)
 
@@ -356,7 +361,6 @@ class PFE:
             "probe_feats: %s, gallery_feats: %s"
             % (probe_feats.shape, gallery_feats.shape)
         )
-        
 
         # compute pfe likelihood
         probe_feats = probe_feats[:, np.newaxis, :]

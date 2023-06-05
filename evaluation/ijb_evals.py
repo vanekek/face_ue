@@ -348,7 +348,9 @@ def process_embeddings(
     return embs
 
 
-def image2template_feature_legacy(img_feats=None, templates=None, medias=None, choose_templates=None, choose_ids=None):
+def image2template_feature_legacy(
+    img_feats=None, templates=None, medias=None, choose_templates=None, choose_ids=None
+):
     if choose_templates is not None:  # 1:N
         unique_templates, indices = np.unique(choose_templates, return_index=True)
         unique_subjectids = choose_ids[indices]
@@ -358,7 +360,11 @@ def image2template_feature_legacy(img_feats=None, templates=None, medias=None, c
 
     # template_feats = np.zeros((len(unique_templates), img_feats.shape[1]), dtype=img_feats.dtype)
     template_feats = np.zeros((len(unique_templates), img_feats.shape[1]))
-    for count_template, uqt in tqdm(enumerate(unique_templates), "Extract template feature", total=len(unique_templates)):
+    for count_template, uqt in tqdm(
+        enumerate(unique_templates),
+        "Extract template feature",
+        total=len(unique_templates),
+    ):
         (ind_t,) = np.where(templates == uqt)
         face_norm_feats = img_feats[ind_t]
         face_medias = medias[ind_t]
@@ -763,6 +769,7 @@ def plot_roc_and_calculate_tpr(scores, names=None, label=None):
 
     return tpr_result_df, fig
 
+
 def plot_tar_far_scores(scores, names=None):
     import matplotlib.pyplot as plt
 
@@ -776,7 +783,12 @@ def plot_tar_far_scores(scores, names=None):
         name = name if name is not None else str(id)
 
         auc_value = auc(fars, tpirs)
-        label = "[%s (AUC = %0.4f%%), tar %0.4f%% at far %.1E]" % (name, auc_value * 100, tpirs[0], fars[0])
+        label = "[%s (AUC = %0.4f%%), tar %0.4f%% at far %.1E]" % (
+            name,
+            auc_value * 100,
+            tpirs[0],
+            fars[0],
+        )
         plt.plot(fars, tpirs, lw=1, label=label)
 
     plt.xlabel("False Acceptance Rate")
@@ -793,6 +805,7 @@ def plot_tar_far_scores(scores, names=None):
     #     fig = None
 
     return fig
+
 
 def plot_dir_far_cmc_scores(scores, names=None):
     import matplotlib.pyplot as plt
