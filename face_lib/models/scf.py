@@ -6,6 +6,7 @@ import pickle
 from pathlib import Path
 import numpy as np
 
+
 class IJB_writer(BasePredictionWriter):
     def __init__(self, output_dir: str, write_interval: str, subset: str):
         super().__init__(write_interval)
@@ -16,7 +17,9 @@ class IJB_writer(BasePredictionWriter):
         embs = torch.cat([batch[0] for batch in predictions], axis=0).numpy()
         unc = torch.cat([batch[1] for batch in predictions], axis=0).numpy()
         print(embs.shape, unc.shape)
-        np.savez(self.output_dir / f'scf_ijb_embs_{self.subset}.npz', embs=embs, unc=unc)
+        np.savez(
+            self.output_dir / f"scf_ijb_embs_{self.subset}.npz", embs=embs, unc=unc
+        )
         # [word for sentence in text for word in sentence]
         # feature_dict = {
         #     path: features.numpy()
@@ -90,17 +93,13 @@ class SphereConfidenceFace(LightningModule):
 
         self.log("train_loss", total_loss.item(), prog_bar=True)
         self.log("kappa", kappa_mean.item())
-        # self.log("neg_kappa_times_cos_theta", neg_kappa_times_cos_theta.item())
-        # self.log(
-        #     "neg_dim_scalar_times_log_kappa", neg_dim_scalar_times_log_kappa.item()
-        # )
-        # self.log("log_iv_kappa", log_iv_kappa.item())
 
         return total_loss
 
     def configure_optimizers(self):
         optimizer = getattr(
-            importlib.import_module(self.optimizer_params["optimizer_path"]), self.optimizer_params["optimizer_name"]
+            importlib.import_module(self.optimizer_params["optimizer_path"]),
+            self.optimizer_params["optimizer_name"],
         )(self.head.parameters(), **self.optimizer_params["params"])
         return {
             "optimizer": optimizer,
@@ -118,6 +117,7 @@ class SphereConfidenceFace(LightningModule):
         images_batch = images_batch.permute(0, 3, 1, 2)
 
         return self(images_batch)
+
     # def validation_step(self, batch, batch_idx):
     #     self._shared_eval(batch, batch_idx, "val")
 

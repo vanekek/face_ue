@@ -2,6 +2,10 @@
 
 seed_everything: 7
 trainer:
+  logger:
+    class_path: pytorch_lightning.loggers.WandbLogger
+    init_args:
+      project: "face_incertainty_train"
   log_every_n_steps: 3
   default_root_dir: outputs/pfe_train
   enable_checkpointing: true
@@ -21,22 +25,25 @@ trainer:
 model:
     class_path: face_lib.models.pfe.ProbabilisticFaceEmbedding
     init_args:
-        weights: /app/model_weights/pfe_old/sota.pth
-        pfe_loss: # NOT USED
-            class_path: face_lib.models.losses.KLDiracVMF
+        weights: None # /app/model_weights/pfe_old/sota.pth
+        head_args:
+          in_feat: 25088
+          out_feat: 512
+          learnable: True
+        pfe_loss:
+            class_path: face_lib.models.losses.PFELoss
             init_args:
-                z_dim: 512
-                radius: 64
+              mean: True
         optimizer_params:
             optimizer_path: face_lib.optimizers.lars
             optimizer_name: LARS
             params:
-                lr: 0.15 #= 0.3 × BatchSize/256
-                weight_decay: 1e-6
+                lr: 0.01
+                weight_decay: 1e-5
         scheduler_params:
             scheduler: StepLR
             params:
-                step_size: 5000
+                step_size: 10000
                 gamma: 0.5
             interval: "step"
             frequency: 1
@@ -45,9 +52,10 @@ model:
 data:
     class_path: face_lib.datasets.lightning_datasets.UncertaintyDataModule
     init_args:
-        data_train_dir: /app/data/ms1m/
+        data_train_dir: /app/datasets/ms1m/
+        add_nose: False
         data_predict_dir: /app/datasets/arcface_ijb
         data_predict_subset: IJBC
-        batch_size: 128
+        batch_size: 200
         num_workers: 20
 

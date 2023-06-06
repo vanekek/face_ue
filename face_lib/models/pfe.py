@@ -12,6 +12,7 @@ from .heads import PFEHeadAdjustableLightning
 sys.path.append("/app")
 from face_lib import models as mlib
 
+
 class IJB_writer(BasePredictionWriter):
     def __init__(self, output_dir: str, write_interval: str, subset: str):
         super().__init__(write_interval)
@@ -22,35 +23,29 @@ class IJB_writer(BasePredictionWriter):
         embs = torch.cat([batch[0] for batch in predictions], axis=0).numpy()
         unc = torch.cat([batch[1] for batch in predictions], axis=0).numpy()
         print(embs.shape, unc.shape)
-        np.savez(self.output_dir / f'pfe_ijb_embs_{self.subset}.npz', embs=embs, unc=unc)
+        np.savez(
+            self.output_dir / f"pfe_ijb_embs_{self.subset}.npz", embs=embs, unc=unc
+        )
         # [word for sentence in text for word in sentence]
-
 
 
 class ProbabilisticFaceEmbedding(LightningModule):
     def __init__(
         self,
-        weights:str,
+        weights: str,
+        head_args,
         pfe_loss: torch.nn.Module,
         optimizer_params,
         scheduler_params,
     ):
         super().__init__()
-        checkpoint = torch.load(weights)
-        self.backbone = mlib.model_dict["iresnet50_normalized"](
-            learnable=False
-        )
-        self.backbone.load_state_dict(checkpoint["backbone"])
-        head_args = {
-            "in_feat": 25088,
-            "out_feat": 512,
-            "learnable": True,
-        }
-        self.head = PFEHeadAdjustableLightning(
-            **head_args
-        )
-        self.head.load_state_dict(checkpoint["head"])
 
+        self.backbone = mlib.model_dict["iresnet50_normalized"](learnable=False)
+        self.head = PFEHeadAdjustableLightning(**head_args)
+        if weights != "None":
+            checkpoint = torch.load(weights)
+            self.backbone.load_state_dict(checkpoint["backbone"])
+            self.head.load_state_dict(checkpoint["head"])
         self.pfe_loss = pfe_loss
         self.optimizer_params = optimizer_params
         self.scheduler_params = scheduler_params
@@ -62,13 +57,18 @@ class ProbabilisticFaceEmbedding(LightningModule):
 
     def training_step(self, batch):
         images, labels = batch
-        feature, log_sigma = self(images)
-        assert False
-        return 3
+        feature, log_sigma_sq = self(images)
+        loss = self.pfe_loss(feature, labels, log_sigma_sq)
+        self.log("train_loss", loss.item(), prog_bar=True)
+
+        self.log("log_sigma_sq", log_sigma_sq.mean().item())
+
+        return loss
 
     def configure_optimizers(self):
         optimizer = getattr(
-            importlib.import_module("torch.optim"), self.optimizer_params["optimizer"]
+            importlib.import_module(self.optimizer_params["optimizer_path"]),
+            self.optimizer_params["optimizer_name"],
         )(self.head.parameters(), **self.optimizer_params["params"])
         return {
             "optimizer": optimizer,
@@ -86,4 +86,3 @@ class ProbabilisticFaceEmbedding(LightningModule):
         images_batch = images_batch.permute(0, 3, 1, 2)
 
         return self(images_batch)
-

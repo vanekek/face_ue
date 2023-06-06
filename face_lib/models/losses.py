@@ -138,6 +138,25 @@ class MLS(nn.Module):
         return -diff
 
 
+class PFELoss(FaceModule):
+    """
+    TODO: docs
+    """
+
+    def __init__(self, mean=False):
+        super(PFELoss, self).__init__()
+        self.mean = mean
+        self.MLS = MLS()
+
+    def forward(self, features, gty, log_sigma_sq):
+        non_diag_mask = (1 - torch.eye(features.size(0))).int().to(gty.device)
+        loss_mat = -self.MLS(features, log_sigma_sq)
+        gty_mask = (torch.eq(gty[:, None], gty[None, :])).int()
+        pos_mask = (non_diag_mask * gty_mask) > 0
+        pos_loss = loss_mat[pos_mask].mean()
+        return pos_loss
+
+
 class MLSLoss(FaceModule):
     """
     TODO: docs

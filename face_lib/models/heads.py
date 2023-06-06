@@ -6,6 +6,7 @@ from torch.nn.utils import spectral_norm
 from face_lib.models import FaceModule
 from face_lib import models as mlib
 
+
 class SCFHead(nn.Module):
     def __init__(self, convf_dim, latent_vector_size):
         super().__init__()
@@ -27,6 +28,7 @@ class SCFHead(nn.Module):
         log_kappa = torch.log(1e-6 + torch.exp(log_kappa))
 
         return log_kappa
+
 
 class PFEHead(FaceModule):
     def __init__(self, in_feat=512, **kwargs):
@@ -70,7 +72,8 @@ class PFEHeadAdjustable(FaceModule):
         x = self.gamma * x + self.beta
         x = torch.log(1e-6 + torch.exp(x))  # log(sigma^2)
         return {"log_sigma": x}
-    
+
+
 class PFEHeadAdjustableLightning(FaceModule):
     def __init__(self, in_feat=512, out_feat=512, **kwargs):
         super(PFEHeadAdjustableLightning, self).__init__(**kwargs)
