@@ -70,9 +70,10 @@ model:
 
 
 data:
-    class_path: face_lib.datasets.lightning_scf.SCF_DataModule
+    class_path: face_lib.datasets.lightning_datasets.UncertaintyDataModule
     init_args:
         data_train_dir: /app/datasets/ms1m/
+        add_nose: False
         data_predict_dir: /app/datasets/arcface_ijb
         data_predict_subset: IJBC
         batch_size: 128

@@ -3,9 +3,9 @@ cache
 .vscode
 datasets
 unsorted_data
-models
 wandb
 IJB_result
+model_weights
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -138,7 +138,6 @@ dmypy.json
 
 
 # Custom
-pfe/
 log/
 data/
 dataset/

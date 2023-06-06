@@ -21,31 +21,29 @@ trainer:
 model:
     class_path: face_lib.models.pfe.ProbabilisticFaceEmbedding
     init_args:
-        weights: /app/models/pfe_old/sota.pth
+        weights: /app/model_weights/pfe_old/sota.pth
         pfe_loss: # NOT USED
             class_path: face_lib.models.losses.KLDiracVMF
             init_args:
                 z_dim: 512
                 radius: 64
         optimizer_params:
-            optimizer: Adam
+            optimizer_path: face_lib.optimizers.lars
+            optimizer_name: LARS
             params:
-                lr: 3e-5
-                weight_decay: 5e-4
-        # scheduler_params:
-        #     scheduler: StepLR
-        #     params:
-        #         step_size: 1
-        #         gamma: 0.5
+                lr: 0.15 #= 0.3 × BatchSize/256
+                weight_decay: 1e-6
         scheduler_params:
-            scheduler: CosineAnnealingWarmRestarts
+            scheduler: StepLR
             params:
-                T_0: 5000
-                eta_min: 3e-8
+                step_size: 5000
+                gamma: 0.5
+            interval: "step"
+            frequency: 1
 
 
 data:
-    class_path: face_lib.datasets.lightning_scf.SCF_DataModule
+    class_path: face_lib.datasets.lightning_datasets.UncertaintyDataModule
     init_args:
         data_train_dir: /app/data/ms1m/
         data_predict_dir: /app/datasets/arcface_ijb
