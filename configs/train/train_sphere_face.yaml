@@ -2,10 +2,10 @@
 
 seed_everything: 7
 trainer:
-  logger:
-    class_path: pytorch_lightning.loggers.WandbLogger
-    init_args:
-      project: "face_incertainty_train"
+#   logger:
+#     class_path: pytorch_lightning.loggers.WandbLogger
+#     init_args:
+#       project: "face_incertainty_train"
   log_every_n_steps: 3
   default_root_dir: outputs/scf_train
   enable_checkpointing: true
@@ -17,10 +17,10 @@ trainer:
   - class_path: pytorch_lightning.callbacks.LearningRateMonitor
     init_args: 
       logging_interval: "step"
-  - class_path: face_lib.models.scf.IJB_writer
+  - class_path: face_lib.models.scf.Prediction_writer
     init_args: 
       output_dir: /app/cache/features
-      subset: ${data.init_args.data_predict_subset}
+      file_name: scf_qmul_survFace # subset: ${data.init_args.data_predict_subset}
       write_interval: epoch
   max_epochs: 5
   accelerator: gpu
@@ -32,7 +32,7 @@ model:
             class_path: face_lib.models.lightning_wrappers.ResNet
             init_args:
                 resnet_name: iresnet50_normalized
-                weights: /app/models/backbone/ms1mv3_arcface_r50/backbone.pth
+                weights: /app/model_weights/backbone/ms1mv3_arcface_r50/backbone.pth
                 learnable: False
         head:
             class_path: face_lib.models.heads.SCFHead
@@ -47,7 +47,7 @@ model:
         softmax_weights:
             class_path: face_lib.models.scf.SoftmaxWeights
             init_args:
-                softmax_weights_path: /app/models/backbone/ms1mv3_arcface_r50/softmax_weight.pt
+                softmax_weights_path: /app/model_weights/backbone/ms1mv3_arcface_r50/softmax_weight.pt
                 radius: 64 #${model.scf_loss.init_args.radius}
         optimizer_params:
             optimizer: AdamW # Adam
@@ -82,8 +82,12 @@ data:
     class_path: face_lib.datasets.lightning_datasets.UncertaintyDataModule
     init_args:
         data_train_dir: /app/datasets/ms1m/
-        data_predict_dir: /app/datasets/arcface_ijb
-        data_predict_subset: IJBC
+        predict_dataset:
+            class_path: face_lib.datasets.qmul.SurvFace
+            init_args:
+                data_dir: /app/datasets/QMUL-SurvFace/Face_Identification_Test_Set
+        # data_predict_dir: /app/datasets/arcface_ijb
+        # data_predict_subset: IJBC
         batch_size: 128
         num_workers: 20
 

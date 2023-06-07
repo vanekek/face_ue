@@ -7,36 +7,20 @@ from pathlib import Path
 import numpy as np
 
 
-class IJB_writer(BasePredictionWriter):
-    def __init__(self, output_dir: str, write_interval: str, subset: str):
+class Prediction_writer(BasePredictionWriter):
+    def __init__(self, output_dir: str, file_name: str, write_interval: str):
         super().__init__(write_interval)
         self.output_dir = Path(output_dir)
-        self.subset = subset
+        self.file_name = file_name
 
     def write_on_epoch_end(self, trainer, pl_module, predictions, batch_indices):
         embs = torch.cat([batch[0] for batch in predictions], axis=0).numpy()
         unc = torch.cat([batch[1] for batch in predictions], axis=0).numpy()
         print(embs.shape, unc.shape)
         np.savez(
-            self.output_dir / f"scf_ijb_embs_{self.subset}.npz", embs=embs, unc=unc
+            self.output_dir / f"{self.file_name}.npz", embs=embs, unc=unc
         )
-        # [word for sentence in text for word in sentence]
-        # feature_dict = {
-        #     path: features.numpy()
-        #     for batch in predictions
-        #     for features, path in zip(batch[0][0], batch[1])
-        # }
 
-        # with open(self.output_dir / "SCF_features.pickle", "wb") as f:
-        #     pickle.dump(feature_dict, f)
-        # uncertainty_dict = {
-        #     path: features.numpy()
-        #     for batch in predictions
-        #     for features, path in zip(batch[0][1], batch[1])
-        # }
-        # with open(self.output_dir / "SCF_uncertainty.pickle", "wb") as f:
-        #     pickle.dump(uncertainty_dict, f)
-        # torch.save(predictions, os.path.join(self.output_dir, "predictions.pt"))
 
 
 class SoftmaxWeights(torch.nn.Module):
