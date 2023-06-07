@@ -9,26 +9,10 @@ subset: IJBC # Subset test target, could be IJBB / IJBC
 use_two_galleries: True
 recompute_template_pooling: False
 batch_size: 16
-is_one_2_N: False  # Run 1:N test instead of 1
-is_bunch: False
+is_one_2_N: True  # Run 1:N test instead of 1
 far_range: [-4, 0, 100]
-open_set_recognition_methods:
 
-  # - evaluation_1N_function: 
-  #     class_path: evaluation.one_to_N_eval_functions.SCF
-  #     init_args:
-  #       confidence_function: 
-  #         class_name: MaxSimilarity_confidence
-  #         init_args:
-  #           foo: bar
-  #       k_shift: 150
-  #       use_cosine_sim_match: False
-  #   restore_embs: /app/cache/features/scf_ijb_embs_${subset}.npz
-  #   template_pooling_strategy:
-  #     function_path: evaluation.template_pooling_strategies.pooling_SCF
-  #   features: scf
-  #   use_detector_score: True
-  #   save_result: "${exp_dir}/${subset}_SCF_det_and_scf_score_shift_150_scf_dist.npz"
+open_set_recognition_methods:
 
   - evaluation_1N_function: 
       class_path: evaluation.one_to_N_eval_functions.CosineSim
@@ -39,21 +23,24 @@ open_set_recognition_methods:
             foo: bar
     restore_embs: /app/cache/features/scf_ijb_embs_${subset}.npz
     template_pooling_strategy:
-      function_path: evaluation.template_pooling_strategies.pooling_default
+      function_path: evaluation.template_pooling_strategies.pooling_SCF
     features: scf
     use_detector_score: True
-    save_result: "${exp_dir}/${subset}_CosineSim_det_score.npz"
+    save_result: "${exp_dir}/${subset}_CosineSim_det_and_scf_score.npz"
 
-  # - evaluation_1N_function: 
-  #     class_path: evaluation.one_to_N_eval_functions.CosineSim
-  #     init_args:
-  #       confidence_function: 
-  #         class_name: MaxSimilarity_confidence
-  #         init_args:
-  #           foo: bar
-  #   restore_embs: /app/cache/features/scf_ijb_embs_${subset}.npz
-  #   template_pooling_strategy:
-  #     function_path: evaluation.template_pooling_strategies.pooling_SCF
-  #   features: scf
-  #   use_detector_score: True
-  #   save_result: "${exp_dir}/${subset}_CosineSim_det_and_scf_score.npz"
+  - evaluation_1N_function: 
+      class_path: evaluation.one_to_N_eval_functions.SCF
+      init_args:
+        confidence_function: 
+          class_name: MaxSimilarity_confidence
+          init_args:
+            foo: bar
+        k_shift: 0
+        use_cosine_sim_match: False
+        normalize_similarities: True
+    restore_embs: /app/cache/features/scf_ijb_embs_${subset}.npz
+    template_pooling_strategy:
+      function_path: evaluation.template_pooling_strategies.pooling_SCF
+    features: scf
+    use_detector_score: True
+    save_result: "${exp_dir}/${subset}_SCF_det_and_scf_score_shift_0_scf_dist_norm_sims.npz"

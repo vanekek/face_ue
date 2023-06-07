@@ -220,12 +220,20 @@ class CosineSim:
         ) = compute_detection_and_identification_rate(
             fars, probe_ids, gallery_ids, similarity, probe_score
         )
-        return top_1_count, top_5_count, top_10_count, threshes, recalls, cmc_scores
+        return (
+            top_1_count,
+            top_5_count,
+            top_10_count,
+            threshes,
+            recalls,
+            cmc_scores,
+            probe_score,
+        )
 
 
 class SCF:
     def __init__(
-        self, confidence_function: dict, k_shift: float, use_cosine_sim_match: bool
+        self, confidence_function: dict, k_shift: float, use_cosine_sim_match: bool, normalize_similarities: bool
     ) -> None:
         """
         Implements SCF mutual “likelihood” of distributions belonging to the same person (sharing the same latent code)
@@ -236,6 +244,7 @@ class SCF:
         self.confidence_function = confidence_function
         self.k_shift = k_shift
         self.use_cosine_sim_match = use_cosine_sim_match
+        self.normalize_similarities = normalize_similarities
 
     def __call__(
         self,
@@ -285,11 +294,13 @@ class SCF:
             - d * np.log(64)
         )
         # scf_similarity = -scf_similarity
+        if self.normalize_similarities:
+            scf_similarity = (scf_similarity - np.mean(scf_similarity)) / np.std(scf_similarity)
+
         if self.use_cosine_sim_match:
             similarity = mu_ij / 2
         else:
             similarity = scf_similarity
-
         # compute confidences
         confidence_function = getattr(
             confidence_functions, self.confidence_function.class_name
@@ -307,7 +318,7 @@ class SCF:
         ) = compute_detection_and_identification_rate(
             fars, probe_ids, gallery_ids, similarity, probe_score
         )
-        return top_1_count, top_5_count, top_10_count, threshes, recalls, cmc_scores
+        return top_1_count, top_5_count, top_10_count, threshes, recalls, cmc_scores, probe_score
 
 
 def compute_pfe(

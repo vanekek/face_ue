@@ -56,6 +56,10 @@ trainer:
       train_time_interval: null
       every_n_epochs: null
       save_on_train_epoch_end: null
+  - class_path: pytorch_lightning.callbacks.LearningRateMonitor
+    init_args:
+      logging_interval: step
+      log_momentum: false
   - class_path: face_lib.models.pfe.IJB_writer
     init_args:
       output_dir: /app/cache/features
@@ -97,11 +101,18 @@ ckpt_path: null
 model:
   class_path: face_lib.models.pfe.ProbabilisticFaceEmbedding
   init_args:
-    weights: None
-    head_args:
-      in_feat: 25088
-      out_feat: 512
-      learnable: true
+    backbone:
+      class_path: face_lib.models.lightning_wrappers.ResNet
+      init_args:
+        resnet_name: iresnet50_normalized
+        weights: /app/model_weights/backbone/ms1mv3_arcface_r50/backbone.pth
+        learnable: false
+    head:
+      class_path: face_lib.models.heads.PFEHeadAdjustableLightning
+      init_args:
+        in_feat: 25088
+        out_feat: 512
+        learnable: true
     pfe_loss:
       class_path: face_lib.models.losses.PFELoss
       init_args:
@@ -110,7 +121,7 @@ model:
       optimizer_path: face_lib.optimizers.lars
       optimizer_name: LARS
       params:
-        lr: 0.15
+        lr: 1.0e-08
         weight_decay: 1.0e-05
     scheduler_params:
       scheduler: StepLR
@@ -126,5 +137,5 @@ data:
     add_nose: false
     data_predict_dir: /app/datasets/arcface_ijb
     data_predict_subset: IJBC
-    batch_size: 200
+    batch_size: 180
     num_workers: 20

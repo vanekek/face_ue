@@ -149,10 +149,16 @@ class PFELoss(FaceModule):
         self.MLS = MLS()
 
     def forward(self, features, gty, log_sigma_sq):
+        print(features)
+        print(gty)
+        print(log_sigma_sq)
         non_diag_mask = (1 - torch.eye(features.size(0))).int().to(gty.device)
-        loss_mat = -self.MLS(features, log_sigma_sq)
+        print(non_diag_mask)
+        loss_mat = -MLS()(features, log_sigma_sq)
+        print(loss_mat)
         gty_mask = (torch.eq(gty[:, None], gty[None, :])).int()
         pos_mask = (non_diag_mask * gty_mask) > 0
+        print(pos_mask)
         pos_loss = loss_mat[pos_mask].mean()
         return pos_loss
 

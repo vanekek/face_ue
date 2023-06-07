@@ -420,6 +420,7 @@ class IJB_test:
         model_file,
         data_path,
         subset,
+        exp_dir,
         evaluation_1N_function,
         batch_size,
         force_reload,
@@ -431,6 +432,7 @@ class IJB_test:
         features,
         far_range,
     ):
+        self.exp_dir = exp_dir
         self.use_two_galleries = use_two_galleries
         self.recompute_template_pooling = recompute_template_pooling
         self.features = features
@@ -651,6 +653,7 @@ class IJB_test:
             g1_threshes,
             g1_recalls,
             g1_cmc_scores,
+            g1_probe_score,
         ) = self.evaluation_1N_function(
             probe_mixed_templates_feature,
             probe_template_unc,
@@ -660,7 +663,10 @@ class IJB_test:
             g1_unique_ids,
             fars_cal,
         )
-
+        np.save(
+            Path(self.exp_dir) / f"{type(self.evaluation_1N_function).__name__}_gallery_1_open_set_scores.npy",
+            g1_probe_score,
+        )
         if self.use_two_galleries:
             print(">>>> Gallery 2")
             (
@@ -670,6 +676,7 @@ class IJB_test:
                 g2_threshes,
                 g2_recalls,
                 g2_cmc_scores,
+                g2_probe_score,
             ) = self.evaluation_1N_function(
                 probe_mixed_templates_feature,
                 probe_template_unc,
@@ -678,6 +685,10 @@ class IJB_test:
                 probe_mixed_unique_subject_ids,
                 g2_unique_ids,
                 fars_cal,
+            )
+            np.save(
+                Path(self.exp_dir) / f"{type(self.evaluation_1N_function).__name__}_gallery_2_open_set_scores.npy",
+                g2_probe_score,
             )
             print(">>>> Mean")
             query_num = probe_mixed_templates_feature.shape[0]
@@ -862,6 +873,7 @@ def main(cfg):
             model_file=None,
             data_path=cfg.data_path,
             subset=cfg.subset,
+            exp_dir=cfg.exp_dir,
             evaluation_1N_function=one_to_N_eval_function,
             batch_size=cfg.batch_size,
             force_reload=False,

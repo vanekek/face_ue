@@ -32,20 +32,22 @@ class IJB_writer(BasePredictionWriter):
 class ProbabilisticFaceEmbedding(LightningModule):
     def __init__(
         self,
-        weights: str,
-        head_args,
+        backbone: torch.nn.Module,  # weights: str,
+        head: torch.nn.Module,  # head_args,
         pfe_loss: torch.nn.Module,
         optimizer_params,
         scheduler_params,
     ):
         super().__init__()
 
-        self.backbone = mlib.model_dict["iresnet50_normalized"](learnable=False)
-        self.head = PFEHeadAdjustableLightning(**head_args)
-        if weights != "None":
-            checkpoint = torch.load(weights)
-            self.backbone.load_state_dict(checkpoint["backbone"])
-            self.head.load_state_dict(checkpoint["head"])
+        self.backbone = (
+            backbone  # mlib.model_dict["iresnet50_normalized"](learnable=False)
+        )
+        self.head = head  # PFEHeadAdjustableLightning(**head_args)
+        # if weights != "None":
+        #     checkpoint = torch.load(weights)
+        #     self.backbone.load_state_dict(checkpoint["backbone"])
+        #     self.head.load_state_dict(checkpoint["head"])
         self.pfe_loss = pfe_loss
         self.optimizer_params = optimizer_params
         self.scheduler_params = scheduler_params
