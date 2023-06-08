@@ -8,6 +8,7 @@ ARG DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && apt-get install -y \
     curl \
     wget \
+    unzip \
     sox \
     libsox-dev \
     libsox-fmt-all \
@@ -28,14 +29,14 @@ WORKDIR /app
 
 
 USER root
-RUN groupadd -g 1000 ilykuleshov
+RUN groupadd -g 1134 erlygin
 
-RUN adduser --disabled-password --uid 1000 --gid 1000 --gecos '' --shell /bin/bash ilykuleshov \
- && chown -R ilykuleshov:ilykuleshov /app
-RUN echo "ilykuleshov ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/90-ilykuleshov
-USER ilykuleshov
+RUN adduser --disabled-password --uid 1133 --gid 1134 --gecos '' --shell /bin/bash erlygin \
+ && chown -R erlygin:erlygin /app
+RUN echo "erlygin ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/90-erlygin
+USER erlygin
 
-ENV HOME=/home/ilykuleshov
+ENV HOME=/home/erlygin
 
 
 
@@ -46,12 +47,10 @@ RUN mkdir $HOME/.cache $HOME/.config \
 ENV CONDA_AUTO_UPDATE_CONDA=false \
     PATH=$HOME/miniconda/bin:$PATH
 COPY environment.yml /app/environment.yml
-RUN curl -sLo ~/miniconda.sh https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh \
+RUN curl -sLo ~/miniconda.sh https://repo.anaconda.com/miniconda/Miniconda3-py39_23.1.0-1-Linux-x86_64.sh \
  && chmod +x ~/miniconda.sh \
  && ~/miniconda.sh -b -p ~/miniconda \
  && rm ~/miniconda.sh \
  && conda env update -n base -f /app/environment.yml \
  && rm /app/environment.yml \
  && conda clean -ya
- 
- ENV PYTHONPATH=/app/:$PYTHONPATH

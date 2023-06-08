@@ -4,7 +4,8 @@ import cv2
 import sys
 sys.path.append("/app")
 
-from evaluation.ijb_evals import extract_IJB_data_11, face_align_landmark
+from evaluation.embeddings import face_align_landmark
+from evaluation.data_tools import extract_IJB_data_11
 
 class IJB_aligned_images(Dataset):
     def __init__(self, data_ijb_dir: str, subset: str) -> None:

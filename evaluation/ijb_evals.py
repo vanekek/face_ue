@@ -6,7 +6,7 @@ import hydra
 from hydra.utils import instantiate
 import sys
 
-from evaluation.ijb_test import IJB_test
+from evaluation.face_recognition_test import Face_Fecognition_test
 from evaluation.visualize import plot_dir_far_cmc_scores
 
 path = str(Path(__file__).parent.parent.absolute())
@@ -19,6 +19,8 @@ sys.path.insert(1, path)
     version_base="1.2",
 )
 def main(cfg):
+    test_dataset = instantiate(cfg.test_dataset)
+
     method_scores, method_names = [], []
     for method in cfg.open_set_recognition_methods:
         one_to_N_eval_function = instantiate(method.evaluation_1N_function)
@@ -34,20 +36,14 @@ def main(cfg):
             os.makedirs(save_path)
 
         template_pooling = instantiate(method.template_pooling_strategy)
-        tt = IJB_test(
-            model_file=None,
-            data_path=cfg.data_path,
-            subset=cfg.subset,
-            exp_dir=cfg.exp_dir,
+        tt = Face_Fecognition_test(
             evaluation_1N_function=one_to_N_eval_function,
-            batch_size=cfg.batch_size,
-            force_reload=False,
-            restore_embs=method.restore_embs,
+            test_dataset = test_dataset,
+            embeddings_path=method.embeddings_path,
             template_pooling_strategy=template_pooling,
             use_detector_score=method.use_detector_score,
             use_two_galleries=cfg.use_two_galleries,
             recompute_template_pooling=cfg.recompute_template_pooling,
-            features=method.features,
             far_range=cfg.far_range,
         )
 

@@ -22,6 +22,7 @@ dependencies:
   - cython
   - pysoundfile
   - pip:
+    - scikit-learn-intelex
     - numexpr
     - wandb
     - tabulate

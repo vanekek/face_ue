@@ -1,12 +1,180 @@
-import os
+from pathlib import Path
 import numpy as np
 import pandas as pd
+import os
 
-
-def read_IJB_meta_columns_to_int(file_path, columns, sep=" ", skiprows=0, header=None):
+def read_meta_columns_to_int(file_path, columns, sep=" ", skiprows=0, header=None):
     # meta = np.loadtxt(file_path, skiprows=skiprows, delimiter=sep)
     meta = pd.read_csv(file_path, sep=sep, skiprows=skiprows, header=header).values
     return (meta[:, ii].astype("int") for ii in columns)
+
+
+def extract_meta_data(data_path, dataset_name, save_path=None, force_reload=False):
+    data_path = Path(data_path)
+    if save_path == None:
+        save_path = data_path  / "backup.npz"
+    if not force_reload and save_path.is_file():
+        print(">>>> Reload from backup: %s ..." % save_path)
+        aa = np.load(save_path, allow_pickle=True)
+        return (
+            aa["templates"],
+            aa["medias"],
+            aa["p1"],
+            aa["p2"],
+            aa["label"],
+            aa["img_names"],
+            aa["landmarks"],
+            aa["face_scores"],
+        )
+    
+    media_list_path = data_path / "meta" / f"{dataset_name.lower()}_face_tid_mid.txt"
+    pair_list_path = data_path / "meta" / f"{dataset_name.lower()}_template_pair_label.txt"
+    img_path = data_path / "loose_crop"
+    img_list_path = data_path / "meta" / f"{dataset_name.lower()}_name_5pts_score.txt"
+    
+    print(">>>> Loading templates and medias...")
+    templates, medias = read_meta_columns_to_int(
+        media_list_path, columns=[1, 2]
+    )  # ['1.jpg', '1', '69544']
+    print(
+        "templates: %s, medias: %s, unique templates: %s"
+        % (templates.shape, medias.shape, np.unique(templates).shape)
+    )
+    # templates: (227630,), medias: (227630,), unique templates: (12115,)
+
+    if pair_list_path.is_file():
+        print(">>>> Loading pairs...")
+        p1, p2, label = read_meta_columns_to_int(
+            pair_list_path, columns=[0, 1, 2]
+        )  # ['1', '11065', '1']
+        print("p1: %s, unique p1: %s" % (p1.shape, np.unique(p1).shape))
+        print("p2: %s, unique p2: %s" % (p2.shape, np.unique(p2).shape))
+        print(
+            "label: %s, label value counts: %s"
+            % (label.shape, dict(zip(*np.unique(label, return_counts=True))))
+        )
+        # p1: (8010270,), unique p1: (1845,)
+        # p2: (8010270,), unique p2: (10270,) # 10270 + 1845 = 12115 --> np.unique(templates).shape
+        # label: (8010270,), label value counts: {0: 8000000, 1: 10270}
+    else:
+        p1 = None
+        p2 = None
+        label = None
+    if img_list_path.is_file():
+        print(">>>> Loading images...")
+        with open(img_list_path, "r") as ff:
+            # 1.jpg 46.060 62.026 87.785 60.323 68.851 77.656 52.162 99.875 86.450 98.648 0.999
+            img_records = np.array([ii.strip().split(" ") for ii in ff.readlines()])
+        img_names = np.array([img_path / ii for ii in img_records[:, 0]])
+        landmarks = img_records[:, 1:-1].astype("float32").reshape(-1, 5, 2)
+        face_scores = img_records[:, -1].astype("float32")
+        print(
+            "img_names: %s, landmarks: %s, face_scores: %s"
+            % (img_names.shape, landmarks.shape, face_scores.shape)
+        )
+        # img_names: (227630,), landmarks: (227630, 5, 2), face_scores: (227630,)
+        print(
+            "face_scores value counts:", dict(zip(*np.histogram(face_scores, bins=9)[::-1]))
+        )
+        # {0.1: 2515, 0.2: 0, 0.3: 62, 0.4: 94, 0.5: 136, 0.6: 197, 0.7: 291, 0.8: 538, 0.9: 223797}
+    else:
+        img_names = None
+        landmarks = None
+        face_scores = None
+    print(">>>> Saving backup to: %s ..." % save_path)
+    np.savez(
+        save_path,
+        templates=templates,
+        medias=medias,
+        p1=p1,
+        p2=p2,
+        label=label,
+        img_names=img_names,
+        landmarks=landmarks,
+        face_scores=face_scores,
+    )
+    print()
+    return templates, medias, p1, p2, label, img_names, landmarks, face_scores
+
+
+def extract_gallery_prob_data(data_path, dataset_name, save_path=None, force_reload=False):
+    data_path = Path(data_path)
+    if save_path == None:
+        save_path = data_path  / "gallery_prob_backup.npz"
+    if not force_reload and save_path.is_file():
+        print(">>>> Reload from backup: %s ..." % save_path)
+        aa = np.load(save_path, allow_pickle=True)
+        return (
+            aa["s1_templates"],
+            aa["s1_subject_ids"],
+            aa["s2_templates"],
+            aa["s2_subject_ids"],
+            aa["probe_mixed_templates"],
+            aa["probe_mixed_subject_ids"],
+        )
+
+    
+    meta_dir = data_path / "meta"
+    gallery_s1_record = meta_dir / f"{dataset_name.lower()}_1N_gallery_G1.csv"
+    gallery_s2_record = meta_dir / f"{dataset_name.lower()}_1N_gallery_G2.csv"
+    probe_mixed_record = meta_dir / f"{dataset_name.lower()}_1N_probe_mixed.csv"
+
+
+    print(">>>> Loading gallery feature...")
+    s1_templates, s1_subject_ids = read_meta_columns_to_int(
+        gallery_s1_record, columns=[0, 1], skiprows=1, sep=","
+    )
+    print(
+        "s1 gallery: %s, ids: %s, unique: %s"
+        % (s1_templates.shape, s1_subject_ids.shape, np.unique(s1_templates).shape)
+    )
+    if gallery_s2_record.is_file():
+        s2_templates, s2_subject_ids = read_meta_columns_to_int(
+            gallery_s2_record, columns=[0, 1], skiprows=1, sep=","
+        )
+        print(
+        "s2 gallery: %s, ids: %s, unique: %s"
+        % (s2_templates.shape, s2_subject_ids.shape, np.unique(s2_templates).shape)
+        )
+    else:
+        s2_templates = None
+        s2_subject_ids = None
+    
+
+
+    print(">>>> Loading probe feature...")
+    probe_mixed_templates, probe_mixed_subject_ids = read_meta_columns_to_int(
+        probe_mixed_record, columns=[0, 1], skiprows=1, sep=","
+    )
+    print(
+        "probe_mixed_templates: %s, unique: %s"
+        % (probe_mixed_templates.shape, np.unique(probe_mixed_templates).shape)
+    )
+    print(
+        "probe_mixed_subject_ids: %s, unique: %s"
+        % (probe_mixed_subject_ids.shape, np.unique(probe_mixed_subject_ids).shape)
+    )
+
+    print(">>>> Saving backup to: %s ..." % save_path)
+    np.savez(
+        save_path,
+        s1_templates=s1_templates,
+        s1_subject_ids=s1_subject_ids,
+        s2_templates=s2_templates,
+        s2_subject_ids=s2_subject_ids,
+        probe_mixed_templates=probe_mixed_templates,
+        probe_mixed_subject_ids=probe_mixed_subject_ids,
+    )
+    print()
+    return (
+        s1_templates,
+        s1_subject_ids,
+        s2_templates,
+        s2_subject_ids,
+        probe_mixed_templates,
+        probe_mixed_subject_ids,
+    )
+
 
 
 def extract_IJB_data_11(data_path, subset, save_path=None, force_reload=False):
@@ -97,79 +265,3 @@ def extract_IJB_data_11(data_path, subset, save_path=None, force_reload=False):
     )
     print()
     return templates, medias, p1, p2, label, img_names, landmarks, face_scores
-
-
-def extract_gallery_prob_data(data_path, subset, save_path=None, force_reload=False):
-    if save_path == None:
-        save_path = os.path.join(data_path, subset + "_gallery_prob_backup.npz")
-    if not force_reload and os.path.exists(save_path):
-        print(">>>> Reload from backup: %s ..." % save_path)
-        aa = np.load(save_path)
-        return (
-            aa["s1_templates"],
-            aa["s1_subject_ids"],
-            aa["s2_templates"],
-            aa["s2_subject_ids"],
-            aa["probe_mixed_templates"],
-            aa["probe_mixed_subject_ids"],
-        )
-
-    if subset == "IJBC":
-        meta_dir = os.path.join(data_path, "IJBC/meta")
-        gallery_s1_record = os.path.join(meta_dir, "ijbc_1N_gallery_G1.csv")
-        gallery_s2_record = os.path.join(meta_dir, "ijbc_1N_gallery_G2.csv")
-        probe_mixed_record = os.path.join(meta_dir, "ijbc_1N_probe_mixed.csv")
-    else:
-        meta_dir = os.path.join(data_path, "IJBB/meta")
-        gallery_s1_record = os.path.join(meta_dir, "ijbb_1N_gallery_S1.csv")
-        gallery_s2_record = os.path.join(meta_dir, "ijbb_1N_gallery_S2.csv")
-        probe_mixed_record = os.path.join(meta_dir, "ijbb_1N_probe_mixed.csv")
-
-    print(">>>> Loading gallery feature...")
-    s1_templates, s1_subject_ids = read_IJB_meta_columns_to_int(
-        gallery_s1_record, columns=[0, 1], skiprows=1, sep=","
-    )
-    s2_templates, s2_subject_ids = read_IJB_meta_columns_to_int(
-        gallery_s2_record, columns=[0, 1], skiprows=1, sep=","
-    )
-    print(
-        "s1 gallery: %s, ids: %s, unique: %s"
-        % (s1_templates.shape, s1_subject_ids.shape, np.unique(s1_templates).shape)
-    )
-    print(
-        "s2 gallery: %s, ids: %s, unique: %s"
-        % (s2_templates.shape, s2_subject_ids.shape, np.unique(s2_templates).shape)
-    )
-
-    print(">>>> Loading probe feature...")
-    probe_mixed_templates, probe_mixed_subject_ids = read_IJB_meta_columns_to_int(
-        probe_mixed_record, columns=[0, 1], skiprows=1, sep=","
-    )
-    print(
-        "probe_mixed_templates: %s, unique: %s"
-        % (probe_mixed_templates.shape, np.unique(probe_mixed_templates).shape)
-    )
-    print(
-        "probe_mixed_subject_ids: %s, unique: %s"
-        % (probe_mixed_subject_ids.shape, np.unique(probe_mixed_subject_ids).shape)
-    )
-
-    print(">>>> Saving backup to: %s ..." % save_path)
-    np.savez(
-        save_path,
-        s1_templates=s1_templates,
-        s1_subject_ids=s1_subject_ids,
-        s2_templates=s2_templates,
-        s2_subject_ids=s2_subject_ids,
-        probe_mixed_templates=probe_mixed_templates,
-        probe_mixed_subject_ids=probe_mixed_subject_ids,
-    )
-    print()
-    return (
-        s1_templates,
-        s1_subject_ids,
-        s2_templates,
-        s2_subject_ids,
-        probe_mixed_templates,
-        probe_mixed_subject_ids,
-    )

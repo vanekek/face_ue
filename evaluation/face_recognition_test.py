@@ -1,79 +1,60 @@
 import numpy as np
 from pathlib import Path
-import importlib
 
-from .data_tools import extract_IJB_data_11, extract_gallery_prob_data
+
+from .data_tools import extract_meta_data, extract_gallery_prob_data
 from .interfaces import keras_model_interf, Torch_model_interf, ONNX_model_interf, Mxnet_model_interf
 from .embeddings import get_embeddings, process_embeddings
 from .image2template import image2template_feature
 from .metrics import verification_11
 from .template_pooling_strategies import AbstractTemplatePooling
 from .eval_functions.abc import Abstract1NEval
+from .test_datasets import FaceRecogntioniDataset
 
-
-class IJB_test:
+class Face_Fecognition_test:
     def __init__(
         self,
-        model_file: str,
-        data_path: str,
-        subset,
         evaluation_1N_function: Abstract1NEval,
-        batch_size,
-        force_reload,
-        restore_embs,
+        test_dataset: FaceRecogntioniDataset,
+        embeddings_path: str,
         template_pooling_strategy: AbstractTemplatePooling,
         use_detector_score,
         use_two_galleries,
         recompute_template_pooling,
-        features,
         far_range,
     ):
         self.use_two_galleries = use_two_galleries
+        self.test_dataset = test_dataset
         self.recompute_template_pooling = recompute_template_pooling
-        self.features = features
-        (
-            templates,
-            medias,
-            p1,
-            p2,
-            label,
-            img_names,
-            landmarks,
-            face_scores,
-        ) = extract_IJB_data_11(data_path, subset, force_reload=force_reload)
-        if model_file != None:
-            if model_file.endswith(".h5"):
-                interf_func = keras_model_interf(model_file)
-            elif model_file.endswith(".pth") or model_file.endswith(".pt"):
-                interf_func = Torch_model_interf(model_file)
-            elif model_file.endswith(".onnx") or model_file.endswith(".ONNX"):
-                interf_func = ONNX_model_interf(model_file)
-            else:
-                interf_func = Mxnet_model_interf(model_file)
-            self.embs, self.embs_f = get_embeddings(
-                interf_func, img_names, landmarks, batch_size=batch_size
-            )
-        elif restore_embs != None:
-            print(">>>> Reload embeddings from:", restore_embs)
-            aa = np.load(restore_embs)
+        
+        # (
+        #     templates,
+        #     medias,
+        #     p1,
+        #     p2,
+        #     label,
+        #     _,
+        #     _,
+        #     face_scores,
+        # ) = extract_meta_data(data_path, subset, force_reload=force_reload)
 
-            if "embs" in aa and "unc" in aa:
-                self.embs = aa["embs"]
-                self.embs_f = []
-                self.unc = aa["unc"]
-            else:
-                print("ERROR: %s NOT containing embs / unc" % restore_embs)
-                exit(1)
-            print(">>>> Done.")
-        self.data_path, self.subset, self.force_reload = data_path, subset, force_reload
-        self.templates, self.medias, self.p1, self.p2, self.label = (
-            templates,
-            medias,
-            p1,
-            p2,
-            label,
-        )
-        self.face_scores = face_scores.astype(self.embs.dtype)
+        print(">>>> Reload embeddings from:", embeddings_path)
+        aa = np.load(embeddings_path)
+
+        self.embs = aa["embs"]
+        self.embs_f = []
+        self.unc = aa["unc"]
+            
+        
+        # self.templates, self.medias, self.p1, self.p2, self.label = (
+        #     templates,
+        #     medias,
+        #     p1,
+        #     p2,
+        #     label,
+        # )
+        if self.test_dataset.face_scores is not None:
+            self.test_dataset.face_scores = self.test_dataset.face_scores.astype(self.embs.dtype)
         self.evaluation_1N_function = evaluation_1N_function
         self.template_pooling_strategy = template_pooling_strategy
 
@@ -89,7 +70,7 @@ class IJB_test:
             use_flip_test=use_flip_test,
             use_norm_score=use_norm_score,
             use_detector_score=use_detector_score,
-            face_scores=self.face_scores,
+            face_scores=self.test_dataset.face_scores,
         )
         template_norm_feats, template_unc, unique_templates, _ = image2template_feature(
             img_input_feats, self.templates, self.medias
@@ -125,29 +106,26 @@ class IJB_test:
         ] + [
             1
         ]  # plot in range [10-4, 1]
-        fars_show_idx = np.arange(len(fars_cal))[
-            :: npoints // 4
-        ]  # npoints=100, fars_show=[0.0001, 0.001, 0.01, 0.1, 1.0]
+        # (
+        #     g1_templates,
+        #     g1_ids,
+        #     g2_templates,
+        #     g2_ids,
+        #     probe_mixed_templates,
+        #     probe_mixed_ids,
+        # ) = extract_gallery_prob_data(
+        #     self.data_path, self.subset, force_reload=self.force_reload
+        # )
 
-        (
-            g1_templates,
-            g1_ids,
-            g2_templates,
-            g2_ids,
-            probe_mixed_templates,
-            probe_mixed_ids,
-        ) = extract_gallery_prob_data(
-            self.data_path, self.subset, force_reload=self.force_reload
-        )
+
         img_input_feats = process_embeddings(
             self.embs,
             self.embs_f,
             use_flip_test=False,
             use_norm_score=False,
             use_detector_score=self.use_detector_score,
-            face_scores=self.face_scores,
+            face_scores=self.test_dataset.face_scores,
         )
-        # get template pooling function
         (
             g1_templates_feature,
             g1_template_unc,
@@ -156,12 +134,12 @@ class IJB_test:
         ) = self.template_pooling_strategy(
             img_input_feats,
             self.unc,
-            self.templates,
-            self.medias,
-            g1_templates,
-            g1_ids,
+            self.test_dataset.templates,
+            self.test_dataset.medias,
+            self.test_dataset.g1_templates,
+            self.test_dataset.g1_ids,
         )
-        if self.use_two_galleries:
+        if self.use_two_galleries and self.test_dataset.g2_templates is not None:
             (
                 g2_templates_feature,
                 g2_template_unc,
@@ -170,17 +148,17 @@ class IJB_test:
             ) = self.template_pooling_strategy(
                 img_input_feats,
                 self.unc,
-                self.templates,
-                self.medias,
-                g2_templates,
-                g2_ids,
+                self.test_dataset.templates,
+                self.test_dataset.medias,
+                self.test_dataset.g2_templates,
+                self.test_dataset.g2_ids,
             )
         cache_dir = Path("/app/cache/template_cache")
         cache_dir.mkdir(parents=True, exist_ok=True)
         class_name = self.template_pooling_strategy.__class__.__name__
         probe_mixed_templates_feature_path = str(
             cache_dir
-            / f"probe_aggr_{class_name}_{str(self.use_detector_score)}_{self.subset}"
+            / f"probe_aggr_{class_name}_{str(self.use_detector_score)}_{self.test_dataset.dataset_name}"
         )
 
         if (
@@ -205,10 +183,10 @@ class IJB_test:
             ) = self.template_pooling_strategy(
                 img_input_feats,
                 self.unc,
-                self.templates,
-                self.medias,
-                probe_mixed_templates,
-                probe_mixed_ids,
+                self.test_dataset.templates,
+                self.test_dataset.medias,
+                self.test_dataset.probe_mixed_templates,
+                self.test_dataset.probe_mixed_ids,
             )
             np.save(
                 probe_mixed_templates_feature_path + "_feature.npy",
