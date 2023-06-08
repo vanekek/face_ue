@@ -1,7 +1,8 @@
 from .data_tools import extract_meta_data, extract_gallery_prob_data
 
+
 class FaceRecogntioniDataset:
-    def __init__(self, dataset_name:str, dataset_path: str) -> None:
+    def __init__(self, dataset_name: str, dataset_path: str) -> None:
         self.dataset_name = dataset_name
         (
             self.templates,
@@ -20,6 +21,4 @@ class FaceRecogntioniDataset:
             self.g2_ids,
             self.probe_mixed_templates,
             self.probe_mixed_ids,
-        ) = extract_gallery_prob_data(
-            dataset_path, dataset_name
-        )
+        ) = extract_gallery_prob_data(dataset_path, dataset_name)

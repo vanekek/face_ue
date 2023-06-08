@@ -4,6 +4,7 @@ import numpy as np
 
 from ..metrics import EvalMetricsT
 
+
 class Abstract1NEval(ABC):
     def __call__(
         self,

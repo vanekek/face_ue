@@ -4,9 +4,11 @@ from scipy.special import softmax
 
 from abc import ABC
 
+
 class AbstractConfidence(ABC):
     def __call__(self, similarity_matrix) -> Any:
         raise NotImplementedError
+
 
 class NAC_confidence(AbstractConfidence):
     def __init__(self, k: int, s: float, shift: float, normalize: bool) -> None:

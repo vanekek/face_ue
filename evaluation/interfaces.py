@@ -1,5 +1,6 @@
 import os
 
+
 # https://github.com/deepinsight/insightface/tree/master/recognition/_evaluation_/ijb
 class Mxnet_model_interf:
     def __init__(self, model_file, layer="fc1", image_size=(112, 112)):

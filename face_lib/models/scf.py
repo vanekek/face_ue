@@ -17,10 +17,7 @@ class Prediction_writer(BasePredictionWriter):
         embs = torch.cat([batch[0] for batch in predictions], axis=0).numpy()
         unc = torch.cat([batch[1] for batch in predictions], axis=0).numpy()
         print(embs.shape, unc.shape)
-        np.savez(
-            self.output_dir / f"{self.file_name}.npz", embs=embs, unc=unc
-        )
-
+        np.savez(self.output_dir / f"{self.file_name}.npz", embs=embs, unc=unc)
 
 
 class SoftmaxWeights(torch.nn.Module):

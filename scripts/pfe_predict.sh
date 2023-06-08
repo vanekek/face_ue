@@ -1,5 +1,4 @@
-docker run \
- -d \
+docker run -d \
  --shm-size=8g \
  --memory=80g \
  --cpus=40 \
@@ -7,7 +6,7 @@ docker run \
  --name scf_train \
  --rm \
  --init \
- -v /home/l.erlygin/face-evaluation:/app \
+ -v /home/l.erlygin/face_ue:/app \
  --gpus all \
  -w="/app" \
  face-eval \

@@ -29,7 +29,9 @@ def compute_pfe(
 
 
 class PFE(Abstract1NEval):
-    def __init__(self, confidence_function: AbstractConfidence, variance_scale: float) -> None:
+    def __init__(
+        self, confidence_function: AbstractConfidence, variance_scale: float
+    ) -> None:
         """
         Implements PFE “likelihood” of distributions belonging to the same person (sharing the same latent code)
 

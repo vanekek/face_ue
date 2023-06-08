@@ -5,13 +5,15 @@ import tqdm
 
 
 EvalMetricsT = Tuple[int, int, int, List[float], List[float], List[Tuple[float, float]]]
+
+
 def compute_detection_and_identification_rate(
     fars: np.ndarray,
     probe_ids: np.ndarray,
     gallery_ids: np.ndarray,
     similarity: np.ndarray,
     probe_score: np.ndarray,
-    labels_sorted: bool = False
+    labels_sorted: bool = False,
 ) -> EvalMetricsT:
     """
     Computes Detection & identification rate for open set recognition
@@ -29,29 +31,33 @@ def compute_detection_and_identification_rate(
     :param similarity: (probe_size, gallery_size) marix, which specifies closeness of all test images to each gallery class
     :param probe_score: specifies confinence that particular test image belongs to predicted class
         image's probe_score is less than operating threshold τ, then this image get rejected as imposter
-    :param labels_sorted: specifies the order of labels in similarity matrix. 
+    :param labels_sorted: specifies the order of labels in similarity matrix.
         If True, assumes the order is ascending, else assumes order is the same as in gallery_ids
     :return: Detection & identification (DI) rate at each FAR
     """
     gallery_ids_argsort = np.argsort(gallery_ids)
     if not labels_sorted:
         similarity = similarity[:, gallery_ids_argsort]
-        
+
     is_seen = np.isin(probe_ids, gallery_ids)
-    
+
     top_1_count: int
     top_5_count: int
     top_10_count: int
-    
+
     seen_sim: np.ndarray = similarity[is_seen]
     seen_probe_ids = probe_ids[is_seen]
-    def topk(k) -> int: 
-        return top_k_accuracy_score(seen_probe_ids, seen_sim, k=k, normalize=False) # type: ignore
+
+    def topk(k) -> int:
+        return top_k_accuracy_score(seen_probe_ids, seen_sim, k=k, normalize=False)  # type: ignore
+
     top_1_count, top_5_count, top_10_count = map(topk, [1, 5, 10])
-    
+
     # Boolean mask (seen_probes, gallery_ids), 1 where the probe matches gallery sample
-    pos_mask: np.ndarray = probe_ids[is_seen, None] == gallery_ids[None, gallery_ids_argsort]
-    
+    pos_mask: np.ndarray = (
+        probe_ids[is_seen, None] == gallery_ids[None, gallery_ids_argsort]
+    )
+
     pos_sims = seen_sim[pos_mask]
     neg_sims = seen_sim[~pos_mask].reshape(*pos_sims.shape, -1)
     pos_score = probe_score[is_seen]

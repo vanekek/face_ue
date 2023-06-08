@@ -14,7 +14,9 @@ sys.path.insert(1, path)
 
 
 @hydra.main(
-    config_path=str(Path(__file__).resolve().parents[1] / "configs/uncertainty_benchmark"),
+    config_path=str(
+        Path(__file__).resolve().parents[1] / "configs/uncertainty_benchmark"
+    ),
     config_name=Path(__file__).stem,
     version_base="1.2",
 )
@@ -24,12 +26,12 @@ def main(cfg):
     method_scores, method_names = [], []
     for method in cfg.open_set_recognition_methods:
         one_to_N_eval_function = instantiate(method.evaluation_1N_function)
-        
-        if hasattr(one_to_N_eval_function, '__name__'):
+
+        if hasattr(one_to_N_eval_function, "__name__"):
             save_name = one_to_N_eval_function.__name__
         else:
             save_name = os.path.splitext(os.path.basename(method.save_result))[0]
-            
+
         save_path = os.path.dirname(method.save_result)
         save_items = {}
         if len(save_path) != 0 and not os.path.exists(save_path):
@@ -38,7 +40,7 @@ def main(cfg):
         template_pooling = instantiate(method.template_pooling_strategy)
         tt = Face_Fecognition_test(
             evaluation_1N_function=one_to_N_eval_function,
-            test_dataset = test_dataset,
+            test_dataset=test_dataset,
             embeddings_path=method.embeddings_path,
             template_pooling_strategy=template_pooling,
             use_detector_score=method.use_detector_score,
@@ -64,7 +66,7 @@ def main(cfg):
             scores, names, label = [score], [save_name], tt.label
             save_items.update({"scores": scores, "names": names, "label": tt.label})
 
-        np.savez(os.path.join(save_path, save_name + '.npz'), **save_items)
+        np.savez(os.path.join(save_path, save_name + ".npz"), **save_items)
 
     fig = plot_dir_far_cmc_scores(scores=method_scores, names=method_names)
     fig.savefig(Path(cfg.exp_dir) / "di_far_plot.png", dpi=300)

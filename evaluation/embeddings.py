@@ -74,4 +74,3 @@ def process_embeddings(
     if use_detector_score and np.isnan(face_scores).any() is False:
         embs = embs * np.expand_dims(face_scores, -1)
     return embs
-

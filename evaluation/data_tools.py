@@ -3,6 +3,7 @@ import numpy as np
 import pandas as pd
 import os
 
+
 def read_meta_columns_to_int(file_path, columns, sep=" ", skiprows=0, header=None):
     # meta = np.loadtxt(file_path, skiprows=skiprows, delimiter=sep)
     meta = pd.read_csv(file_path, sep=sep, skiprows=skiprows, header=header).values
@@ -12,7 +13,7 @@ def read_meta_columns_to_int(file_path, columns, sep=" ", skiprows=0, header=Non
 def extract_meta_data(data_path, dataset_name, save_path=None, force_reload=False):
     data_path = Path(data_path)
     if save_path == None:
-        save_path = data_path  / "backup.npz"
+        save_path = data_path / "backup.npz"
     if not force_reload and save_path.is_file():
         print(">>>> Reload from backup: %s ..." % save_path)
         aa = np.load(save_path, allow_pickle=True)
@@ -26,12 +27,14 @@ def extract_meta_data(data_path, dataset_name, save_path=None, force_reload=Fals
             aa["landmarks"],
             aa["face_scores"],
         )
-    
+
     media_list_path = data_path / "meta" / f"{dataset_name.lower()}_face_tid_mid.txt"
-    pair_list_path = data_path / "meta" / f"{dataset_name.lower()}_template_pair_label.txt"
+    pair_list_path = (
+        data_path / "meta" / f"{dataset_name.lower()}_template_pair_label.txt"
+    )
     img_path = data_path / "loose_crop"
     img_list_path = data_path / "meta" / f"{dataset_name.lower()}_name_5pts_score.txt"
-    
+
     print(">>>> Loading templates and medias...")
     templates, medias = read_meta_columns_to_int(
         media_list_path, columns=[1, 2]
@@ -74,7 +77,8 @@ def extract_meta_data(data_path, dataset_name, save_path=None, force_reload=Fals
         )
         # img_names: (227630,), landmarks: (227630, 5, 2), face_scores: (227630,)
         print(
-            "face_scores value counts:", dict(zip(*np.histogram(face_scores, bins=9)[::-1]))
+            "face_scores value counts:",
+            dict(zip(*np.histogram(face_scores, bins=9)[::-1])),
         )
         # {0.1: 2515, 0.2: 0, 0.3: 62, 0.4: 94, 0.5: 136, 0.6: 197, 0.7: 291, 0.8: 538, 0.9: 223797}
     else:
@@ -97,10 +101,12 @@ def extract_meta_data(data_path, dataset_name, save_path=None, force_reload=Fals
     return templates, medias, p1, p2, label, img_names, landmarks, face_scores
 
 
-def extract_gallery_prob_data(data_path, dataset_name, save_path=None, force_reload=False):
+def extract_gallery_prob_data(
+    data_path, dataset_name, save_path=None, force_reload=False
+):
     data_path = Path(data_path)
     if save_path == None:
-        save_path = data_path  / "gallery_prob_backup.npz"
+        save_path = data_path / "gallery_prob_backup.npz"
     if not force_reload and save_path.is_file():
         print(">>>> Reload from backup: %s ..." % save_path)
         aa = np.load(save_path, allow_pickle=True)
@@ -113,12 +119,10 @@ def extract_gallery_prob_data(data_path, dataset_name, save_path=None, force_rel
             aa["probe_mixed_subject_ids"],
         )
 
-    
     meta_dir = data_path / "meta"
     gallery_s1_record = meta_dir / f"{dataset_name.lower()}_1N_gallery_G1.csv"
     gallery_s2_record = meta_dir / f"{dataset_name.lower()}_1N_gallery_G2.csv"
     probe_mixed_record = meta_dir / f"{dataset_name.lower()}_1N_probe_mixed.csv"
-
 
     print(">>>> Loading gallery feature...")
     s1_templates, s1_subject_ids = read_meta_columns_to_int(
@@ -133,14 +137,12 @@ def extract_gallery_prob_data(data_path, dataset_name, save_path=None, force_rel
             gallery_s2_record, columns=[0, 1], skiprows=1, sep=","
         )
         print(
-        "s2 gallery: %s, ids: %s, unique: %s"
-        % (s2_templates.shape, s2_subject_ids.shape, np.unique(s2_templates).shape)
+            "s2 gallery: %s, ids: %s, unique: %s"
+            % (s2_templates.shape, s2_subject_ids.shape, np.unique(s2_templates).shape)
         )
     else:
         s2_templates = None
         s2_subject_ids = None
-    
-
 
     print(">>>> Loading probe feature...")
     probe_mixed_templates, probe_mixed_subject_ids = read_meta_columns_to_int(
@@ -174,7 +176,6 @@ def extract_gallery_prob_data(data_path, dataset_name, save_path=None, force_rel
         probe_mixed_templates,
         probe_mixed_subject_ids,
     )
-
 
 
 def extract_IJB_data_11(data_path, subset, save_path=None, force_reload=False):

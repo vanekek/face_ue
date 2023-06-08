@@ -3,13 +3,19 @@ from pathlib import Path
 
 
 from .data_tools import extract_meta_data, extract_gallery_prob_data
-from .interfaces import keras_model_interf, Torch_model_interf, ONNX_model_interf, Mxnet_model_interf
+from .interfaces import (
+    keras_model_interf,
+    Torch_model_interf,
+    ONNX_model_interf,
+    Mxnet_model_interf,
+)
 from .embeddings import get_embeddings, process_embeddings
 from .image2template import image2template_feature
 from .metrics import verification_11
 from .template_pooling_strategies import AbstractTemplatePooling
 from .eval_functions.abc import Abstract1NEval
 from .test_datasets import FaceRecogntioniDataset
+
 
 class Face_Fecognition_test:
     def __init__(
@@ -26,7 +32,7 @@ class Face_Fecognition_test:
         self.use_two_galleries = use_two_galleries
         self.test_dataset = test_dataset
         self.recompute_template_pooling = recompute_template_pooling
-        
+
         # (
         #     templates,
         #     medias,
@@ -44,8 +50,7 @@ class Face_Fecognition_test:
         self.embs = aa["embs"]
         self.embs_f = []
         self.unc = aa["unc"]
-            
-        
+
         # self.templates, self.medias, self.p1, self.p2, self.label = (
         #     templates,
         #     medias,
@@ -54,7 +59,9 @@ class Face_Fecognition_test:
         #     label,
         # )
         if self.test_dataset.face_scores is not None:
-            self.test_dataset.face_scores = self.test_dataset.face_scores.astype(self.embs.dtype)
+            self.test_dataset.face_scores = self.test_dataset.face_scores.astype(
+                self.embs.dtype
+            )
         self.evaluation_1N_function = evaluation_1N_function
         self.template_pooling_strategy = template_pooling_strategy
 
@@ -116,7 +123,6 @@ class Face_Fecognition_test:
         # ) = extract_gallery_prob_data(
         #     self.data_path, self.subset, force_reload=self.force_reload
         # )
-
 
         img_input_feats = process_embeddings(
             self.embs,

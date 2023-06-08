@@ -2,10 +2,10 @@
 
 seed_everything: 7
 trainer:
-  logger:
-    class_path: pytorch_lightning.loggers.WandbLogger
-    init_args:
-      project: "face_incertainty_train"
+  # logger:
+  #   class_path: pytorch_lightning.loggers.WandbLogger
+  #   init_args:
+  #     project: "face_incertainty_train"
   log_every_n_steps: 3
   default_root_dir: outputs/pfe_train
   enable_checkpointing: true
@@ -17,17 +17,23 @@ trainer:
   - class_path: pytorch_lightning.callbacks.LearningRateMonitor
     init_args: 
       logging_interval: "step"
-  - class_path: face_lib.models.pfe.IJB_writer
+  - class_path: face_lib.models.scf.Prediction_writer
     init_args: 
       output_dir: /app/cache/features
-      subset: ${data.init_args.data_predict_subset}
+      file_name: pfe_qmul_survFace 
       write_interval: epoch
+  # - class_path: face_lib.models.pfe.IJB_writer
+  #   init_args: 
+  #     output_dir: /app/cache/features
+  #     subset: ${data.init_args.data_predict_subset}
+  #     write_interval: epoch
   max_epochs: 4
   accelerator: gpu
   devices: 2
 model:
     class_path: face_lib.models.pfe.ProbabilisticFaceEmbedding
     init_args:
+        weights: /app/model_weights/pfe_old/sota.pth
         backbone:
             class_path: face_lib.models.lightning_wrappers.ResNet
             init_args:
@@ -58,14 +64,26 @@ model:
             interval: "step"
             frequency: 1
 
-
 data:
     class_path: face_lib.datasets.lightning_datasets.UncertaintyDataModule
     init_args:
         data_train_dir: /app/datasets/ms1m/
-        add_nose: False
-        data_predict_dir: /app/datasets/arcface_ijb
-        data_predict_subset: IJBC
-        batch_size: 180
+        predict_dataset:
+            class_path: face_lib.datasets.qmul.SurvFace
+            init_args:
+                data_dir: /app/datasets/QMUL-SurvFace/Face_Identification_Test_Set
+        # data_predict_dir: /app/datasets/arcface_ijb
+        # data_predict_subset: IJBC
+        batch_size: 128
         num_workers: 20
+
+# data:
+#     class_path: face_lib.datasets.lightning_datasets.UncertaintyDataModule
+#     init_args:
+#         data_train_dir: /app/datasets/ms1m/
+#         add_nose: False
+#         data_predict_dir: /app/datasets/arcface_ijb
+#         data_predict_subset: IJBC
+#         batch_size: 180
+#         num_workers: 20
 

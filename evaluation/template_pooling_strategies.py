@@ -6,6 +6,7 @@ from tqdm import tqdm
 from sklearn.preprocessing import normalize
 import scipy
 
+
 class AbstractTemplatePooling(ABC):
     def __call__(
         self,
@@ -17,6 +18,7 @@ class AbstractTemplatePooling(ABC):
         choose_ids: np.ndarray,
     ) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
         raise NotImplementedError
+
 
 class PoolingDefault(AbstractTemplatePooling):
     def __call__(
@@ -41,14 +43,18 @@ class PoolingDefault(AbstractTemplatePooling):
             (ind_t,) = np.where(templates == uqt)
             face_norm_feats = img_feats[ind_t]
             face_medias = medias[ind_t]
-            unique_medias, unique_media_counts = np.unique(face_medias, return_counts=True)
+            unique_medias, unique_media_counts = np.unique(
+                face_medias, return_counts=True
+            )
             media_norm_feats = []
             for u, ct in zip(unique_medias, unique_media_counts):
                 (ind_m,) = np.where(face_medias == u)
                 if ct == 1:
                     media_norm_feats += [face_norm_feats[ind_m]]
                 else:  # image features from the same video will be aggregated into one feature
-                    media_norm_feats += [np.mean(face_norm_feats[ind_m], 0, keepdims=True)]
+                    media_norm_feats += [
+                        np.mean(face_norm_feats[ind_m], 0, keepdims=True)
+                    ]
             media_norm_feats = np.concatenate(media_norm_feats)
             template_feats[count_template] = np.sum(media_norm_feats, axis=0)
 
@@ -83,7 +89,9 @@ class PoolingSCF(AbstractTemplatePooling):
             face_norm_feats = img_feats[ind_t]
             conf_template = kappa[ind_t]
             face_medias = medias[ind_t]
-            unique_medias, unique_media_counts = np.unique(face_medias, return_counts=True)
+            unique_medias, unique_media_counts = np.unique(
+                face_medias, return_counts=True
+            )
             media_norm_feats = []
             kappa_in_template = []
             for u, ct in zip(unique_medias, unique_media_counts):
@@ -92,7 +100,9 @@ class PoolingSCF(AbstractTemplatePooling):
                     media_norm_feats += [face_norm_feats[ind_m]]
                     kappa_in_template += [conf_template[ind_m]]
                 else:  # image features from the same video will be aggregated into one feature
-                    kappa_in_template += [np.mean(conf_template[ind_m], 0, keepdims=True)]
+                    kappa_in_template += [
+                        np.mean(conf_template[ind_m], 0, keepdims=True)
+                    ]
                     media_norm_feats += [
                         np.sum(
                             face_norm_feats[ind_m] * conf_template[ind_m],
@@ -148,7 +158,9 @@ class PoolingPFEHarmonicMean(AbstractTemplatePooling):
             conf_template = conf[ind_t]
             raw_sigma_sq_in_template = sigma_sq[ind_t]
             face_medias = medias[ind_t]
-            unique_medias, unique_media_counts = np.unique(face_medias, return_counts=True)
+            unique_medias, unique_media_counts = np.unique(
+                face_medias, return_counts=True
+            )
             media_norm_feats = []
             conf_in_template = []
             sigma_sq_in_template = []
@@ -164,7 +176,9 @@ class PoolingPFEHarmonicMean(AbstractTemplatePooling):
                     # result_media_variance = 1 / np.sum(1 / media_var, axis=0, keepdims=True)
                     sigma_sq_in_template += [result_media_variance]
 
-                    conf_in_template += [np.mean(conf_template[ind_m], 0, keepdims=True)]
+                    conf_in_template += [
+                        np.mean(conf_template[ind_m], 0, keepdims=True)
+                    ]
                     media_norm_feats += [
                         np.sum(
                             face_norm_feats[ind_m] * conf_template[ind_m],
@@ -188,7 +202,13 @@ class PoolingPFEHarmonicMean(AbstractTemplatePooling):
             templates_sigma_sq[count_template] = pfe_template_variance
 
         template_norm_feats = normalize(template_feats)
-        return template_norm_feats, templates_sigma_sq, unique_templates, unique_subjectids
+        return (
+            template_norm_feats,
+            templates_sigma_sq,
+            unique_templates,
+            unique_subjectids,
+        )
+
 
 class PoolingPFE(AbstractTemplatePooling):
     def __call__(
@@ -221,7 +241,9 @@ class PoolingPFE(AbstractTemplatePooling):
             face_norm_feats = img_feats[ind_t]
             raw_sigma_sq_in_template = sigma_sq[ind_t]
             face_medias = medias[ind_t]
-            unique_medias, unique_media_counts = np.unique(face_medias, return_counts=True)
+            unique_medias, unique_media_counts = np.unique(
+                face_medias, return_counts=True
+            )
             media_norm_feats = []
             sigma_sq_in_template = []
             for u, ct in zip(unique_medias, unique_media_counts):
@@ -258,4 +280,9 @@ class PoolingPFE(AbstractTemplatePooling):
             templates_sigma_sq[count_template] = final_template_conf
 
         template_norm_feats = normalize(template_feats)
-        return template_norm_feats, templates_sigma_sq, unique_templates, unique_subjectids
+        return (
+            template_norm_feats,
+            templates_sigma_sq,
+            unique_templates,
+            unique_subjectids,
+        )

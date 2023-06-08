@@ -20,7 +20,7 @@ class SVM(Abstract1NEval):
         self,
         use_unc: bool,
         C: float,
-        loss: Literal['squared_hinge', 'hinge'] = "squared_hinge",
+        loss: Literal["squared_hinge", "hinge"] = "squared_hinge",
         scale: bool = True,
         frac_pca_components: Optional[float] = None,
         shift: int = 0,
@@ -29,9 +29,9 @@ class SVM(Abstract1NEval):
         self.C = C
         self.shift = shift
         self.scale = scale
-        self.loss: Literal['squared_hinge', 'hinge'] = loss
+        self.loss: Literal["squared_hinge", "hinge"] = loss
         self.frac_pca_components = frac_pca_components
-    
+
     @property
     def __name__(self):
         attrs = [
@@ -45,7 +45,7 @@ class SVM(Abstract1NEval):
 
         if self.scale:
             attrs.append("scaled")
-            
+
         return "_".join(attrs)
 
     def __call__(
@@ -83,21 +83,31 @@ class SVM(Abstract1NEval):
                 transforms.append(StandardScaler())
 
             pipeline = make_pipeline(
-                *transforms,
-                OneVsRestClassifier(LinearSVC(C=self.C, loss=self.loss))
+                *transforms, OneVsRestClassifier(LinearSVC(C=self.C, loss=self.loss))
             )
 
             warnings.filterwarnings("error")
             try:
                 with Parallel(-1) as backend:
                     pipeline.fit(XX, gallery_ids)
-                    decision_scores = np.concatenate(backend(map(
-                            delayed(pipeline.decision_function),
-                            np.array_split(YX, 16),
-                    ))) # type: ignore
+                    decision_scores = np.concatenate(
+                        backend(
+                            map(
+                                delayed(pipeline.decision_function),
+                                np.array_split(YX, 16),
+                            )
+                        )
+                    )  # type: ignore
             except ConvergenceWarning:
                 print("SVM didn't converge with given parameters, returning nans")
-                return 0, 0, 0, [np.nan] * len(fars), [np.nan] * len(fars), [(np.nan, np.nan)] * len(fars)
+                return (
+                    0,
+                    0,
+                    0,
+                    [np.nan] * len(fars),
+                    [np.nan] * len(fars),
+                    [(np.nan, np.nan)] * len(fars),
+                )
             finally:
                 warnings.resetwarnings()
         else:
