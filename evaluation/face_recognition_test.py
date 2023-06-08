@@ -139,7 +139,7 @@ class Face_Fecognition_test:
             self.test_dataset.g1_templates,
             self.test_dataset.g1_ids,
         )
-        if self.use_two_galleries and self.test_dataset.g2_templates is not None:
+        if self.use_two_galleries and self.test_dataset.g2_templates.shape != ():
             (
                 g2_templates_feature,
                 g2_template_unc,
@@ -202,7 +202,7 @@ class Face_Fecognition_test:
             )
         print("g1_templates_feature:", g1_templates_feature.shape)  # (1772, 512)
 
-        if self.use_two_galleries:
+        if self.use_two_galleries and self.test_dataset.g2_templates.shape != ():
             print("g2_templates_feature:", g2_templates_feature.shape)  # (1759, 512)
 
         print(
@@ -230,7 +230,7 @@ class Face_Fecognition_test:
             fars_cal,
         )
 
-        if self.use_two_galleries:
+        if self.use_two_galleries and self.test_dataset.g2_templates.shape != ():
             print(">>>> Gallery 2")
             (
                 g2_top_1_count,
@@ -257,5 +257,10 @@ class Face_Fecognition_test:
 
             mean_tpirs = (np.array(g1_recalls) + np.array(g2_recalls)) / 2
         else:
+            query_num = probe_mixed_templates_feature.shape[0] - 3000
+            top_1 = g1_top_1_count / query_num
+            top_5 = g1_top_5_count / query_num
+            top_10 = g1_top_10_count / query_num
+            print("[Mean] top1: %f, top5: %f, top10: %f" % (top_1, top_5, top_10))
             mean_tpirs = np.array(g1_recalls)
         return fars_cal, mean_tpirs, None, None  # g1_cmc_scores, g2_cmc_scores
