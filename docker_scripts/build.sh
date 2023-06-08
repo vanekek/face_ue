@@ -1,1 +1,1 @@
-docker build -t face-eval .
+docker build -t face-eval $HOME/face_ue/docker_scripts --no-cache

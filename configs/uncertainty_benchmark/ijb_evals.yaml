@@ -14,16 +14,26 @@ far_range: [-4, 0, 100]
 
 open_set_recognition_methods:
 
+  # - evaluation_1N_function: 
+  #     _target_: evaluation.eval_functions.CosineSim
+  #     confidence_function: 
+  #       _target_: evaluation.confidence_functions.MaxSimilarity_confidence
+  #       foo: bar
+  #   restore_embs: /app/cache/features/scf_ijb_embs_${subset}.npz
+  #   template_pooling_strategy:
+  #     _target_: evaluation.template_pooling_strategies.PoolingSCF
+  #   features: scf
+  #   use_detector_score: True
+  #   save_result: "${exp_dir}/${subset}_CosineSim_det_and_scf_score_.npz"
+
   - evaluation_1N_function: 
-      class_path: evaluation.one_to_N_eval_functions.CosineSim
-      init_args:
-        confidence_function: 
-          class_name: MaxSimilarity_confidence
-          init_args:
-            foo: bar
+      _target_: evaluation.eval_functions.SVM
+      use_unc: False
+      C: 1
+      loss: squared_hinge
     restore_embs: /app/cache/features/scf_ijb_embs_${subset}.npz
     template_pooling_strategy:
-      function_path: evaluation.template_pooling_strategies.pooling_SCF
+      _target_: evaluation.template_pooling_strategies.PoolingSCF
     features: scf
     use_detector_score: True
     save_result: "${exp_dir}/${subset}_CosineSim_det_and_scf_score.npz"

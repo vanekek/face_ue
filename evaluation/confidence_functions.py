@@ -2,9 +2,14 @@ from typing import Any
 import numpy as np
 from scipy.special import softmax
 
+from abc import ABC
 
-class NAC_confidence:
-    def __init__(self, k: int, s: float, normalize: bool) -> None:
+class AbstractConfidence(ABC):
+    def __call__(self, similarity_matrix) -> Any:
+        raise NotImplementedError
+
+class NAC_confidence(AbstractConfidence):
+    def __init__(self, k: int, s: float, shift: float, normalize: bool) -> None:
         """
         Implemetns Neighborhood Aware Cosine (NAC) that computes
         similarity based on neighborhood information
@@ -36,7 +41,7 @@ class NAC_confidence:
         return softmax((top_k_logits) * self.s, axis=1)[:, -1]
 
 
-class MaxSimilarity_confidence:
+class MaxSimilarity_confidence(AbstractConfidence):
     def __init__(self, foo: str) -> None:
         """
         Returns confidence for each test image of being gallery (known class) sample

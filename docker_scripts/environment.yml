@@ -12,6 +12,7 @@ dependencies:
   - conda-forge::tensorboard
   - conda-forge::black
   - conda-forge::hydra-core
+  - conda-forge::numexpr
   - anaconda::ipython
   - anaconda::path
   - pip
@@ -43,3 +44,4 @@ dependencies:
     - imageio~=2.9.0
     - matplotlib~=3.3.4
     - seaborn~=0.11.1
+    - scikit-learn-intelex
