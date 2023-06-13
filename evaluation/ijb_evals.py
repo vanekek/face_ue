@@ -32,10 +32,7 @@ def main(cfg):
         else:
             save_name = os.path.splitext(os.path.basename(method.save_result))[0]
 
-        save_path = os.path.dirname(method.save_result)
-        save_items = {}
-        if len(save_path) != 0 and not os.path.exists(save_path):
-            os.makedirs(save_path)
+
 
         template_pooling = instantiate(method.template_pooling_strategy)
         tt = Face_Fecognition_test(
@@ -49,23 +46,25 @@ def main(cfg):
             far_range=cfg.far_range,
         )
 
-        if cfg.is_one_2_N:  # 1:N test
-            fars, tpirs, _, _ = tt.run_model_test_1N()
+        save_path = os.path.dirname(method.save_result)
+        save_items = {}
+        if len(save_path) != 0 and not os.path.exists(save_path):
+            os.makedirs(save_path)
+        if cfg.task == 'openset_identification':  # 1:N test
+            fars, tpirs, _, _ = tt.run_model_test_openset_identification()
             scores = [(fars, tpirs)]
             names = [save_name]
             method_scores.append((fars, tpirs))
             method_names.append(save_name)
             save_items.update({"scores": scores, "names": names})
-        elif cfg.is_bunch:  # All 8 tests N{0,1}D{0,1}F{0,1}
-            scores, names = tt.run_model_test_bunch()
-            names = [save_name + "_" + ii for ii in names]
-            label = tt.label
-            save_items.update({"scores": scores, "names": names})
-        else:  # Basic 1:1 N0D1F1 test
-            score = tt.run_model_test_single()
+        elif cfg.task == 'verification':  # Basic 1:1 N0D1F1 test
+            score = tt.run_model_test_verification()
             scores, names, label = [score], [save_name], tt.label
             save_items.update({"scores": scores, "names": names, "label": tt.label})
-
+        elif cfg.task == 'closedset_identification':
+            pass
+        else:
+            raise ValueError
         np.savez(os.path.join(save_path, save_name + ".npz"), **save_items)
 
     fig = plot_dir_far_cmc_scores(scores=method_scores, names=method_names)

@@ -27,12 +27,11 @@ class PoolingDefault(AbstractTemplatePooling):
         raw_unc: np.ndarray,
         templates: np.ndarray,
         medias: np.ndarray,
-        choose_templates: np.ndarray,
-        choose_ids: np.ndarray,
     ):
         ## here we assume that after default pooling uncertainty are not used
-        unique_templates, indices = np.unique(choose_templates, return_index=True)
-        unique_subjectids = choose_ids[indices]
+        unique_templates, indices = np.unique(templates, return_index=True)
+        #unique_templates, indices = np.unique(choose_templates, return_index=True)
+        #unique_subjectids = choose_ids[indices]
 
         template_feats = np.zeros((len(unique_templates), img_feats.shape[1]))
         for count_template, uqt in tqdm(
@@ -59,7 +58,7 @@ class PoolingDefault(AbstractTemplatePooling):
             template_feats[count_template] = np.sum(media_norm_feats, axis=0)
 
         template_norm_feats = normalize(template_feats)
-        return template_norm_feats, np.zeros(6), unique_templates, unique_subjectids
+        return template_norm_feats, np.zeros((len(unique_templates),1)), unique_templates, #unique_subjectids
 
 
 class PoolingSCF(AbstractTemplatePooling):

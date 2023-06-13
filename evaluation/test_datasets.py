@@ -19,6 +19,6 @@ class FaceRecogntioniDataset:
             self.g1_ids,
             self.g2_templates,
             self.g2_ids,
-            self.probe_mixed_templates,
-            self.probe_mixed_ids,
+            self.probe_templates,
+            self.probe_ids,
         ) = extract_gallery_prob_data(dataset_path, dataset_name)
