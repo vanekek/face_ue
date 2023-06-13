@@ -32,8 +32,6 @@ def main(cfg):
         else:
             save_name = os.path.splitext(os.path.basename(method.save_result))[0]
 
-
-
         template_pooling = instantiate(method.template_pooling_strategy)
         tt = Face_Fecognition_test(
             evaluation_1N_function=one_to_N_eval_function,
@@ -50,18 +48,18 @@ def main(cfg):
         save_items = {}
         if len(save_path) != 0 and not os.path.exists(save_path):
             os.makedirs(save_path)
-        if cfg.task == 'openset_identification':  # 1:N test
+        if cfg.task == "openset_identification":  # 1:N test
             fars, tpirs, _, _ = tt.run_model_test_openset_identification()
             scores = [(fars, tpirs)]
             names = [save_name]
             method_scores.append((fars, tpirs))
             method_names.append(save_name)
             save_items.update({"scores": scores, "names": names})
-        elif cfg.task == 'verification':  # Basic 1:1 N0D1F1 test
+        elif cfg.task == "verification":  # Basic 1:1 N0D1F1 test
             score = tt.run_model_test_verification()
             scores, names, label = [score], [save_name], tt.label
             save_items.update({"scores": scores, "names": names, "label": tt.label})
-        elif cfg.task == 'closedset_identification':
+        elif cfg.task == "closedset_identification":
             pass
         else:
             raise ValueError

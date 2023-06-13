@@ -60,7 +60,7 @@ class Face_Fecognition_test:
         )
         # pool templates
 
-        self.pool_templates(cache_dir = '/app/cache/template_cache')
+        self.pool_templates(cache_dir="/app/cache/template_cache")
 
         self.fars_cal = [
             10**ii
@@ -71,19 +71,19 @@ class Face_Fecognition_test:
             1
         ]  # plot in range [10-4, 1]
 
-    def pool_templates(self, cache_dir:str):
+    def pool_templates(self, cache_dir: str):
         cache_dir = Path(cache_dir)
         cache_dir.mkdir(parents=True, exist_ok=True)
         class_name = self.template_pooling_strategy.__class__.__name__
-        pooled_templates_path = cache_dir / f"template_pool_{class_name}_det_score_{str(self.use_detector_score)}_{self.test_dataset.dataset_name}.npz"
-        if (
-            pooled_templates_path.is_file()
-            and self.recompute_template_pooling is False
-        ):
+        pooled_templates_path = (
+            cache_dir
+            / f"template_pool_{class_name}_det_score_{str(self.use_detector_score)}_{self.test_dataset.dataset_name}.npz"
+        )
+        if pooled_templates_path.is_file() and self.recompute_template_pooling is False:
             pooled_data = np.load(pooled_templates_path)
-            self.template_pooled_emb = pooled_data['template_pooled_emb']
-            self.template_pooled_unc = pooled_data['template_pooled_unc']
-            self.template_ids = pooled_data['template_ids']
+            self.template_pooled_emb = pooled_data["template_pooled_emb"]
+            self.template_pooled_unc = pooled_data["template_pooled_unc"]
+            self.template_ids = pooled_data["template_ids"]
         else:
             (
                 self.template_pooled_emb,
@@ -95,12 +95,20 @@ class Face_Fecognition_test:
                 self.test_dataset.templates,
                 self.test_dataset.medias,
             )
-            np.savez(pooled_templates_path, template_pooled_emb=self.template_pooled_emb,template_pooled_unc=self.template_pooled_unc, template_ids=self.template_ids)
+            np.savez(
+                pooled_templates_path,
+                template_pooled_emb=self.template_pooled_emb,
+                template_pooled_unc=self.template_pooled_unc,
+                template_ids=self.template_ids,
+            )
+
     def run_model_test_verification(
         self,
     ):
         template_norm_feats, template_unc, unique_templates, _ = image2template_feature(
-            self.image_input_feats, self.test_dataset.templates, self.test_dataset.medias
+            self.image_input_feats,
+            self.test_dataset.templates,
+            self.test_dataset.medias,
         )
         score = verification_11(
             template_norm_feats,
@@ -109,46 +117,60 @@ class Face_Fecognition_test:
             self.test_dataset.p2,
         )
         return score
-    def get_template_subsets(self, choose_templates: np.ndarray, choose_ids: np.ndarray):
+
+    def get_template_subsets(
+        self, choose_templates: np.ndarray, choose_ids: np.ndarray
+    ):
         unique_templates, indices = np.unique(choose_templates, return_index=True)
         unique_subjectids = choose_ids[indices]
 
-        templates_feature = np.zeros((len(unique_templates), self.template_pooled_emb.shape[1]))
-        template_unc = np.zeros((len(unique_templates), self.template_pooled_unc.shape[1]))
-        
+        templates_feature = np.zeros(
+            (len(unique_templates), self.template_pooled_emb.shape[1])
+        )
+        template_unc = np.zeros(
+            (len(unique_templates), self.template_pooled_unc.shape[1])
+        )
+
         for count_template, uqt in enumerate(unique_templates):
             (ind_t,) = np.where(self.template_ids == uqt)
             templates_feature[count_template] = self.template_pooled_emb[ind_t]
             template_unc[count_template] = self.template_pooled_unc[ind_t]
         return templates_feature, template_unc, unique_subjectids
+
     def run_model_test_openset_identification(self):
         # pool first gallery
         (
             g1_templates_feature,
             g1_template_unc,
             g1_unique_ids,
-        ) = self.get_template_subsets(self.test_dataset.g1_templates, self.test_dataset.g1_ids)
-        
+        ) = self.get_template_subsets(
+            self.test_dataset.g1_templates, self.test_dataset.g1_ids
+        )
+
         if self.use_two_galleries and self.test_dataset.g2_templates.shape != ():
             # pool second gallery
-                    (
-            g2_templates_feature,
-            g2_template_unc,
-            g2_unique_ids,
-        ) = self.get_template_subsets(self.test_dataset.g2_templates, self.test_dataset.g2_ids)
+            (
+                g2_templates_feature,
+                g2_template_unc,
+                g2_unique_ids,
+            ) = self.get_template_subsets(
+                self.test_dataset.g2_templates, self.test_dataset.g2_ids
+            )
         # pool probes
-        probe_templates_feature, probe_template_unc, probe_unique_ids = self.get_template_subsets(self.test_dataset.probe_templates, self.test_dataset.probe_ids)
+        (
+            probe_templates_feature,
+            probe_template_unc,
+            probe_unique_ids,
+        ) = self.get_template_subsets(
+            self.test_dataset.probe_templates, self.test_dataset.probe_ids
+        )
 
         print("g1_templates_feature:", g1_templates_feature.shape)  # (1772, 512)
 
         if self.use_two_galleries and self.test_dataset.g2_templates.shape != ():
             print("g2_templates_feature:", g2_templates_feature.shape)  # (1759, 512)
-        print(
-            "probe_templates_feature:", probe_templates_feature.shape
-        )  # (19593, 512)
-        print(
-            "probe_unique_ids:", probe_unique_ids.shape
-        )  # (19593,)
+        print("probe_templates_feature:", probe_templates_feature.shape)  # (19593, 512)
+        print("probe_unique_ids:", probe_unique_ids.shape)  # (19593,)
 
         print(">>>> Gallery 1")
         (
