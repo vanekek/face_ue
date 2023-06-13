@@ -4,6 +4,12 @@ from .abc import Abstract1NEval
 from ..confidence_functions import AbstractConfidence
 
 
+def compute_cosine_sim(
+    X_1: np.ndarray, X_2: np.ndarray, X_unc: np.ndarray = None, Y_unc: np.ndarray = None
+):
+    return np.dot(X_1, X_2.T)
+
+
 class CosineSim(Abstract1NEval):
     def __init__(self, confidence_function: AbstractConfidence) -> None:
         self.confidence_function = confidence_function
@@ -22,8 +28,12 @@ class CosineSim(Abstract1NEval):
             "probe_feats: %s, gallery_feats: %s"
             % (probe_feats.shape, gallery_feats.shape)
         )
-        similarity = np.dot(probe_feats, gallery_feats.T)  # (19593, 1772)
+        similarity = compute_cosine_sim(
+            probe_feats, gallery_feats
+        )  # np.dot(probe_feats, gallery_feats.T)  # (19593, 1772)
         probe_score = self.confidence_function(similarity)
+
+        return similarity, probe_score
 
         # Compute Detection & identification rate for open set recognition
         (

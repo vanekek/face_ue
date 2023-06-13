@@ -44,12 +44,10 @@ class NAC_confidence(AbstractConfidence):
 
 
 class MaxSimilarity_confidence(AbstractConfidence):
-    def __init__(self, foo: str) -> None:
-        """
-        Returns confidence for each test image of being gallery (known class) sample
-        Here we take similarity to most similar class in gallery as confidence measure
-        """
-        self.foo = foo
+    """
+    Returns confidence for each test image of being gallery (known class) sample
+    Here we take similarity to most similar class in gallery as confidence measure
+    """
 
     def __call__(self, similarity_matrix: np.ndarray) -> Any:
         """

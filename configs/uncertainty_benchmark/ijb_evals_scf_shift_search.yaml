@@ -11,7 +11,7 @@ recompute_template_pooling: False
 batch_size: 16
 is_one_2_N: True  # Run 1:N test instead of 1
 far_range: [-4, 0, 100]
-open_set_recognition_methods:
+open_set_identification_methods:
   # - evaluation_1N_function: 
   #     class_path: evaluation.one_to_N_eval_functions.CosineSim
   #     init_args:

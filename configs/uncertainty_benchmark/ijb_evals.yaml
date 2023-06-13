@@ -1,14 +1,11 @@
 hydra:
   run:
     dir: ${exp_dir}
-exp_dir: outputs/ijb_evals/ijb_evals_${now:%Y-%m-%d_%H-%M-%S}
+#exp_dir: outputs/ijb_evals/ijb_evals_${now:%Y-%m-%d_%H-%M-%S}
+exp_dir: outputs/experiments/pooling_methods
 
 use_two_galleries: True
 recompute_template_pooling: False
-batch_size: 16
-task: openset_identification
-metric: foo
-is_one_2_N: True  # Run 1:N test instead of 1
 far_range: [-4, 0, 100]
 
 # test_dataset:
@@ -21,23 +18,44 @@ test_dataset:
   dataset_name: IJBC
   dataset_path: /app/datasets/arcface_ijb/IJBC
 
-open_set_recognition_methods:
-  - evaluation_1N_function: 
-      _target_: evaluation.eval_functions.CosineSim
-      confidence_function: 
-        _target_: evaluation.confidence_functions.MaxSimilarity_confidence
-        foo: bar
+open_set_identification_metrics:
+  - _target_: evaluation.metrics.DetectionAndIdentificationRate
+    top_n_ranks: [1, 10, 20]
+
+closed_set_identification_metrics:
+  - _target_: evaluation.metrics.DetectionAndIdentificationRate
+    top_n_ranks: [1, 10, 20]
+
+verification_metrics:
+  - _target_: evaluation.metrics.verification_11
+
+
+verification_methods:
+  - evaluation_function:
+      _target_: evaluation.eval_functions.verification.distance_based_evaluation.VerifEval
+      distance_function:
+        _target_: evaluation.eval_functions.distaince_functions.compute_scf_sim
     embeddings_path: ${test_dataset.dataset_path}/embeddings/scf_embs_${test_dataset.dataset_name}.npz
     template_pooling_strategy:
       _target_: evaluation.template_pooling_strategies.PoolingSCF
     use_detector_score: True
     save_result: "${exp_dir}/${test_dataset.dataset_name}_CosineSim_det_and_scf_score.npz"
 
-  - evaluation_1N_function: 
-      _target_: evaluation.eval_functions.CosineSim
+open_set_identification_methods:
+  - evaluation_function: 
+      _target_: evaluation.eval_functions.open_set_identification.CosineSim
       confidence_function: 
         _target_: evaluation.confidence_functions.MaxSimilarity_confidence
-        foo: bar
+    embeddings_path: ${test_dataset.dataset_path}/embeddings/scf_embs_${test_dataset.dataset_name}.npz
+    template_pooling_strategy:
+      _target_: evaluation.template_pooling_strategies.PoolingSCF
+    use_detector_score: True
+    save_result: "${exp_dir}/${test_dataset.dataset_name}_CosineSim_det_and_scf_score.npz"
+
+  - evaluation_function: 
+      _target_: evaluation.eval_functions.open_set_identification.CosineSim
+      confidence_function: 
+        _target_: evaluation.confidence_functions.MaxSimilarity_confidence
     embeddings_path: ${test_dataset.dataset_path}/embeddings/scf_embs_${test_dataset.dataset_name}.npz
     template_pooling_strategy:
       _target_: evaluation.template_pooling_strategies.PoolingDefault

@@ -24,17 +24,21 @@ def main(cfg):
     test_dataset = instantiate(cfg.test_dataset)
 
     method_scores, method_names = [], []
-    for method in cfg.open_set_recognition_methods:
-        one_to_N_eval_function = instantiate(method.evaluation_1N_function)
+    methods = cfg.open_set_identification_methods + cfg.verification_methods
+    method_types = ["verification"] * len(cfg.verification_methods) + [
+        "open_set_identification"
+    ] * len(cfg.open_set_identification_methods)
+    for method, method_type in zip(method, method_types):
+        evaluation_function = instantiate(method.evaluation_function)
 
-        if hasattr(one_to_N_eval_function, "__name__"):
-            save_name = one_to_N_eval_function.__name__
+        if hasattr(evaluation_function, "__name__"):
+            save_name = evaluation_function.__name__
         else:
             save_name = os.path.splitext(os.path.basename(method.save_result))[0]
 
         template_pooling = instantiate(method.template_pooling_strategy)
         tt = Face_Fecognition_test(
-            evaluation_1N_function=one_to_N_eval_function,
+            evaluation_function=evaluation_function,
             test_dataset=test_dataset,
             embeddings_path=method.embeddings_path,
             template_pooling_strategy=template_pooling,
@@ -42,20 +46,24 @@ def main(cfg):
             use_two_galleries=cfg.use_two_galleries,
             recompute_template_pooling=cfg.recompute_template_pooling,
             far_range=cfg.far_range,
+            open_set_identification_metrics=cfg.open_set_identification_metrics,
+            closed_set_identification_metrics=cfg.closed_set_identification_metrics,
+            verification_metrics=cfg.verification_metrics,
         )
 
         save_path = os.path.dirname(method.save_result)
         save_items = {}
         if len(save_path) != 0 and not os.path.exists(save_path):
             os.makedirs(save_path)
-        if cfg.task == "openset_identification":  # 1:N test
-            fars, tpirs, _, _ = tt.run_model_test_openset_identification()
-            scores = [(fars, tpirs)]
-            names = [save_name]
-            method_scores.append((fars, tpirs))
-            method_names.append(save_name)
-            save_items.update({"scores": scores, "names": names})
-        elif cfg.task == "verification":  # Basic 1:1 N0D1F1 test
+        if method_type == "open_set_identification":  # 1:N test
+            fars, metrics = tt.run_model_test_openset_identification()
+
+            # scores = [(fars, tpirs)]
+            # names = [save_name]
+            # method_scores.append((fars, tpirs))
+            # method_names.append(save_name)
+            # save_items.update({"scores": scores, "names": names})
+        elif method_type == "verification":  # Basic 1:1 N0D1F1 test
             score = tt.run_model_test_verification()
             scores, names, label = [score], [save_name], tt.label
             save_items.update({"scores": scores, "names": names, "label": tt.label})

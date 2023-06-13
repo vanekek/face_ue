@@ -19,7 +19,7 @@ test_dataset:
 #   dataset_name: IJBB
 #   dataset_path: /app/datasets/arcface_ijb/IJBB
 
-open_set_recognition_methods:
+open_set_identification_methods:
 
   # - evaluation_1N_function: 
   #     _target_: evaluation.eval_functions.CosineSim
