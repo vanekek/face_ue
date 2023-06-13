@@ -3,7 +3,7 @@ from pathlib import Path
 
 import numpy as np
 from tqdm import tqdm
-from .abc import Abstract1NEval
+from evaluation.eval_functions.open_set_identification.abc import Abstract1NEval
 
 
 class TcmNN(Abstract1NEval):

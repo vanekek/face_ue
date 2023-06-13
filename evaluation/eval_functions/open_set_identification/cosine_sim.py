@@ -1,7 +1,8 @@
 import numpy as np
-from ..metrics import compute_detection_and_identification_rate
-from .abc import Abstract1NEval
-from ..confidence_functions import AbstractConfidence
+
+# from evaluation.metrics import compute_detection_and_identification_rate
+from evaluation.eval_functions.open_set_identification.abc import Abstract1NEval
+from evaluation.confidence_functions import AbstractConfidence
 
 
 def compute_cosine_sim(

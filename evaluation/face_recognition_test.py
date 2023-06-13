@@ -4,9 +4,8 @@ from pathlib import Path
 
 from .embeddings import process_embeddings
 from .image2template import image2template_feature
-from .metrics import verification_11
 from .template_pooling_strategies import AbstractTemplatePooling
-from .eval_functions.abc import Abstract1NEval
+from .eval_functions.open_set_identification.abc import Abstract1NEval
 from .test_datasets import FaceRecogntioniDataset
 
 
@@ -102,17 +101,6 @@ class Face_Fecognition_test:
                 template_ids=self.template_ids,
             )
 
-    def run_model_test_verification(
-        self,
-    ):
-        score = verification_11(
-            self.template_pooled_emb,
-            self.template_ids,
-            self.test_dataset.p1,
-            self.test_dataset.p2,
-        )
-        return score
-
     def get_template_subsets(
         self, choose_templates: np.ndarray, choose_ids: np.ndarray
     ):
@@ -131,6 +119,17 @@ class Face_Fecognition_test:
             templates_feature[count_template] = self.template_pooled_emb[ind_t]
             template_unc[count_template] = self.template_pooled_unc[ind_t]
         return templates_feature, template_unc, unique_subjectids
+
+    def run_model_test_verification(
+        self,
+    ):
+        score = self.verification_metrics[0](
+            self.template_pooled_emb,
+            self.template_ids,
+            self.test_dataset.p1,
+            self.test_dataset.p2,
+        )
+        return score
 
     def run_model_test_openset_identification(self):
         (
@@ -165,7 +164,7 @@ class Face_Fecognition_test:
         print("probe_unique_ids:", probe_unique_ids.shape)  # (19593,)
 
         print(">>>> Gallery 1")
-        label_sorted = (
+        labels_sorted = (
             True if self.evaluation_function.__class__.__name__ == "SVM" else False
         )
         similarity, probe_score = self.evaluation_function(
@@ -186,7 +185,7 @@ class Face_Fecognition_test:
                     gallery_ids=g1_unique_ids,
                     similarity=similarity,
                     probe_score=probe_score,
-                    label_sorted=label_sorted,
+                    labels_sorted=labels_sorted,
                 )
             )
 
@@ -210,7 +209,7 @@ class Face_Fecognition_test:
                         gallery_ids=g2_unique_ids,
                         similarity=similarity,
                         probe_score=probe_score,
-                        label_sorted=label_sorted,
+                        labels_sorted=labels_sorted,
                     )
                 )
             query_num = probe_templates_feature.shape[0]
@@ -222,7 +221,6 @@ class Face_Fecognition_test:
                 else:
                     raise ValueError
             print(">>>> Mean")
-            print(metrics)
 
         else:
             is_seen = np.isin(probe_unique_ids, g1_unique_ids)
@@ -234,5 +232,4 @@ class Face_Fecognition_test:
                     metrics[key] = (metrics[key]) / query_num
                 else:
                     raise ValueError
-            print(metrics)
         return self.fars_cal, metrics

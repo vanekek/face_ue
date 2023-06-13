@@ -1,10 +1,11 @@
 import numpy as np
-from evaluation.metrics import compute_detection_and_identification_rate
-from .abc import Abstract1NEval
-from ..confidence_functions import AbstractConfidence
+
+# from evaluation.metrics import compute_detection_and_identification_rate
+from evaluation.eval_functions.open_set_identification.abc import Abstract1NEval
+from evaluation.confidence_functions import AbstractConfidence
 
 
-from evaluation.eval_functions.distaince_functions import compute_scf_sim
+from evaluation.eval_functions.distaince_functions import ScfSim
 
 
 class SCF(Abstract1NEval):
@@ -23,6 +24,7 @@ class SCF(Abstract1NEval):
         self.confidence_function = confidence_function
         self.k_shift = k_shift
         self.use_cosine_sim_match = use_cosine_sim_match
+        self.compute_scf_sim = ScfSim()
 
     def __call__(
         self,
@@ -42,7 +44,7 @@ class SCF(Abstract1NEval):
         gallery_unc = gallery_unc + self.k_shift
         probe_unc = probe_unc + self.k_shift
 
-        scf_similarity = compute_scf_sim(
+        scf_similarity = self.compute_scf_sim(
             probe_feats, gallery_feats, gallery_unc, probe_unc
         )
 

@@ -27,14 +27,14 @@ closed_set_identification_metrics:
     top_n_ranks: [1, 10, 20]
 
 verification_metrics:
-  - _target_: evaluation.metrics.verification_11
+  - _target_: evaluation.metrics.TarFar
 
 
 verification_methods:
   - evaluation_function:
       _target_: evaluation.eval_functions.verification.distance_based_evaluation.VerifEval
       distance_function:
-        _target_: evaluation.eval_functions.distaince_functions.compute_scf_sim
+        _target_: evaluation.eval_functions.distaince_functions.ScfSim
     embeddings_path: ${test_dataset.dataset_path}/embeddings/scf_embs_${test_dataset.dataset_name}.npz
     template_pooling_strategy:
       _target_: evaluation.template_pooling_strategies.PoolingSCF
@@ -43,9 +43,11 @@ verification_methods:
 
 open_set_identification_methods:
   - evaluation_function: 
-      _target_: evaluation.eval_functions.open_set_identification.CosineSim
+      _target_: evaluation.eval_functions.open_set_identification.SCF
       confidence_function: 
         _target_: evaluation.confidence_functions.MaxSimilarity_confidence
+      k_shift: 0
+      use_cosine_sim_match: False
     embeddings_path: ${test_dataset.dataset_path}/embeddings/scf_embs_${test_dataset.dataset_name}.npz
     template_pooling_strategy:
       _target_: evaluation.template_pooling_strategies.PoolingSCF
@@ -58,7 +60,7 @@ open_set_identification_methods:
         _target_: evaluation.confidence_functions.MaxSimilarity_confidence
     embeddings_path: ${test_dataset.dataset_path}/embeddings/scf_embs_${test_dataset.dataset_name}.npz
     template_pooling_strategy:
-      _target_: evaluation.template_pooling_strategies.PoolingDefault
+      _target_: evaluation.template_pooling_strategies.PoolingSCF
     use_detector_score: True
     save_result: "${exp_dir}/${test_dataset.dataset_name}_CosineSim_det_score.npz"
 

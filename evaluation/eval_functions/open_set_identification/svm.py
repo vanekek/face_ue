@@ -10,9 +10,11 @@ from sklearn.svm import LinearSVC
 from sklearn.multiclass import OneVsRestClassifier
 import warnings
 
-from ..metrics import EvalMetricsT, compute_detection_and_identification_rate
-from .abc import Abstract1NEval
-from .scf import compute_scf_sim
+from evaluation.metrics import EvalMetricsT
+
+# , compute_detection_and_identification_rate
+from evaluation.eval_functions.open_set_identification.abc import Abstract1NEval
+from evaluation.eval_functions.distaince_functions import ScfSim
 
 
 class SVM(Abstract1NEval):
@@ -31,6 +33,7 @@ class SVM(Abstract1NEval):
         self.scale = scale
         self.loss: Literal["squared_hinge", "hinge"] = loss
         self.frac_pca_components = frac_pca_components
+        self.compute_scf_sim = ScfSim()
 
     @property
     def __name__(self):
@@ -60,14 +63,14 @@ class SVM(Abstract1NEval):
     ) -> EvalMetricsT:
         if self.use_unc:
             d = probe_feats.shape[1]
-            XX = compute_scf_sim(
+            XX = self.compute_scf_sim(
                 mu_ij=2 * np.dot(gallery_feats, gallery_feats.T),
                 X_unc=gallery_unc + self.shift,
                 Y_unc=gallery_unc + self.shift,
                 d=d,
             )
 
-            YX = compute_scf_sim(
+            YX = self.compute_scf_sim(
                 mu_ij=2 * np.dot(probe_feats, gallery_feats.T),
                 X_unc=gallery_unc + self.shift,
                 Y_unc=probe_unc + self.shift,
@@ -113,7 +116,7 @@ class SVM(Abstract1NEval):
         else:
             model = LinearSVC(C=self.C).fit(gallery_feats, gallery_ids)
             decision_scores = model.decision_function(probe_feats)
-
+        return decision_scores, decision_scores.max(1)
         return compute_detection_and_identification_rate(
             fars,
             probe_ids,

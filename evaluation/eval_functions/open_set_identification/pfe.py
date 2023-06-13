@@ -1,14 +1,13 @@
 from pathlib import Path
 
-import numexpr as ne
 import numpy as np
 
-from ..metrics import compute_detection_and_identification_rate
-from .abc import Abstract1NEval
-from ..confidence_functions import AbstractConfidence
+# from ..metrics import compute_detection_and_identification_rate
+from evaluation.eval_functions.open_set_identification.abc import Abstract1NEval
+from evaluation.confidence_functions import AbstractConfidence
 
 
-from evaluation.eval_functions.distaince_functions import compute_pfe_sim
+from evaluation.eval_functions.distaince_functions import PfeSim
 
 
 class PFE(Abstract1NEval):
@@ -23,6 +22,7 @@ class PFE(Abstract1NEval):
         """
         self.confidence_function = confidence_function
         self.variance_scale = variance_scale
+        self.compute_pfe_sim = PfeSim()
 
     def __call__(
         self,
@@ -57,7 +57,7 @@ class PFE(Abstract1NEval):
         if pfe_cache_path.is_file():
             pfe_similarity = np.load(pfe_cache_path)
         else:
-            pfe_similarity = compute_pfe_sim(
+            pfe_similarity = self.compute_pfe_sim(
                 probe_feats,
                 gallery_feats,
                 probe_sigma_sq,
@@ -67,6 +67,7 @@ class PFE(Abstract1NEval):
 
         # compute confidences
         probe_score = self.confidence_function(pfe_similarity)
+        return similarity, probe_score
 
         # Compute Detection & identification rate for open set recognition
         (

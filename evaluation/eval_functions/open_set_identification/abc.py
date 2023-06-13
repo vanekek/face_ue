@@ -2,7 +2,7 @@ from typing import List, Sequence, Tuple
 from abc import ABC
 import numpy as np
 
-from ..metrics import EvalMetricsT
+from evaluation.metrics import EvalMetricsT
 
 
 class Abstract1NEval(ABC):
