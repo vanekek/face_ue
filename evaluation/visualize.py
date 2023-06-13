@@ -112,3 +112,40 @@ def plot_dir_far_cmc_scores(scores, names=None):
     #     fig = None
 
     return fig
+
+
+def plot_tar_far_scores(scores, names=None):
+    import matplotlib.pyplot as plt
+
+    fig = plt.figure()
+    for id, score in enumerate(scores):
+        name = None if names is None else names[id]
+        if isinstance(score, str) and score.endswith(".npz"):
+            aa = np.load(score)
+            score, name = aa.get("scores")[0], aa.get("names")[0]
+        fars, tpirs = score[0], score[1]
+        name = name if name is not None else str(id)
+
+        auc_value = auc(fars, tpirs)
+        label = "[%s (AUC = %0.4f%%), tar %0.4f%% at far %.1E]" % (
+            name,
+            auc_value * 100,
+            tpirs[0],
+            fars[0],
+        )
+        plt.plot(fars, tpirs, lw=1, label=label)
+
+    plt.xlabel("False Acceptance Rate")
+    plt.xlim([0.00001, 1])
+    plt.xscale("log")
+    plt.ylabel("True Acceptance Rate (%)")
+    plt.ylim([0, 1])
+
+    plt.grid(linestyle="--", linewidth=1)
+    plt.legend(fontsize="x-small")
+    plt.tight_layout()
+    # except:
+    #     print("matplotlib plot failed")
+    #     fig = None
+
+    return fig

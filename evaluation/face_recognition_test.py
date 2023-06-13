@@ -80,9 +80,14 @@ class Face_Fecognition_test:
             face_scores=self.test_dataset.face_scores,
         )
         template_norm_feats, template_unc, unique_templates, _ = image2template_feature(
-            img_input_feats, self.templates, self.medias
+            img_input_feats, self.test_dataset.templates, self.test_dataset.medias
         )
-        score = verification_11(template_norm_feats, unique_templates, self.p1, self.p2)
+        score = verification_11(
+            template_norm_feats,
+            unique_templates,
+            self.test_dataset.p1,
+            self.test_dataset.p2,
+        )
         return score
 
     def run_model_test_bunch(self):
