@@ -22,6 +22,7 @@ class Face_Fecognition_test:
         open_set_identification_metrics,
         closed_set_identification_metrics,
         verification_metrics,
+        open_set_uncertainty_metrics,
     ):
         self.use_two_galleries = use_two_galleries
         self.test_dataset = test_dataset
@@ -29,6 +30,7 @@ class Face_Fecognition_test:
         self.open_set_identification_metrics = open_set_identification_metrics
         self.closed_set_identification_metrics = closed_set_identification_metrics
         self.verification_metrics = verification_metrics
+        self.open_set_uncertainty_metrics = open_set_uncertainty_metrics
 
         print(">>>> Reload embeddings from:", embeddings_path)
         aa = np.load(embeddings_path)
@@ -250,6 +252,8 @@ class Face_Fecognition_test:
             g1_templates_feature,
             g1_template_unc,
         )
+
+        # recognition metrics
         metrics = {}
         for metric in self.open_set_identification_metrics:
             metrics.update(
@@ -261,6 +265,21 @@ class Face_Fecognition_test:
                     labels_sorted=self.labels_sorted,
                 )
             )
+
+        # uncertainty metrics
+
+        for unc_metric in self.open_set_uncertainty_metrics:
+            assert self.labels_sorted is False
+            metrics.update(
+                unc_metric(
+                    probe_ids=probe_unique_ids,
+                    gallery_ids=g1_unique_ids,
+                    similarity=similarity,
+                    probe_score=probe_score,
+                )
+            )
+
+
 
         if self.use_two_galleries and self.test_dataset.g2_templates.shape != ():
             (
@@ -289,9 +308,21 @@ class Face_Fecognition_test:
                         labels_sorted=self.labels_sorted,
                     )
                 )
+            # uncertainty metrics
+
+            for unc_metric in self.open_set_uncertainty_metrics:
+                assert self.labels_sorted is False
+                g2_metrics.update(
+                    unc_metric(
+                        probe_ids=probe_unique_ids,
+                        gallery_ids=g2_unique_ids,
+                        similarity=similarity,
+                        probe_score=probe_score,
+                    )
+                )
             query_num = probe_templates_feature.shape[0]
             for key in g2_metrics.keys():
-                if key == "recalls":
+                if key == "recalls" or key == "auc_mean_dist_unc" :
                     metrics[key] = (metrics[key] + g2_metrics[key]) / 2
                 elif "top" in key:
                     metrics[key] = (metrics[key] + g2_metrics[key]) / query_num

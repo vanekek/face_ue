@@ -11,6 +11,7 @@ from evaluation.visualize import (
     plot_dir_far_scores,
     plot_tar_far_scores,
     plot_cmc_scores,
+    plot_rejection_scores,
 )
 
 path = str(Path(__file__).parent.parent.absolute())
@@ -33,16 +34,21 @@ def main(cfg):
     open_set_identification_metrics = instantiate_list(
         cfg.open_set_identification_metrics
     )
+    open_set_uncertainty_metrics = instantiate_list(cfg.open_set_uncertainty_metrics)
     closed_set_identification_metrics = instantiate_list(
         cfg.closed_set_identification_metrics
     )
     verification_metrics = instantiate_list(cfg.verification_metrics)
+
 
     test_dataset = instantiate(cfg.test_dataset)
 
     verif_scores, verif_names = [], []
     open_set_ident_scores, open_set_ident_names = [], []
     closed_set_ident_scores, closed_set_ident_names = [], []
+
+    open_set_ident_rejection_scores, open_set_ident_rejection_names = [], []
+
     # methods = cfg.open_set_identification_methods + cfg.verification_methods
     # method_types = ["open_set_identification"] * len(
     #     cfg.open_set_identification_methods
@@ -77,6 +83,7 @@ def main(cfg):
             open_set_identification_metrics=open_set_identification_metrics,
             closed_set_identification_metrics=closed_set_identification_metrics,
             verification_metrics=verification_metrics,
+            open_set_uncertainty_metrics=open_set_uncertainty_metrics,
         )
 
         save_path = os.path.dirname(method.save_result)
@@ -91,6 +98,13 @@ def main(cfg):
             open_set_ident_scores.append(
                 (fars, open_set_identification_metric_values["recalls"])
             )
+
+            open_set_ident_rejection_scores.append(
+                (open_set_identification_metric_values['fractions'],
+                 open_set_identification_metric_values['auc_mean_dist_unc'])
+            )
+            open_set_ident_rejection_names.append(save_name)
+
             open_set_ident_names.append(save_name)
             print(f"{save_name}:")
             for key in open_set_identification_metric_values.keys():
@@ -105,6 +119,7 @@ def main(cfg):
             verif_scores.append([verif_far, verification_metric_values["recalls"]])
             verif_names.append(save_name)
         elif method_type == "closed_set_identification":
+            continue
             closed_set_identification_metric_values = (
                 tt.run_model_test_closedset_identification()
             )
@@ -140,6 +155,14 @@ def main(cfg):
     print("Plot closed ident path:")
     print(str(Path(cfg.exp_dir) / "cmc_plot.png"))
 
+    # rejection plot
+
+    fig_rejection = plot_rejection_scores(
+        scores=open_set_ident_rejection_scores, names=open_set_ident_rejection_names
+    )
+    fig_rejection.savefig(Path(cfg.exp_dir) / "rejection_plot.png", dpi=300)
+    print("Plot open ident rejection path:")
+    print(str(Path(cfg.exp_dir) / "rejection_plot.png"))
 
 if __name__ == "__main__":
     main()

@@ -30,6 +30,13 @@ verification_metrics:
   - _target_: evaluation.metrics.TarFar
     far_range: [-5, 0, 100]
 
+open_set_uncertainty_metrics:
+  - _target_: evaluation.metrics.MeanDistanceReject
+    metric_to_monitor:
+      _target_: evaluation.metrics.DetectionAndIdentificationRate
+      top_n_ranks: [1, 10, 20]
+      far_range: [-4, 0, 100] 
+
 
 
 closed_set_identification_methods:

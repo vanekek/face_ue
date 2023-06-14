@@ -1,4 +1,4 @@
-from typing import List, Tuple
+from typing import Any, List, Tuple
 import numpy as np
 from sklearn.metrics import top_k_accuracy_score
 from tqdm import tqdm
@@ -7,6 +7,31 @@ from sklearn.metrics import roc_curve, auc
 EvalMetricsT = Tuple[int, int, int, List[float], List[float], List[Tuple[float, float]]]
 
 
+class MeanDistanceReject:
+    def __init__(self, metric_to_monitor: any) -> None:
+        self.fractions = np.arange(0, 0.9, step=0.1)
+        self.metric_to_monitor =  metric_to_monitor
+    def __call__(self, probe_ids: np.ndarray,
+        gallery_ids: np.ndarray,
+        similarity: np.ndarray,
+        probe_score: np.ndarray) -> Any:
+        
+        mean_probe_score = np.mean(probe_score)
+        unc_score = -np.abs(probe_score - mean_probe_score)
+
+        unc_indexes = np.argsort(unc_score)
+        aucs = []
+        for fraction in self.fractions:
+            # drop worst fraction
+            good_probes_idx = unc_indexes[:int((1-fraction) * probe_ids.shape[0])]
+            metric = self.metric_to_monitor(
+                probe_ids = probe_ids[good_probes_idx],
+                gallery_ids = gallery_ids,
+                similarity = similarity[good_probes_idx],
+                probe_score = probe_score[good_probes_idx],
+            )
+            aucs.append(auc(metric['fars'], metric['recalls']))
+        return {'fractions': self.fractions, 'auc_mean_dist_unc': np.array(aucs)}
 class CMC:
     def __init__(self, top_n_ranks: List[int]) -> None:
         self.top_n_ranks = top_n_ranks
