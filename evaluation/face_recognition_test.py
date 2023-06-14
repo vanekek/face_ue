@@ -22,7 +22,8 @@ class Face_Fecognition_test:
         open_set_identification_metrics,
         closed_set_identification_metrics,
         verification_metrics,
-        far_range,
+        varif_far_range,
+        open_set_ident_far_range,
     ):
         self.use_two_galleries = use_two_galleries
         self.test_dataset = test_dataset
@@ -46,7 +47,7 @@ class Face_Fecognition_test:
         self.template_pooling_strategy = template_pooling_strategy
 
         self.use_detector_score = use_detector_score
-        self.far_range = far_range
+        
 
         # process embeddings
         self.image_input_feats = process_embeddings(
@@ -60,15 +61,22 @@ class Face_Fecognition_test:
         # pool templates
 
         self.pool_templates(cache_dir="/app/cache/template_cache")
-
-        self.fars_cal = [
+        self.verif_far = [
             10**ii
             for ii in np.arange(
-                self.far_range[0], self.far_range[1], 4.0 / self.far_range[2]
+                varif_far_range[0], varif_far_range[1], 4.0 / varif_far_range[2]
             )
         ] + [
             1
-        ]  # plot in range [10-4, 1]
+        ] 
+        self.open_set_ident_far = [
+            10**ii
+            for ii in np.arange(
+                open_set_ident_far_range[0], open_set_ident_far_range[1], 4.0 / open_set_ident_far_range[2]
+            )
+        ] + [
+            1
+        ] 
 
     def pool_templates(self, cache_dir: str):
         cache_dir = Path(cache_dir)
@@ -122,14 +130,23 @@ class Face_Fecognition_test:
 
     def run_model_test_verification(
         self,
-    ):
-        score = self.verification_metrics[0](
-            self.template_pooled_emb,
-            self.template_ids,
-            self.test_dataset.p1,
-            self.test_dataset.p2,
-        )
-        return score
+    ):  
+        scores = self.evaluation_function(self.template_pooled_emb,
+            self.template_ids[:20003],
+            self.test_dataset.p1[:20003],
+            self.test_dataset.p2[:20003])
+        
+        metrics = {}
+        for metric in self.verification_metrics:
+            metrics.update(
+                metric(
+                    fars = self.verif_far,
+                    scores=scores,
+                    labels = self.test_dataset.label[:20003],
+
+                )
+            )
+        return self.verif_far, metrics
 
     def run_model_test_openset_identification(self):
         (
@@ -174,13 +191,13 @@ class Face_Fecognition_test:
             g1_template_unc,
             probe_unique_ids,
             g1_unique_ids,
-            self.fars_cal,
+            self.open_set_ident_far,
         )
         metrics = {}
         for metric in self.open_set_identification_metrics:
             metrics.update(
                 metric(
-                    fars=self.fars_cal,
+                    fars=self.open_set_ident_far,
                     probe_ids=probe_unique_ids,
                     gallery_ids=g1_unique_ids,
                     similarity=similarity,
@@ -198,13 +215,13 @@ class Face_Fecognition_test:
                 g2_template_unc,
                 probe_unique_ids,
                 g2_unique_ids,
-                self.fars_cal,
+                self.open_set_ident_far,
             )
             g2_metrics = {}
             for metric in self.open_set_identification_metrics:
                 g2_metrics.update(
                     metric(
-                        fars=self.fars_cal,
+                        fars=self.open_set_ident_far,
                         probe_ids=probe_unique_ids,
                         gallery_ids=g2_unique_ids,
                         similarity=similarity,
@@ -232,4 +249,4 @@ class Face_Fecognition_test:
                     metrics[key] = (metrics[key]) / query_num
                 else:
                     raise ValueError
-        return self.fars_cal, metrics
+        return self.open_set_ident_far, metrics

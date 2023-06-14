@@ -2,6 +2,14 @@ from tqdm import tqdm
 import numexpr as ne
 import numpy as np
 
+class CosineSimPairwise:
+    @staticmethod
+    def __call__(X_1: np.ndarray, X_2: np.ndarray, X_unc: np.ndarray = None, Y_unc: np.ndarray = None):
+        return np.sum(X_1* X_2, axis=1)
+class CosineSimDistance:
+    @staticmethod
+    def __call__(X_1: np.ndarray, X_2: np.ndarray, X_unc: np.ndarray = None, Y_unc: np.ndarray = None):
+        return np.dot(X_1, X_2.T)
 
 class ScfSim:
     @staticmethod

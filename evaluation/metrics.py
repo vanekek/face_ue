@@ -2,10 +2,33 @@ from typing import List, Tuple
 import numpy as np
 from sklearn.metrics import top_k_accuracy_score
 from tqdm import tqdm
-
+from sklearn.metrics import roc_curve, auc
 
 EvalMetricsT = Tuple[int, int, int, List[float], List[float], List[Tuple[float, float]]]
 
+class TarFar:
+    @staticmethod
+    def __call__(
+        fars,
+        scores,
+        labels
+    ):
+        true_match_scores = scores[labels==1]
+        wrong_match_scores = scores[labels==0]
+
+        threshes, recalls = [], []
+        wrong_match_scores_sorted = np.sort(wrong_match_scores)[::-1]
+        for far in fars:
+            thresh = wrong_match_scores_sorted[max(int((wrong_match_scores_sorted.shape[0]) * far) - 1, 0)]
+            recall = (
+                    np.sum(true_match_scores > thresh)
+                    / true_match_scores.shape[0]
+                )
+            threshes.append(thresh)
+            recalls.append(recall)
+        metrics = {'recalls': np.array(recalls),
+                   'auc': auc(fars, np.array(recalls))}
+        return metrics
 
 class DetectionAndIdentificationRate:
     def __init__(self, top_n_ranks: List[int]) -> None:
@@ -90,37 +113,4 @@ class DetectionAndIdentificationRate:
         return metrics
 
 
-class TarFar:
-    def __call__(
-        template_norm_feats=None,
-        unique_templates=None,
-        p1=None,
-        p2=None,
-        batch_size=10000,
-    ):
-        try:
-            print(">>>> Trying cupy.")
-            import cupy as cp
 
-            template_norm_feats = cp.array(template_norm_feats)
-            score_func = lambda feat1, feat2: cp.sum(feat1 * feat2, axis=-1).get()
-            test = score_func(
-                template_norm_feats[:batch_size], template_norm_feats[:batch_size]
-            )
-        except:
-            score_func = lambda feat1, feat2: np.sum(feat1 * feat2, -1)
-
-        template2id = np.zeros(max(unique_templates) + 1, dtype=int)
-        template2id[unique_templates] = np.arange(len(unique_templates))
-
-        steps = int(np.ceil(len(p1) / batch_size))
-        score = []
-        for id in tqdm(range(steps), "Verification"):
-            feat1 = template_norm_feats[
-                template2id[p1[id * batch_size : (id + 1) * batch_size]]
-            ]
-            feat2 = template_norm_feats[
-                template2id[p2[id * batch_size : (id + 1) * batch_size]]
-            ]
-            score.extend(score_func(feat1, feat2))
-        return np.array(score)

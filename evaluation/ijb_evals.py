@@ -7,7 +7,7 @@ from hydra.utils import instantiate
 import sys
 
 from evaluation.face_recognition_test import Face_Fecognition_test
-from evaluation.visualize import plot_dir_far_cmc_scores
+from evaluation.visualize import plot_dir_far_cmc_scores, plot_tar_far_scores
 
 path = str(Path(__file__).parent.parent.absolute())
 sys.path.insert(1, path)
@@ -36,11 +36,16 @@ def main(cfg):
 
     test_dataset = instantiate(cfg.test_dataset)
 
-    method_scores, method_names = [], []
-    methods = cfg.open_set_identification_methods + cfg.verification_methods
-    method_types = ["open_set_identification"] * len(
+    verif_scores, verif_names = [], []
+    open_set_ident_scores, open_set_ident_names = [], []
+    # methods = cfg.open_set_identification_methods + cfg.verification_methods
+    # method_types = ["open_set_identification"] * len(
+    #     cfg.open_set_identification_methods
+    # ) + ["verification"] * len(cfg.verification_methods)
+    methods = cfg.verification_methods + cfg.open_set_identification_methods
+    method_types = ["verification"] * len(cfg.verification_methods) + ["open_set_identification"] * len(
         cfg.open_set_identification_methods
-    ) + ["verification"] * len(cfg.verification_methods)
+    )
     for method, method_type in zip(methods, method_types):
         evaluation_function = instantiate(method.evaluation_function)
 
@@ -58,7 +63,8 @@ def main(cfg):
             use_detector_score=method.use_detector_score,
             use_two_galleries=cfg.use_two_galleries,
             recompute_template_pooling=cfg.recompute_template_pooling,
-            far_range=cfg.far_range,
+            varif_far_range=cfg.varif_far_range,
+            open_set_ident_far_range=cfg.open_set_ident_far_range,
             open_set_identification_metrics=open_set_identification_metrics,
             closed_set_identification_metrics=closed_set_identification_metrics,
             verification_metrics=verification_metrics,
@@ -73,10 +79,10 @@ def main(cfg):
                 fars,
                 open_set_identification_metric_values,
             ) = tt.run_model_test_openset_identification()
-            method_scores.append(
+            open_set_ident_scores.append(
                 (fars, open_set_identification_metric_values["recalls"])
             )
-            method_names.append(save_name)
+            open_set_ident_names.append(save_name)
             print(f"{save_name}:")
             for key in open_set_identification_metric_values.keys():
                 if "top" in key:
@@ -85,26 +91,29 @@ def main(cfg):
                     )
             # scores = [(fars, tpirs)]
             # names = [save_name]
-            # method_scores.append((fars, tpirs))
-            # method_names.append(save_name)
+            # open_set_ident_scores.append((fars, tpirs))
+            # open_set_ident_names.append(save_name)
             # save_items.update({"scores": scores, "names": names})
         elif method_type == "verification":  # Basic 1:1 N0D1F1 test
-            continue
-            score = tt.run_model_test_verification()
-            print(len(score))
-            # scores, names, label = [score], [save_name], tt.label
-            # save_items.update({"scores": scores, "names": names, "label": tt.label})
+            verif_far, verification_metric_values = tt.run_model_test_verification()
+            verif_scores.append([verif_far, verification_metric_values['recalls']])
+            verif_names.append(save_name)
         elif cfg.task == "closedset_identification":
             pass
         else:
             raise ValueError
         np.savez(os.path.join(save_path, save_name + ".npz"), **save_items)
-
-    fig = plot_dir_far_cmc_scores(scores=method_scores, names=method_names)
+    # identif plot
+    fig = plot_dir_far_cmc_scores(scores=open_set_ident_scores, names=open_set_ident_names)
     fig.savefig(Path(cfg.exp_dir) / "di_far_plot.png", dpi=300)
-    print("Plot path:")
+    print("Plot open ident path:")
     print(str(Path(cfg.exp_dir) / "di_far_plot.png"))
 
+    # verif plot
 
+    fig_verif = plot_tar_far_scores(scores=verif_scores, names=verif_names)
+    fig_verif.savefig(Path(cfg.exp_dir) / "tar_far_plot.png", dpi=300)
+    print("Plot verif path:")
+    print(str(Path(cfg.exp_dir) / "tar_far_plot.png"))
 if __name__ == "__main__":
     main()

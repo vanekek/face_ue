@@ -6,8 +6,8 @@ exp_dir: outputs/experiments/pooling_methods
 
 use_two_galleries: True
 recompute_template_pooling: False
-far_range: [-4, 0, 100]
-
+open_set_ident_far_range: [-4, 0, 100]
+varif_far_range: [-5, 0, 100]
 # test_dataset:
 #   _target_: evaluation.test_datasets.FaceRecogntioniDataset
 #   dataset_name: survFace
@@ -34,7 +34,7 @@ verification_methods:
   - evaluation_function:
       _target_: evaluation.eval_functions.verification.distance_based_evaluation.VerifEval
       distance_function:
-        _target_: evaluation.eval_functions.distaince_functions.ScfSim
+        _target_: evaluation.eval_functions.distaince_functions.CosineSimPairwise
     embeddings_path: ${test_dataset.dataset_path}/embeddings/scf_embs_${test_dataset.dataset_name}.npz
     template_pooling_strategy:
       _target_: evaluation.template_pooling_strategies.PoolingSCF
@@ -42,17 +42,17 @@ verification_methods:
     save_result: "${exp_dir}/${test_dataset.dataset_name}_CosineSim_det_and_scf_score.npz"
 
 open_set_identification_methods:
-  - evaluation_function: 
-      _target_: evaluation.eval_functions.open_set_identification.SCF
-      confidence_function: 
-        _target_: evaluation.confidence_functions.MaxSimilarity_confidence
-      k_shift: 0
-      use_cosine_sim_match: False
-    embeddings_path: ${test_dataset.dataset_path}/embeddings/scf_embs_${test_dataset.dataset_name}.npz
-    template_pooling_strategy:
-      _target_: evaluation.template_pooling_strategies.PoolingSCF
-    use_detector_score: True
-    save_result: "${exp_dir}/${test_dataset.dataset_name}_CosineSim_det_and_scf_score.npz"
+  # - evaluation_function: 
+  #     _target_: evaluation.eval_functions.open_set_identification.SCF
+  #     confidence_function: 
+  #       _target_: evaluation.confidence_functions.MaxSimilarity_confidence
+  #     k_shift: 0
+  #     use_cosine_sim_match: False
+  #   embeddings_path: ${test_dataset.dataset_path}/embeddings/scf_embs_${test_dataset.dataset_name}.npz
+  #   template_pooling_strategy:
+  #     _target_: evaluation.template_pooling_strategies.PoolingSCF
+  #   use_detector_score: True
+  #   save_result: "${exp_dir}/${test_dataset.dataset_name}_CosineSim_det_and_scf_score.npz"
 
   - evaluation_function: 
       _target_: evaluation.eval_functions.open_set_identification.CosineSim
