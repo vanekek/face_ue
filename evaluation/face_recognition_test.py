@@ -128,12 +128,29 @@ class Face_Fecognition_test:
     def run_model_test_verification(
         self,
     ):
+        # scores = self.evaluation_function(
+        #     self.template_pooled_emb,
+        #     self.template_pooled_unc,
+        #     self.template_ids[:20003],
+        #     self.test_dataset.p1[:20003],
+        #     self.test_dataset.p2[:20003],
+        # )
+
+        # metrics = {}
+        # for metric in self.verification_metrics:
+        #     metrics.update(
+        #         metric(
+        #             fars=self.verif_far,
+        #             scores=scores,
+        #             labels=self.test_dataset.label[:20003],
+        #         )
+        #     )
         scores = self.evaluation_function(
             self.template_pooled_emb,
             self.template_pooled_unc,
-            self.template_ids[:20003],
-            self.test_dataset.p1[:20003],
-            self.test_dataset.p2[:20003],
+            self.template_ids,
+            self.test_dataset.p1,
+            self.test_dataset.p2,
         )
 
         metrics = {}
@@ -142,12 +159,14 @@ class Face_Fecognition_test:
                 metric(
                     fars=self.verif_far,
                     scores=scores,
-                    labels=self.test_dataset.label[:20003],
+                    labels=self.test_dataset.label,
                 )
             )
         return self.verif_far, metrics
+
     def run_model_test_closedset_identification(self):
         pass
+
     def run_model_test_openset_identification(self):
         (
             g1_templates_feature,

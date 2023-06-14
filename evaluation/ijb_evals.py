@@ -94,8 +94,11 @@ def main(cfg):
             verif_scores.append([verif_far, verification_metric_values["recalls"]])
             verif_names.append(save_name)
         elif cfg.task == "closed_set_identification":
-            closed_set_fars, closed_set_identification_metric_values = tt.run_model_test_closedset_identification()
-            
+            (
+                closed_set_fars,
+                closed_set_identification_metric_values,
+            ) = tt.run_model_test_closedset_identification()
+
         else:
             raise ValueError
         np.savez(os.path.join(save_path, save_name + ".npz"), **save_items)

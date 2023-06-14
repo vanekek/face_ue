@@ -30,10 +30,10 @@ class VerifEval:
             ]
 
             unc1 = template_pooled_unc[
-                p1[id * self.batch_size : (id + 1) * self.batch_size]
+                template2id[p1[id * self.batch_size : (id + 1) * self.batch_size]]
             ]
             unc2 = template_pooled_unc[
-                p2[id * self.batch_size : (id + 1) * self.batch_size]
+                template2id[p2[id * self.batch_size : (id + 1) * self.batch_size]]
             ]
             scores.extend(self.distance_function(feat1, feat2, unc1, unc2))
         return np.array(scores)
