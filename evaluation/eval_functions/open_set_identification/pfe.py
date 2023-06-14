@@ -34,9 +34,6 @@ class PFE(Abstract1NEval):
         probe_unc,
         gallery_feats,
         gallery_unc,
-        probe_ids,
-        gallery_ids,
-        fars,
     ):
         print(
             "probe_feats: %s, gallery_feats: %s"
@@ -53,7 +50,7 @@ class PFE(Abstract1NEval):
         pfe_cache_path = Path("/app/cache/pfe_cache") / (
             "default_pfe_variance_shift_"
             + str(self.variance_scale)
-            + f"_gallery_size_{gallery_feats.shape[1]}"
+            + f"probe_size_{probe_feats.shape[0]}_gallery_size_{gallery_feats.shape[1]}"
             + ".npy"
         )
 
@@ -85,16 +82,3 @@ class PFE(Abstract1NEval):
         # compute confidences
         probe_score = self.confidence_function(pfe_similarity)
         return similarity, probe_score
-
-        # Compute Detection & identification rate for open set recognition
-        (
-            top_1_count,
-            top_5_count,
-            top_10_count,
-            threshes,
-            recalls,
-            cmc_scores,
-        ) = compute_detection_and_identification_rate(
-            fars, probe_ids, gallery_ids, similarity, probe_score
-        )
-        return top_1_count, top_5_count, top_10_count, threshes, recalls, cmc_scores

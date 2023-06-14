@@ -7,32 +7,64 @@ from sklearn.metrics import roc_curve, auc
 EvalMetricsT = Tuple[int, int, int, List[float], List[float], List[Tuple[float, float]]]
 
 
+class CMC:
+    def __init__(self, top_n_ranks: List[int]) -> None:
+        self.top_n_ranks = top_n_ranks
+
+    def __call__(
+        self,
+        probe_ids: np.ndarray,
+        gallery_ids: np.ndarray,
+        similarity: np.ndarray,
+        probe_score: np.ndarray,
+    ):
+        cmc = []
+        most_similar_classes = np.argsort(similarity, axis=1)[:, ::-1]
+        for n in self.top_n_ranks:
+            n_similart_classes = gallery_ids[most_similar_classes[:, :n]]
+            is_seen = np.isin(probe_ids, n_similart_classes)
+            cmc.append(np.sum(is_seen) / probe_ids.shape[0])
+
+        metrics = {"ranks": self.top_n_ranks, "cmc": np.array(cmc)}
+        return metrics
+
+
 class TarFar:
-    @staticmethod
-    def __call__(fars, scores, labels):
+    def __init__(self, far_range: List[int]) -> None:
+        self.fars = [
+            10**ii for ii in np.arange(far_range[0], far_range[1], 4.0 / far_range[2])
+        ] + [1]
+
+    def __call__(self, scores, labels):
         true_match_scores = scores[labels == 1]
         wrong_match_scores = scores[labels == 0]
 
         threshes, recalls = [], []
         wrong_match_scores_sorted = np.sort(wrong_match_scores)[::-1]
-        for far in fars:
+        for far in self.fars:
             thresh = wrong_match_scores_sorted[
                 max(int((wrong_match_scores_sorted.shape[0]) * far) - 1, 0)
             ]
             recall = np.sum(true_match_scores > thresh) / true_match_scores.shape[0]
             threshes.append(thresh)
             recalls.append(recall)
-        metrics = {"recalls": np.array(recalls), "auc": auc(fars, np.array(recalls))}
+        metrics = {
+            "fars": self.fars,
+            "recalls": np.array(recalls),
+            "auc": auc(self.fars, np.array(recalls)),
+        }
         return metrics
 
 
 class DetectionAndIdentificationRate:
-    def __init__(self, top_n_ranks: List[int]) -> None:
+    def __init__(self, top_n_ranks: List[int], far_range: List[int]) -> None:
         self.top_n_ranks = top_n_ranks
+        self.fars = [
+            10**ii for ii in np.arange(far_range[0], far_range[1], 4.0 / far_range[2])
+        ] + [1]
 
     def __call__(
         self,
-        fars: np.ndarray,
         probe_ids: np.ndarray,
         gallery_ids: np.ndarray,
         similarity: np.ndarray,
@@ -68,10 +100,11 @@ class DetectionAndIdentificationRate:
         seen_sim: np.ndarray = similarity[is_seen]
         seen_probe_ids = probe_ids[is_seen]
 
-        def topk(k) -> int:
-            return top_k_accuracy_score(seen_probe_ids, seen_sim, k=k, normalize=False)  # type: ignore
+        # def topk(k) -> int:
+        #     raise NotImplemented
+        #     return top_k_accuracy_score(seen_probe_ids, seen_sim, k=k, normalize=False)  # type: ignore
 
-        top_n_count = map(topk, self.top_n_ranks)
+        # top_n_count = map(topk, self.top_n_ranks)
 
         # Boolean mask (seen_probes, gallery_ids), 1 where the probe matches gallery sample
         pos_mask: np.ndarray = (
@@ -90,7 +123,7 @@ class DetectionAndIdentificationRate:
 
         neg_score_sorted = np.sort(neg_score)[::-1]
         threshes, recalls = [], []
-        for far in fars:
+        for far in self.fars:
             # compute operating threshold τ, which gives neaded far
             thresh = neg_score_sorted[
                 max(int((neg_score_sorted.shape[0]) * far) - 1, 0)
@@ -104,6 +137,8 @@ class DetectionAndIdentificationRate:
             threshes.append(thresh)
             recalls.append(recall)
         recalls = np.array(recalls)
-        metrics = dict(zip([f"top_{k}_count" for k in self.top_n_ranks], top_n_count))
-        metrics.update({"recalls": recalls})
+
+        # metrics = dict(zip([f"top_{k}_count" for k in self.top_n_ranks], top_n_count))
+        metrics = {}
+        metrics.update({"fars": self.fars, "recalls": recalls})
         return metrics

@@ -82,7 +82,35 @@ def plot_roc_and_calculate_tpr(scores, names=None, label=None):
     return tpr_result_df, fig
 
 
-def plot_dir_far_cmc_scores(scores, names=None):
+def plot_cmc_scores(scores, names=None):
+    import matplotlib.pyplot as plt
+
+    fig = plt.figure()
+    for id, score in enumerate(scores):
+        name = None if names is None else names[id]
+        if isinstance(score, str) and score.endswith(".npz"):
+            aa = np.load(score)
+            score, name = aa.get("scores")[0], aa.get("names")[0]
+        rank, cmc = score[0], score[1]
+        name = name if name is not None else str(id)
+
+        auc_value = auc(rank, cmc)
+        label = "[%s]" % (name)
+        plt.plot(rank, cmc, lw=1, label=label)
+
+    plt.xlabel("Rank")
+    # plt.xlim([0.0001, 1])
+    plt.xscale("log")
+    plt.ylabel("Identification rate")
+    # plt.ylim([0, 1])
+
+    plt.grid(linestyle="--", linewidth=1)
+    plt.legend(fontsize="x-small")
+    plt.tight_layout()
+    return fig
+
+
+def plot_dir_far_scores(scores, names=None):
     import matplotlib.pyplot as plt
 
     fig = plt.figure()

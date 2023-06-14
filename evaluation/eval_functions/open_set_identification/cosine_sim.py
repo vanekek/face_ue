@@ -17,9 +17,6 @@ class CosineSim(Abstract1NEval):
         probe_unc,
         gallery_feats,
         gallery_unc,
-        probe_ids,
-        gallery_ids,
-        fars,
     ):
         print(
             "probe_feats: %s, gallery_feats: %s"
@@ -33,14 +30,3 @@ class CosineSim(Abstract1NEval):
         return similarity, probe_score
 
         # Compute Detection & identification rate for open set recognition
-        (
-            top_1_count,
-            top_5_count,
-            top_10_count,
-            threshes,
-            recalls,
-            cmc_scores,
-        ) = compute_detection_and_identification_rate(
-            fars, probe_ids, gallery_ids, similarity, probe_score
-        )
-        return top_1_count, top_5_count, top_10_count, threshes, recalls, cmc_scores

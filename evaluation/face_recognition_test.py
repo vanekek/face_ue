@@ -22,8 +22,6 @@ class Face_Fecognition_test:
         open_set_identification_metrics,
         closed_set_identification_metrics,
         verification_metrics,
-        varif_far_range,
-        open_set_ident_far_range,
     ):
         self.use_two_galleries = use_two_galleries
         self.test_dataset = test_dataset
@@ -60,20 +58,10 @@ class Face_Fecognition_test:
         # pool templates
 
         self.pool_templates(cache_dir="/app/cache/template_cache")
-        self.verif_far = [
-            10**ii
-            for ii in np.arange(
-                varif_far_range[0], varif_far_range[1], 4.0 / varif_far_range[2]
-            )
-        ] + [1]
-        self.open_set_ident_far = [
-            10**ii
-            for ii in np.arange(
-                open_set_ident_far_range[0],
-                open_set_ident_far_range[1],
-                4.0 / open_set_ident_far_range[2],
-            )
-        ] + [1]
+
+        self.labels_sorted = (
+            True if self.evaluation_function.__class__.__name__ == "SVM" else False
+        )
 
     def pool_templates(self, cache_dir: str):
         cache_dir = Path(cache_dir)
@@ -128,12 +116,28 @@ class Face_Fecognition_test:
     def run_model_test_verification(
         self,
     ):
+        scores = self.evaluation_function(
+            self.template_pooled_emb,
+            self.template_pooled_unc,
+            self.template_ids[:20003],
+            self.test_dataset.p1[:20003],
+            self.test_dataset.p2[:20003],
+        )
+
+        metrics = {}
+        for metric in self.verification_metrics:
+            metrics.update(
+                metric(
+                    scores=scores,
+                    labels=self.test_dataset.label[:20003],
+                )
+            )
         # scores = self.evaluation_function(
         #     self.template_pooled_emb,
         #     self.template_pooled_unc,
-        #     self.template_ids[:20003],
-        #     self.test_dataset.p1[:20003],
-        #     self.test_dataset.p2[:20003],
+        #     self.template_ids,
+        #     self.test_dataset.p1,
+        #     self.test_dataset.p2,
         # )
 
         # metrics = {}
@@ -142,32 +146,12 @@ class Face_Fecognition_test:
         #         metric(
         #             fars=self.verif_far,
         #             scores=scores,
-        #             labels=self.test_dataset.label[:20003],
+        #             labels=self.test_dataset.label,
         #         )
         #     )
-        scores = self.evaluation_function(
-            self.template_pooled_emb,
-            self.template_pooled_unc,
-            self.template_ids,
-            self.test_dataset.p1,
-            self.test_dataset.p2,
-        )
-
-        metrics = {}
-        for metric in self.verification_metrics:
-            metrics.update(
-                metric(
-                    fars=self.verif_far,
-                    scores=scores,
-                    labels=self.test_dataset.label,
-                )
-            )
-        return self.verif_far, metrics
+        return metrics
 
     def run_model_test_closedset_identification(self):
-        pass
-
-    def run_model_test_openset_identification(self):
         (
             g1_templates_feature,
             g1_template_unc,
@@ -175,6 +159,32 @@ class Face_Fecognition_test:
         ) = self.get_template_subsets(
             self.test_dataset.g1_templates, self.test_dataset.g1_ids
         )
+        (
+            probe_templates_feature,
+            probe_template_unc,
+            probe_unique_ids,
+        ) = self.get_template_subsets(
+            self.test_dataset.probe_templates, self.test_dataset.probe_ids
+        )
+        is_seen_g1 = np.isin(probe_unique_ids, g1_unique_ids)
+
+        similarity, probe_score = self.evaluation_function(
+            probe_templates_feature[is_seen_g1],
+            probe_template_unc[is_seen_g1],
+            g1_templates_feature,
+            g1_template_unc,
+        )
+
+        metrics = {}
+        for metric in self.closed_set_identification_metrics:
+            metrics.update(
+                metric(
+                    probe_unique_ids[is_seen_g1],
+                    g1_unique_ids,
+                    similarity,
+                    probe_score,
+                )
+            )
 
         if self.use_two_galleries and self.test_dataset.g2_templates.shape != ():
             (
@@ -184,6 +194,43 @@ class Face_Fecognition_test:
             ) = self.get_template_subsets(
                 self.test_dataset.g2_templates, self.test_dataset.g2_ids
             )
+            print("g2_templates_feature:", g2_templates_feature.shape)  # (1759, 512)
+            print(">>>> Gallery 2")
+            is_seen_g2 = np.isin(probe_unique_ids, g2_unique_ids)
+
+            similarity, probe_score = self.evaluation_function(
+                probe_templates_feature[is_seen_g2],
+                probe_template_unc[is_seen_g2],
+                g2_templates_feature,
+                g2_template_unc,
+            )
+            g2_metrics = {}
+            for metric in self.closed_set_identification_metrics:
+                g2_metrics.update(
+                    metric(
+                        probe_unique_ids[is_seen_g2],
+                        g2_unique_ids,
+                        similarity,
+                        probe_score,
+                    )
+                )
+            query_num = probe_templates_feature.shape[0]
+            for key in g2_metrics.keys():
+                if key == "cmc":
+                    metrics[key] = (metrics[key] + g2_metrics[key]) / 2
+
+        return metrics
+
+    def run_model_test_openset_identification(self):
+        (
+            g1_templates_feature,
+            g1_template_unc,
+            g1_unique_ids,
+        ) = self.get_template_subsets(
+            self.test_dataset.g1_templates, self.test_dataset.g1_ids
+        )
+        print("g1_templates_feature:", g1_templates_feature.shape)  # (1772, 512)
+
         (
             probe_templates_feature,
             probe_template_unc,
@@ -191,61 +238,55 @@ class Face_Fecognition_test:
         ) = self.get_template_subsets(
             self.test_dataset.probe_templates, self.test_dataset.probe_ids
         )
-
-        print("g1_templates_feature:", g1_templates_feature.shape)  # (1772, 512)
-
-        if self.use_two_galleries and self.test_dataset.g2_templates.shape != ():
-            print("g2_templates_feature:", g2_templates_feature.shape)  # (1759, 512)
         print("probe_templates_feature:", probe_templates_feature.shape)  # (19593, 512)
+
         print("probe_unique_ids:", probe_unique_ids.shape)  # (19593,)
 
         print(">>>> Gallery 1")
-        labels_sorted = (
-            True if self.evaluation_function.__class__.__name__ == "SVM" else False
-        )
+
         similarity, probe_score = self.evaluation_function(
             probe_templates_feature,
             probe_template_unc,
             g1_templates_feature,
             g1_template_unc,
-            probe_unique_ids,
-            g1_unique_ids,
-            self.open_set_ident_far,
         )
         metrics = {}
         for metric in self.open_set_identification_metrics:
             metrics.update(
                 metric(
-                    fars=self.open_set_ident_far,
                     probe_ids=probe_unique_ids,
                     gallery_ids=g1_unique_ids,
                     similarity=similarity,
                     probe_score=probe_score,
-                    labels_sorted=labels_sorted,
+                    labels_sorted=self.labels_sorted,
                 )
             )
 
         if self.use_two_galleries and self.test_dataset.g2_templates.shape != ():
+            (
+                g2_templates_feature,
+                g2_template_unc,
+                g2_unique_ids,
+            ) = self.get_template_subsets(
+                self.test_dataset.g2_templates, self.test_dataset.g2_ids
+            )
+            print("g2_templates_feature:", g2_templates_feature.shape)  # (1759, 512)
             print(">>>> Gallery 2")
             similarity, probe_score = self.evaluation_function(
                 probe_templates_feature,
                 probe_template_unc,
                 g2_templates_feature,
                 g2_template_unc,
-                probe_unique_ids,
-                g2_unique_ids,
-                self.open_set_ident_far,
             )
             g2_metrics = {}
             for metric in self.open_set_identification_metrics:
                 g2_metrics.update(
                     metric(
-                        fars=self.open_set_ident_far,
                         probe_ids=probe_unique_ids,
                         gallery_ids=g2_unique_ids,
                         similarity=similarity,
                         probe_score=probe_score,
-                        labels_sorted=labels_sorted,
+                        labels_sorted=self.labels_sorted,
                     )
                 )
             query_num = probe_templates_feature.shape[0]
@@ -254,8 +295,7 @@ class Face_Fecognition_test:
                     metrics[key] = (metrics[key] + g2_metrics[key]) / 2
                 elif "top" in key:
                     metrics[key] = (metrics[key] + g2_metrics[key]) / query_num
-                else:
-                    raise ValueError
+
             print(">>>> Mean")
 
         else:
@@ -266,6 +306,4 @@ class Face_Fecognition_test:
                     pass
                 elif "top" in key:
                     metrics[key] = (metrics[key]) / query_num
-                else:
-                    raise ValueError
-        return self.open_set_ident_far, metrics
+        return metrics

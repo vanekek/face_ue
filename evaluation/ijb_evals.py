@@ -7,7 +7,11 @@ from hydra.utils import instantiate
 import sys
 
 from evaluation.face_recognition_test import Face_Fecognition_test
-from evaluation.visualize import plot_dir_far_cmc_scores, plot_tar_far_scores
+from evaluation.visualize import (
+    plot_dir_far_scores,
+    plot_tar_far_scores,
+    plot_cmc_scores,
+)
 
 path = str(Path(__file__).parent.parent.absolute())
 sys.path.insert(1, path)
@@ -38,14 +42,21 @@ def main(cfg):
 
     verif_scores, verif_names = [], []
     open_set_ident_scores, open_set_ident_names = [], []
-    methods = cfg.open_set_identification_methods + cfg.verification_methods
-    method_types = ["open_set_identification"] * len(
-        cfg.open_set_identification_methods
-    ) + ["verification"] * len(cfg.verification_methods)
-    # methods = cfg.verification_methods + cfg.open_set_identification_methods
-    # method_types = ["verification"] * len(cfg.verification_methods) + [
-    #     "open_set_identification"
-    # ] * len(cfg.open_set_identification_methods)
+    closed_set_ident_scores, closed_set_ident_names = [], []
+    # methods = cfg.open_set_identification_methods + cfg.verification_methods
+    # method_types = ["open_set_identification"] * len(
+    #     cfg.open_set_identification_methods
+    # ) + ["verification"] * len(cfg.verification_methods)
+    methods = (
+        cfg.closed_set_identification_methods
+        + cfg.verification_methods
+        + cfg.open_set_identification_methods
+    )
+    method_types = (
+        ["closed_set_identification"] * len(cfg.closed_set_identification_methods)
+        + ["verification"] * len(cfg.verification_methods)
+        + ["open_set_identification"] * len(cfg.open_set_identification_methods)
+    )
     for method, method_type in zip(methods, method_types):
         evaluation_function = instantiate(method.evaluation_function)
 
@@ -63,8 +74,6 @@ def main(cfg):
             use_detector_score=method.use_detector_score,
             use_two_galleries=cfg.use_two_galleries,
             recompute_template_pooling=cfg.recompute_template_pooling,
-            varif_far_range=cfg.varif_far_range,
-            open_set_ident_far_range=cfg.open_set_ident_far_range,
             open_set_identification_metrics=open_set_identification_metrics,
             closed_set_identification_metrics=closed_set_identification_metrics,
             verification_metrics=verification_metrics,
@@ -75,10 +84,10 @@ def main(cfg):
         if len(save_path) != 0 and not os.path.exists(save_path):
             os.makedirs(save_path)
         if method_type == "open_set_identification":  # 1:N test
-            (
-                fars,
-                open_set_identification_metric_values,
-            ) = tt.run_model_test_openset_identification()
+            open_set_identification_metric_values = (
+                tt.run_model_test_openset_identification()
+            )
+            fars = open_set_identification_metric_values["fars"]
             open_set_ident_scores.append(
                 (fars, open_set_identification_metric_values["recalls"])
             )
@@ -90,22 +99,27 @@ def main(cfg):
                         f"{key}: {round(open_set_identification_metric_values[key],4)}"
                     )
         elif method_type == "verification":  # Basic 1:1 N0D1F1 test
-            verif_far, verification_metric_values = tt.run_model_test_verification()
+            continue
+            verification_metric_values = tt.run_model_test_verification()
+            verif_far = verification_metric_values["fars"]
             verif_scores.append([verif_far, verification_metric_values["recalls"]])
             verif_names.append(save_name)
-        elif cfg.task == "closed_set_identification":
-            (
-                closed_set_fars,
-                closed_set_identification_metric_values,
-            ) = tt.run_model_test_closedset_identification()
-
+        elif method_type == "closed_set_identification":
+            closed_set_identification_metric_values = (
+                tt.run_model_test_closedset_identification()
+            )
+            closed_set_ident_scores.append(
+                [
+                    closed_set_identification_metric_values["ranks"],
+                    closed_set_identification_metric_values["cmc"],
+                ]
+            )
+            closed_set_ident_names.append(save_name)
         else:
             raise ValueError
         np.savez(os.path.join(save_path, save_name + ".npz"), **save_items)
     # identif plot
-    fig = plot_dir_far_cmc_scores(
-        scores=open_set_ident_scores, names=open_set_ident_names
-    )
+    fig = plot_dir_far_scores(scores=open_set_ident_scores, names=open_set_ident_names)
     fig.savefig(Path(cfg.exp_dir) / "di_far_plot.png", dpi=300)
     print("Plot open ident path:")
     print(str(Path(cfg.exp_dir) / "di_far_plot.png"))
@@ -116,6 +130,15 @@ def main(cfg):
     fig_verif.savefig(Path(cfg.exp_dir) / "tar_far_plot.png", dpi=300)
     print("Plot verif path:")
     print(str(Path(cfg.exp_dir) / "tar_far_plot.png"))
+
+    # cmc plot
+
+    fig_verif = plot_cmc_scores(
+        scores=closed_set_ident_scores, names=closed_set_ident_names
+    )
+    fig_verif.savefig(Path(cfg.exp_dir) / "cmc_plot.png", dpi=300)
+    print("Plot closed ident path:")
+    print(str(Path(cfg.exp_dir) / "cmc_plot.png"))
 
 
 if __name__ == "__main__":
