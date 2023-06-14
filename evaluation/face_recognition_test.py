@@ -279,8 +279,6 @@ class Face_Fecognition_test:
                 )
             )
 
-
-
         if self.use_two_galleries and self.test_dataset.g2_templates.shape != ():
             (
                 g2_templates_feature,
@@ -322,7 +320,7 @@ class Face_Fecognition_test:
                 )
             query_num = probe_templates_feature.shape[0]
             for key in g2_metrics.keys():
-                if key == "recalls" or key == "auc_mean_dist_unc" :
+                if key == "recalls" or key == "auc_mean_dist_unc":
                     metrics[key] = (metrics[key] + g2_metrics[key]) / 2
                 elif "top" in key:
                     metrics[key] = (metrics[key] + g2_metrics[key]) / query_num

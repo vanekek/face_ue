@@ -3,6 +3,7 @@ import numpy as np
 import pandas as pd
 from sklearn.metrics import roc_curve, auc
 
+
 def plot_rejection_scores(scores, names=None):
     import matplotlib.pyplot as plt
 
@@ -15,13 +16,13 @@ def plot_rejection_scores(scores, names=None):
         fractions, metric_value = score[0], score[1]
         name = name if name is not None else str(id)
 
-        #auc_value = auc(rank, cmc)
+        # auc_value = auc(rank, cmc)
         label = "[%s]" % (name)
         plt.plot(fractions, metric_value, lw=1, label=label)
 
-    plt.xlabel("Fractions")
+    plt.xlabel("Reject fraction")
     # plt.xlim([0.0001, 1])
-    #plt.xscale("log")
+    # plt.xscale("log")
     plt.ylabel("AUC value")
     # plt.ylim([0, 1])
 
@@ -29,6 +30,7 @@ def plot_rejection_scores(scores, names=None):
     plt.legend(fontsize="x-small")
     plt.tight_layout()
     return fig
+
 
 def plot_roc_and_calculate_tpr(scores, names=None, label=None):
     print(">>>> plot roc and calculate tpr...")

@@ -40,7 +40,6 @@ def main(cfg):
     )
     verification_metrics = instantiate_list(cfg.verification_metrics)
 
-
     test_dataset = instantiate(cfg.test_dataset)
 
     verif_scores, verif_names = [], []
@@ -100,13 +99,14 @@ def main(cfg):
             )
 
             open_set_ident_rejection_scores.append(
-                (open_set_identification_metric_values['fractions'],
-                 open_set_identification_metric_values['auc_mean_dist_unc'])
+                (
+                    open_set_identification_metric_values["fractions"],
+                    open_set_identification_metric_values["auc_mean_dist_unc"],
+                )
             )
             open_set_ident_rejection_names.append(save_name)
 
             open_set_ident_names.append(save_name)
-            print(f"{save_name}:")
             for key in open_set_identification_metric_values.keys():
                 if "top" in key:
                     print(
@@ -163,6 +163,7 @@ def main(cfg):
     fig_rejection.savefig(Path(cfg.exp_dir) / "rejection_plot.png", dpi=300)
     print("Plot open ident rejection path:")
     print(str(Path(cfg.exp_dir) / "rejection_plot.png"))
+
 
 if __name__ == "__main__":
     main()
