@@ -6,12 +6,11 @@ from evaluation.confidence_functions import AbstractConfidence
 from evaluation.eval_functions.distaince_functions import CosineSimDistance
 
 
-
-
 class CosineSim(Abstract1NEval):
     def __init__(self, confidence_function: AbstractConfidence) -> None:
         self.confidence_function = confidence_function
         self.compute_cosine_sim = CosineSimDistance()
+
     def __call__(
         self,
         probe_feats,

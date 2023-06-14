@@ -2,22 +2,66 @@ from tqdm import tqdm
 import numexpr as ne
 import numpy as np
 
+from scipy.special import ive
+
+    
 class CosineSimPairwise:
     @staticmethod
-    def __call__(X_1: np.ndarray, X_2: np.ndarray, X_unc: np.ndarray = None, Y_unc: np.ndarray = None):
-        return np.sum(X_1* X_2, axis=1)
+    def __call__(
+        X_1: np.ndarray,
+        X_2: np.ndarray,
+        X_unc: np.ndarray = None,
+        Y_unc: np.ndarray = None,
+    ):
+        return np.sum(X_1 * X_2, axis=1)
+
+
 class CosineSimDistance:
     @staticmethod
-    def __call__(X_1: np.ndarray, X_2: np.ndarray, X_unc: np.ndarray = None, Y_unc: np.ndarray = None):
+    def __call__(
+        X_1: np.ndarray,
+        X_2: np.ndarray,
+        X_unc: np.ndarray = None,
+        Y_unc: np.ndarray = None,
+    ):
         return np.dot(X_1, X_2.T)
+
+class ScfSimPairwise:
+    def __init__(self, k_shift: float) -> None:
+        self.k_shift = k_shift
+    def __call__(
+        self,
+        X_1: np.ndarray,
+        X_2: np.ndarray,
+        X_unc: np.ndarray = None,
+        Y_unc: np.ndarray = None,
+    ):
+        mu_ii = np.sum(X_1 * X_2, axis=1)
+
+        d = X_1.shape[1]
+        X_unc = X_unc[:, 0] + self.k_shift
+        Y_unc = Y_unc[:, 0] + self.k_shift
+        k_i_times_k_prime_i = Y_unc * X_unc
+        k_ii = np.sqrt(Y_unc**2 + X_unc**2 + 2 * mu_ii * k_i_times_k_prime_i)
+
+        log_iv_i = np.log(1e-6 + ive(d / 2 - 1, Y_unc, dtype=Y_unc.dtype)) + Y_unc
+        log_iv_prime_i = np.log(1e-6 + ive(d / 2 - 1, X_unc, dtype=X_unc.dtype)) + X_unc
+        log_iv_ii = np.log(1e-6 + ive(d / 2 - 1, k_ii, dtype=k_ii.dtype)) + k_ii
+
+        scf_similarity = (
+            (d / 2 - 1) * (np.log(Y_unc) + np.log(X_unc) - np.log(k_ii))  # type: ignore
+            - (log_iv_i + log_iv_prime_i - log_iv_ii)
+            - d / 2 * np.log(2 * np.pi)
+            - d * np.log(64)
+        )
+
+        return scf_similarity
 
 class ScfSim:
     @staticmethod
     def __call__(
         X_1: np.ndarray, X_2: np.ndarray, X_unc: np.ndarray, Y_unc: np.ndarray
     ):
-        from scipy.special import ive
-
         d = X_1.shape[1]
         mu_ij = 2 * np.dot(X_1, X_2.T)
         X_unc = X_unc[None, :, 0]

@@ -43,9 +43,9 @@ def main(cfg):
     #     cfg.open_set_identification_methods
     # ) + ["verification"] * len(cfg.verification_methods)
     methods = cfg.verification_methods + cfg.open_set_identification_methods
-    method_types = ["verification"] * len(cfg.verification_methods) + ["open_set_identification"] * len(
-        cfg.open_set_identification_methods
-    )
+    method_types = ["verification"] * len(cfg.verification_methods) + [
+        "open_set_identification"
+    ] * len(cfg.open_set_identification_methods)
     for method, method_type in zip(methods, method_types):
         evaluation_function = instantiate(method.evaluation_function)
 
@@ -96,7 +96,7 @@ def main(cfg):
             # save_items.update({"scores": scores, "names": names})
         elif method_type == "verification":  # Basic 1:1 N0D1F1 test
             verif_far, verification_metric_values = tt.run_model_test_verification()
-            verif_scores.append([verif_far, verification_metric_values['recalls']])
+            verif_scores.append([verif_far, verification_metric_values["recalls"]])
             verif_names.append(save_name)
         elif cfg.task == "closedset_identification":
             pass
@@ -104,7 +104,9 @@ def main(cfg):
             raise ValueError
         np.savez(os.path.join(save_path, save_name + ".npz"), **save_items)
     # identif plot
-    fig = plot_dir_far_cmc_scores(scores=open_set_ident_scores, names=open_set_ident_names)
+    fig = plot_dir_far_cmc_scores(
+        scores=open_set_ident_scores, names=open_set_ident_names
+    )
     fig.savefig(Path(cfg.exp_dir) / "di_far_plot.png", dpi=300)
     print("Plot open ident path:")
     print(str(Path(cfg.exp_dir) / "di_far_plot.png"))
@@ -115,5 +117,7 @@ def main(cfg):
     fig_verif.savefig(Path(cfg.exp_dir) / "tar_far_plot.png", dpi=300)
     print("Plot verif path:")
     print(str(Path(cfg.exp_dir) / "tar_far_plot.png"))
+
+
 if __name__ == "__main__":
     main()

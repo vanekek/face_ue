@@ -47,7 +47,6 @@ class Face_Fecognition_test:
         self.template_pooling_strategy = template_pooling_strategy
 
         self.use_detector_score = use_detector_score
-        
 
         # process embeddings
         self.image_input_feats = process_embeddings(
@@ -66,17 +65,15 @@ class Face_Fecognition_test:
             for ii in np.arange(
                 varif_far_range[0], varif_far_range[1], 4.0 / varif_far_range[2]
             )
-        ] + [
-            1
-        ] 
+        ] + [1]
         self.open_set_ident_far = [
             10**ii
             for ii in np.arange(
-                open_set_ident_far_range[0], open_set_ident_far_range[1], 4.0 / open_set_ident_far_range[2]
+                open_set_ident_far_range[0],
+                open_set_ident_far_range[1],
+                4.0 / open_set_ident_far_range[2],
             )
-        ] + [
-            1
-        ] 
+        ] + [1]
 
     def pool_templates(self, cache_dir: str):
         cache_dir = Path(cache_dir)
@@ -130,20 +127,22 @@ class Face_Fecognition_test:
 
     def run_model_test_verification(
         self,
-    ):  
-        scores = self.evaluation_function(self.template_pooled_emb,
+    ):
+        scores = self.evaluation_function(
+            self.template_pooled_emb,
+            self.template_pooled_unc,
             self.template_ids[:20003],
             self.test_dataset.p1[:20003],
-            self.test_dataset.p2[:20003])
-        
+            self.test_dataset.p2[:20003],
+        )
+
         metrics = {}
         for metric in self.verification_metrics:
             metrics.update(
                 metric(
-                    fars = self.verif_far,
+                    fars=self.verif_far,
                     scores=scores,
-                    labels = self.test_dataset.label[:20003],
-
+                    labels=self.test_dataset.label[:20003],
                 )
             )
         return self.verif_far, metrics

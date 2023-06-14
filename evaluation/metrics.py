@@ -6,29 +6,25 @@ from sklearn.metrics import roc_curve, auc
 
 EvalMetricsT = Tuple[int, int, int, List[float], List[float], List[Tuple[float, float]]]
 
+
 class TarFar:
     @staticmethod
-    def __call__(
-        fars,
-        scores,
-        labels
-    ):
-        true_match_scores = scores[labels==1]
-        wrong_match_scores = scores[labels==0]
+    def __call__(fars, scores, labels):
+        true_match_scores = scores[labels == 1]
+        wrong_match_scores = scores[labels == 0]
 
         threshes, recalls = [], []
         wrong_match_scores_sorted = np.sort(wrong_match_scores)[::-1]
         for far in fars:
-            thresh = wrong_match_scores_sorted[max(int((wrong_match_scores_sorted.shape[0]) * far) - 1, 0)]
-            recall = (
-                    np.sum(true_match_scores > thresh)
-                    / true_match_scores.shape[0]
-                )
+            thresh = wrong_match_scores_sorted[
+                max(int((wrong_match_scores_sorted.shape[0]) * far) - 1, 0)
+            ]
+            recall = np.sum(true_match_scores > thresh) / true_match_scores.shape[0]
             threshes.append(thresh)
             recalls.append(recall)
-        metrics = {'recalls': np.array(recalls),
-                   'auc': auc(fars, np.array(recalls))}
+        metrics = {"recalls": np.array(recalls), "auc": auc(fars, np.array(recalls))}
         return metrics
+
 
 class DetectionAndIdentificationRate:
     def __init__(self, top_n_ranks: List[int]) -> None:
@@ -111,6 +107,3 @@ class DetectionAndIdentificationRate:
         metrics = dict(zip([f"top_{k}_count" for k in self.top_n_ranks], top_n_count))
         metrics.update({"recalls": recalls})
         return metrics
-
-
-
