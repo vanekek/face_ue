@@ -6,13 +6,16 @@ import numpy as np
 from evaluation.eval_functions.open_set_identification.abc import Abstract1NEval
 from evaluation.confidence_functions import AbstractConfidence
 
-
-from evaluation.eval_functions.distaince_functions import PfeSim
+from tqdm import tqdm
+from evaluation.eval_functions.distaince_functions import compute_pfe
 
 
 class PFE(Abstract1NEval):
     def __init__(
-        self, confidence_function: AbstractConfidence, variance_scale: float
+        self,
+        confidence_function: AbstractConfidence,
+        variance_scale: float,
+        use_cosine_sim_match: bool,
     ) -> None:
         """
         Implements PFE “likelihood” of distributions belonging to the same person (sharing the same latent code)
@@ -22,7 +25,8 @@ class PFE(Abstract1NEval):
         """
         self.confidence_function = confidence_function
         self.variance_scale = variance_scale
-        self.compute_pfe_sim = PfeSim()
+        self.use_cosine_sim_match = use_cosine_sim_match
+        # self.compute_pfe_sim = PfeSim()
 
     def __call__(
         self,
@@ -38,14 +42,13 @@ class PFE(Abstract1NEval):
             "probe_feats: %s, gallery_feats: %s"
             % (probe_feats.shape, gallery_feats.shape)
         )
-        similarity = np.dot(probe_feats, gallery_feats.T)  # (19593, 1772)
 
         # compute pfe likelihood
-        probe_feats = probe_feats
-        probe_sigma_sq = probe_unc * self.variance_scale
+        probe_feats = probe_feats[:, np.newaxis, :]
+        probe_sigma_sq = probe_unc[:, np.newaxis, :] * self.variance_scale
 
-        gallery_feats = gallery_feats
-        gallery_sigma_sq = gallery_unc * self.variance_scale
+        gallery_feats = gallery_feats[np.newaxis, :, :]
+        gallery_sigma_sq = gallery_unc[np.newaxis, :, :] * self.variance_scale
 
         pfe_cache_path = Path("/app/cache/pfe_cache") / (
             "default_pfe_variance_shift_"
@@ -57,13 +60,27 @@ class PFE(Abstract1NEval):
         if pfe_cache_path.is_file():
             pfe_similarity = np.load(pfe_cache_path)
         else:
-            pfe_similarity = self.compute_pfe_sim(
-                probe_feats,
-                gallery_feats,
-                probe_sigma_sq,
-                gallery_sigma_sq,
-                pfe_cache_path=pfe_cache_path,
-            )
+            Path("/app/cache/pfe_cache").mkdir(exist_ok=True)
+            pfe_similarity = np.zeros((probe_feats.shape[0], gallery_feats.shape[1]))
+
+            chunck_size = 128
+            assert probe_feats.shape[2] % chunck_size == 0
+            for d in tqdm(range(probe_feats.shape[2] // chunck_size)):
+                compute_pfe(
+                    pfe_similarity,
+                    slice(d * chunck_size, (d + 1) * chunck_size),
+                    probe_feats,
+                    probe_sigma_sq,
+                    gallery_feats,
+                    gallery_sigma_sq,
+                )
+            pfe_similarity = -0.5 * pfe_similarity
+            np.save(pfe_cache_path, pfe_similarity)
+
+        if self.use_cosine_sim_match is False:
+            similarity = pfe_similarity
+        else:
+            similarity = np.dot(probe_feats, gallery_feats.T)  # (19593, 1772)
 
         # compute confidences
         probe_score = self.confidence_function(pfe_similarity)

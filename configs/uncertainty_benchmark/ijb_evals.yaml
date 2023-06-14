@@ -35,47 +35,62 @@ verification_methods:
       _target_: evaluation.eval_functions.verification.distance_based_evaluation.VerifEval
       distance_function:
         _target_: evaluation.eval_functions.distaince_functions.PfeSimPairwise
-        k_shift: 0
-    embeddings_path: ${test_dataset.dataset_path}/embeddings/scf_embs_${test_dataset.dataset_name}.npz
+        variance_scale: 1
+    embeddings_path: ${test_dataset.dataset_path}/embeddings/pfe_embs_${test_dataset.dataset_name}.npz
     template_pooling_strategy:
-      _target_: evaluation.template_pooling_strategies.PoolingSCF
+      _target_: evaluation.template_pooling_strategies.PoolingPFEHarmonicMean
     use_detector_score: True
-    save_result: "${exp_dir}/${test_dataset.dataset_name}_pfe_det_and_scf_score.npz"
-  - evaluation_function:
-      _target_: evaluation.eval_functions.verification.distance_based_evaluation.VerifEval
-      distance_function:
-        _target_: evaluation.eval_functions.distaince_functions.ScfSimPairwise
-        k_shift: 0
-    embeddings_path: ${test_dataset.dataset_path}/embeddings/scf_embs_${test_dataset.dataset_name}.npz
-    template_pooling_strategy:
-      _target_: evaluation.template_pooling_strategies.PoolingSCF
-    use_detector_score: True
-    save_result: "${exp_dir}/${test_dataset.dataset_name}_scf_det_and_scf_score.npz"
+    save_result: "${exp_dir}/${test_dataset.dataset_name}_pfe_det_and_pfe_score.npz"
 
-  - evaluation_function:
-      _target_: evaluation.eval_functions.verification.distance_based_evaluation.VerifEval
-      distance_function:
-        _target_: evaluation.eval_functions.distaince_functions.CosineSimPairwise
-    embeddings_path: ${test_dataset.dataset_path}/embeddings/scf_embs_${test_dataset.dataset_name}.npz
-    template_pooling_strategy:
-      _target_: evaluation.template_pooling_strategies.PoolingSCF
-    use_detector_score: True
-    save_result: "${exp_dir}/${test_dataset.dataset_name}_CosineSim_det_and_scf_score.npz"
+  # - evaluation_function:
+  #     _target_: evaluation.eval_functions.verification.distance_based_evaluation.VerifEval
+  #     distance_function:
+  #       _target_: evaluation.eval_functions.distaince_functions.ScfSimPairwise
+  #       k_shift: 0
+  #   embeddings_path: ${test_dataset.dataset_path}/embeddings/scf_embs_${test_dataset.dataset_name}.npz
+  #   template_pooling_strategy:
+  #     _target_: evaluation.template_pooling_strategies.PoolingSCF
+  #   use_detector_score: True
+  #   save_result: "${exp_dir}/${test_dataset.dataset_name}_scf_det_and_scf_score.npz"
 
-
-
-open_set_identification_methods:
-  # - evaluation_function: 
-  #     _target_: evaluation.eval_functions.open_set_identification.SCF
-  #     confidence_function: 
-  #       _target_: evaluation.confidence_functions.MaxSimilarity_confidence
-  #     k_shift: 0
-  #     use_cosine_sim_match: False
+  # - evaluation_function:
+  #     _target_: evaluation.eval_functions.verification.distance_based_evaluation.VerifEval
+  #     distance_function:
+  #       _target_: evaluation.eval_functions.distaince_functions.CosineSimPairwise
   #   embeddings_path: ${test_dataset.dataset_path}/embeddings/scf_embs_${test_dataset.dataset_name}.npz
   #   template_pooling_strategy:
   #     _target_: evaluation.template_pooling_strategies.PoolingSCF
   #   use_detector_score: True
   #   save_result: "${exp_dir}/${test_dataset.dataset_name}_CosineSim_det_and_scf_score.npz"
+
+closed_set_identification_methods:
+  - evaluation_function:
+    _target_: evaluation.eval_functions.closed_set_identification.PFE
+
+open_set_identification_methods:
+  - evaluation_function: 
+      _target_: evaluation.eval_functions.open_set_identification.PFE
+      confidence_function: 
+        _target_: evaluation.confidence_functions.MaxSimilarity_confidence
+      variance_scale: 1
+      use_cosine_sim_match: False
+    embeddings_path: ${test_dataset.dataset_path}/embeddings/pfe_embs_${test_dataset.dataset_name}.npz
+    template_pooling_strategy:
+      _target_: evaluation.template_pooling_strategies.PoolingPFEHarmonicMean
+    use_detector_score: True
+    save_result: "${exp_dir}/${test_dataset.dataset_name}_PFE_det_and_pfe_score.npz"
+
+  - evaluation_function: 
+      _target_: evaluation.eval_functions.open_set_identification.SCF
+      confidence_function: 
+        _target_: evaluation.confidence_functions.MaxSimilarity_confidence
+      k_shift: 0
+      use_cosine_sim_match: False
+    embeddings_path: ${test_dataset.dataset_path}/embeddings/scf_embs_${test_dataset.dataset_name}.npz
+    template_pooling_strategy:
+      _target_: evaluation.template_pooling_strategies.PoolingSCF
+    use_detector_score: True
+    save_result: "${exp_dir}/${test_dataset.dataset_name}_SCF_det_and_scf_score.npz"
 
   - evaluation_function: 
       _target_: evaluation.eval_functions.open_set_identification.CosineSim

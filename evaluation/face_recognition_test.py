@@ -146,7 +146,8 @@ class Face_Fecognition_test:
                 )
             )
         return self.verif_far, metrics
-
+    def run_model_test_closedset_identification(self):
+        pass
     def run_model_test_openset_identification(self):
         (
             g1_templates_feature,

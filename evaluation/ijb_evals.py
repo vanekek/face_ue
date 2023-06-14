@@ -38,14 +38,14 @@ def main(cfg):
 
     verif_scores, verif_names = [], []
     open_set_ident_scores, open_set_ident_names = [], []
-    # methods = cfg.open_set_identification_methods + cfg.verification_methods
-    # method_types = ["open_set_identification"] * len(
-    #     cfg.open_set_identification_methods
-    # ) + ["verification"] * len(cfg.verification_methods)
-    methods = cfg.verification_methods + cfg.open_set_identification_methods
-    method_types = ["verification"] * len(cfg.verification_methods) + [
-        "open_set_identification"
-    ] * len(cfg.open_set_identification_methods)
+    methods = cfg.open_set_identification_methods + cfg.verification_methods
+    method_types = ["open_set_identification"] * len(
+        cfg.open_set_identification_methods
+    ) + ["verification"] * len(cfg.verification_methods)
+    # methods = cfg.verification_methods + cfg.open_set_identification_methods
+    # method_types = ["verification"] * len(cfg.verification_methods) + [
+    #     "open_set_identification"
+    # ] * len(cfg.open_set_identification_methods)
     for method, method_type in zip(methods, method_types):
         evaluation_function = instantiate(method.evaluation_function)
 
@@ -89,17 +89,13 @@ def main(cfg):
                     print(
                         f"{key}: {round(open_set_identification_metric_values[key],4)}"
                     )
-            # scores = [(fars, tpirs)]
-            # names = [save_name]
-            # open_set_ident_scores.append((fars, tpirs))
-            # open_set_ident_names.append(save_name)
-            # save_items.update({"scores": scores, "names": names})
         elif method_type == "verification":  # Basic 1:1 N0D1F1 test
             verif_far, verification_metric_values = tt.run_model_test_verification()
             verif_scores.append([verif_far, verification_metric_values["recalls"]])
             verif_names.append(save_name)
-        elif cfg.task == "closedset_identification":
-            pass
+        elif cfg.task == "closed_set_identification":
+            closed_set_fars, closed_set_identification_metric_values = tt.run_model_test_closedset_identification()
+            
         else:
             raise ValueError
         np.savez(os.path.join(save_path, save_name + ".npz"), **save_items)
