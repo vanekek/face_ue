@@ -34,8 +34,12 @@ def create_open_set_ident_recognition_metric_table(
     recognition_result_dict: dict,
 ) -> pd.DataFrame:
     df = {}
-    metric_names = ["AUC", "TAR@FAR=0.0001"]
-    recognition_result_dict
+    metric_names = ["AUC_TOP_1", "TAR@FAR=0.0001"]
+    fars = recognition_result_dict["fars"]
+    for key, value in recognition_result_dict.items():
+        if "top" in key:
+            pass
+    # recognition_result_dict
     return pd.DataFrame(d.items(), columns=["Date", "DateValue"])
 
 

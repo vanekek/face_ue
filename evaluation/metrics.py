@@ -51,8 +51,8 @@ class CMC:
         cmc = []
         most_similar_classes = np.argsort(similarity, axis=1)[:, ::-1]
         for n in self.top_n_ranks:
-            n_similart_classes = gallery_ids[most_similar_classes[:, :n]]
-            is_seen = np.isin(probe_ids, n_similart_classes)
+            n_similar_classes = gallery_ids[most_similar_classes[:, :n]]
+            is_seen = np.isin(probe_ids, n_similar_classes)
             cmc.append(np.sum(is_seen) / probe_ids.shape[0])
 
         metrics = {"ranks": self.top_n_ranks, "cmc": np.array(cmc)}
@@ -122,8 +122,9 @@ class DetectionAndIdentificationRate:
         :return: Detection & identification (DI) rate at each FAR
         """
         gallery_ids_argsort = np.argsort(gallery_ids)
-        if not labels_sorted:
-            similarity = similarity[:, gallery_ids_argsort]
+        gallery_ids = gallery_ids[gallery_ids_argsort]
+        # if not labels_sorted:
+        similarity = similarity[:, gallery_ids_argsort]
 
         is_seen = np.isin(probe_ids, gallery_ids)
 
@@ -144,11 +145,13 @@ class DetectionAndIdentificationRate:
 
         recalls = {}
         for rank in self.top_n_ranks:
-            n_similart_classes = gallery_ids[most_similar_classes[:, :rank]]
-
-            correct_pos = np.isin(
-                seen_probe_ids, n_similart_classes
-            )  # pos_sims > np.max(neg_sims, axis=1)
+            n_similar_classes = []
+            for probe_similar_classes in most_similar_classes[:, :rank]:
+                n_similar_classes.append(gallery_ids[probe_similar_classes])
+            correct_pos = []
+            for pos_id, similar_classes in zip(seen_probe_ids, n_similar_classes):
+                correct_pos.append(np.isin([pos_id], similar_classes)[0])
+            correct_pos = np.array(correct_pos)
 
             recall_values = []
             for far in self.fars:
