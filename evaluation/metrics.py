@@ -80,7 +80,9 @@ class CMC:
 
         new_metrics = {}
         for n in self.display_ranks:
-            new_metrics[f"final_cmc_at_rank_{n}"] = cmc[np.array(self.top_n_ranks) == n]
+            new_metrics[f"final_cmc_at_rank_{n}"] = cmc[
+                np.array(self.top_n_ranks) == n
+            ][0][0]
         metrics.update(new_metrics)
         return metrics
 

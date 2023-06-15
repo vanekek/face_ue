@@ -14,3 +14,8 @@ final_recall_at_far_1e-06: "TAR@FAR=$10^{-6}$"
 final_recall_at_far_1e-05: "TAR@FAR=$10^{-5}$"
 final_recall_at_far_0.01: "TAR@FAR=$0.01$"
 final_recall_at_far_1: "TAR@FAR=$1$"
+
+final_cmc_at_rank_1: ["IR", "Ранг 1"]
+final_cmc_at_rank_10 : ["IR", "Ранг 10"]
+final_cmc_at_rank_50 : ["IR", "Ранг 50"]
+final_cmc_at_rank_500 : ["IR", "Ранг 500"]
