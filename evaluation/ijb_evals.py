@@ -126,20 +126,23 @@ def main(cfg):
     verification_uncertainty_result_metrics = {}
 
     open_set_ident_pretty_names = {}
-    methods = cfg.open_set_identification_methods + cfg.verification_methods
-    method_types = ["open_set_identification"] * len(
+
+    # define methods
+
+    methods = []
+    method_types = []
+    if 'open_set_identification_methods' in cfg:
+        methods+=cfg.open_set_identification_methods
+        method_types+=["open_set_identification"] * len(
         cfg.open_set_identification_methods
-    ) + ["verification"] * len(cfg.verification_methods)
-    # methods = (
-    #     cfg.closed_set_identification_methods
-    #     + cfg.verification_methods
-    #     + cfg.open_set_identification_methods
-    # )
-    # method_types = (
-    #     ["closed_set_identification"] * len(cfg.closed_set_identification_methods)
-    #     + ["verification"] * len(cfg.verification_methods)
-    #     + ["open_set_identification"] * len(cfg.open_set_identification_methods)
-    # )
+         )
+    if 'closed_set_identification_methods' in cfg:
+        methods += cfg.closed_set_identification_methods
+        method_types += ["closed_set_identification"] * len(cfg.closed_set_identification_methods)
+    if 'verification_methods' in cfg:
+        methods+= cfg.verification_methods
+        method_types += ["verification"] * len(cfg.verification_methods)
+
     for method, method_type in zip(methods, method_types):
         evaluation_function = instantiate(method.evaluation_function)
 
