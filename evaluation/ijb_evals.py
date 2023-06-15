@@ -32,10 +32,10 @@ def get_args_string(d):
 
 
 def create_open_set_ident_recognition_metric_table(
-    recognition_result_dict: dict,
+    recognition_result_dict: dict, pretty_names:dict,
 ) -> pd.DataFrame:
 
-    column_names = ['model_name']
+    column_names = ['pretty_name', 'model_name']
     data_rows = []
     for i, model_name in enumerate(recognition_result_dict.keys()):
         metrics = []
@@ -44,15 +44,28 @@ def create_open_set_ident_recognition_metric_table(
                 if i==0:
                     column_names.append(metric_key)
                 metrics.append(metric_value)
-        data_rows.append([model_name] + metrics)
+        data_rows.append([pretty_names[model_name], model_name] + metrics)
     # recognition_result_dict
     df = pd.DataFrame(data_rows, columns=column_names)
     return df
-def create_open_set_ident_plots(recognition_result_dict: dict, out_dir: Path):
-    fig = plot_dir_far_scores(scores=open_set_ident_scores, names=open_set_ident_names)
-    fig.savefig(Path(cfg.exp_dir) / "di_far_plot.png", dpi=300)
-    print("Plot open ident path:")
-    print(str(Path(cfg.exp_dir) / "di_far_plot.png"))
+
+def create_open_set_ident_plots(recognition_result_dict: dict, out_dir: Path, pretty_names: dict):
+    metric_names = []
+    for _, metric in recognition_result_dict.items():
+        for key in metric.keys():
+            if 'recalls' in key:
+                metric_names.append(key)
+        break
+    for metric_name in metric_names:
+        rank = metric_name.split('_')[1]
+        model_names = []
+        scores = []
+        for model_name, metrics in recognition_result_dict.items():
+            model_names.append(pretty_names[model_name])
+            scores.append((metrics['fars'], metrics[metric_name]))
+
+        fig = plot_dir_far_scores(scores=scores, names=model_names, y_label=f"Rank {rank} Detection & Identification Rate")
+        fig.savefig(out_dir / f"rank_{rank}_di_far_plot.png", dpi=300)
 
 
 def create_open_set_ident_uncertainty_metric_table(
@@ -112,6 +125,7 @@ def main(cfg):
     verification_recognition_result_metrics = {}
     verification_uncertainty_result_metrics = {}
 
+    open_set_ident_pretty_names = {}
     methods = cfg.open_set_identification_methods + cfg.verification_methods
     method_types = ["open_set_identification"] * len(
         cfg.open_set_identification_methods
@@ -128,10 +142,6 @@ def main(cfg):
     # )
     for method, method_type in zip(methods, method_types):
         evaluation_function = instantiate(method.evaluation_function)
-        # if hasattr(evaluation_function, "__name__"):
-        #     save_name = evaluation_function.__name__
-        # else:
-        #     save_name = os.path.splitext(os.path.basename(method.save_result))[0]
 
         template_pooling = instantiate(method.template_pooling_strategy)
         tt = Face_Fecognition_test(
@@ -182,9 +192,13 @@ def main(cfg):
             open_set_recognition_result_metrics[
                 method_name
             ] = open_set_identification_metric_values
+
             open_set_uncertainty_result_metrics[
                 method_name
             ] = open_set_uncertainty_metric_values
+
+            open_set_ident_pretty_names.update({method_name: method.pretty_name})
+
 
         elif method_type == "verification":  # Basic 1:1 N0D1F1 test
             continue
@@ -207,36 +221,36 @@ def main(cfg):
         else:
             raise ValueError
     # open set identif metric table
-    df = create_open_set_ident_recognition_metric_table(open_set_recognition_result_metrics)
+    df = create_open_set_ident_recognition_metric_table(open_set_recognition_result_metrics, open_set_ident_pretty_names)
     df.to_csv(open_set_identification_result_dir / 'open_set_recognition.csv', index=False)
     # identif plot
-    create_open_set_ident_plots(open_set_recognition_result_metrics, open_set_identification_result_dir)
+    create_open_set_ident_plots(open_set_recognition_result_metrics, open_set_identification_result_dir, open_set_ident_pretty_names)
     
 
-    # verif plot
+    # # verif plot
 
-    fig_verif = plot_tar_far_scores(scores=verif_scores, names=verif_names)
-    fig_verif.savefig(Path(cfg.exp_dir) / "tar_far_plot.png", dpi=300)
-    print("Plot verif path:")
-    print(str(Path(cfg.exp_dir) / "tar_far_plot.png"))
+    # fig_verif = plot_tar_far_scores(scores=verif_scores, names=verif_names)
+    # fig_verif.savefig(Path(cfg.exp_dir) / "tar_far_plot.png", dpi=300)
+    # print("Plot verif path:")
+    # print(str(Path(cfg.exp_dir) / "tar_far_plot.png"))
 
-    # cmc plot
+    # # cmc plot
 
-    fig_verif = plot_cmc_scores(
-        scores=closed_set_ident_scores, names=closed_set_ident_names
-    )
-    fig_verif.savefig(Path(cfg.exp_dir) / "cmc_plot.png", dpi=300)
-    print("Plot closed ident path:")
-    print(str(Path(cfg.exp_dir) / "cmc_plot.png"))
+    # fig_verif = plot_cmc_scores(
+    #     scores=closed_set_ident_scores, names=closed_set_ident_names
+    # )
+    # fig_verif.savefig(Path(cfg.exp_dir) / "cmc_plot.png", dpi=300)
+    # print("Plot closed ident path:")
+    # print(str(Path(cfg.exp_dir) / "cmc_plot.png"))
 
-    # rejection plot
+    # # rejection plot
 
-    fig_rejection = plot_rejection_scores(
-        scores=open_set_ident_rejection_scores, names=open_set_ident_rejection_names
-    )
-    fig_rejection.savefig(Path(cfg.exp_dir) / "rejection_plot.png", dpi=300)
-    print("Plot open ident rejection path:")
-    print(str(Path(cfg.exp_dir) / "rejection_plot.png"))
+    # fig_rejection = plot_rejection_scores(
+    #     scores=open_set_ident_rejection_scores, names=open_set_ident_rejection_names
+    # )
+    # fig_rejection.savefig(Path(cfg.exp_dir) / "rejection_plot.png", dpi=300)
+    # print("Plot open ident rejection path:")
+    # print(str(Path(cfg.exp_dir) / "rejection_plot.png"))
 
 
 if __name__ == "__main__":

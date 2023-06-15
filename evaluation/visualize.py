@@ -138,7 +138,7 @@ def plot_cmc_scores(scores, names=None):
     return fig
 
 
-def plot_dir_far_scores(scores, names=None):
+def plot_dir_far_scores(scores, names, y_label:str):
     import matplotlib.pyplot as plt
 
     fig = plt.figure()
@@ -157,7 +157,7 @@ def plot_dir_far_scores(scores, names=None):
     plt.xlabel("False Alarm Rate")
     plt.xlim([0.0001, 1])
     plt.xscale("log")
-    plt.ylabel("Detection & Identification Rate (%)")
+    plt.ylabel(y_label)
     plt.ylim([0, 1])
 
     plt.grid(linestyle="--", linewidth=1)
