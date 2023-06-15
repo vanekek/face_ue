@@ -71,34 +71,56 @@ def create_table_head(result_latex_code, caption, table_lable, cfg):
     return result_latex_code
 
 
+def draw_column(data, pretty_name_model, column_name, table_lable):
+    for dataset_name, dataset_metric_values in data.groupby(
+        ["dataset name"], sort=True
+    ):
+        plt.figure(figsize=(12, 6))
+        for model_name, model_metrics in dataset_metric_values.groupby(["model"]):
+            plt.plot(
+                [
+                    int(ts_name.split(" ")[1])
+                    for ts_name in model_metrics["ts in-ds name"]
+                ],
+                model_metrics[column_name],
+                label=f"{pretty_name_model[model_name]}",
+                linewidth=2,
+                markersize=4,
+            )
+        # plt.xticks(fontsize=14, rotation=60)
+        plt.yticks(fontsize=14)
+        plt.xlabel(f"Horizon", fontsize=18)
+        plt.ylabel(f"{column_name}", fontsize=18)
+        plt.legend(fontsize=18)
+        plt.savefig(f"{dataset_name}_{table_lable}.pdf")
+
 
 def create_table_body(result_latex_code, cfg):
-    all_metric_values = pd.read_csv(cfg.metric_table_path)
+    all_metric_values = pd.read_csv(
+        Path(hydra.utils.get_original_cwd()) / cfg.metric_table_path
+    )
+    # add anxilary columns
+    if "dataset name" not in all_metric_values.columns:
+        all_metric_values["dataset name"] = list(
+            len(all_metric_values) * ["all_fd_and_datasets_A_B"]
+        )
+        all_metric_values["ts in-ds name"] = list(len(all_metric_values) * ["none"])
 
-    # # add anxilary columns
-    # if "dataset name" not in all_metric_values.columns:
-    #     all_metric_values["dataset name"] = list(
-    #         len(all_metric_values) * ["all_fd_and_datasets_A_B"]
-    #     )
-    #     all_metric_values["ts in-ds name"] = list(len(all_metric_values) * ["none"])
-
-    # selected_metric_values = all_metric_values[
-    #     (all_metric_values["dataset name"].isin(cfg.used_datasets))
-    #     & (all_metric_values["model"].isin(cfg.used_models))
-    #     & (all_metric_values["ts in-ds name"].isin(cfg.used_ts_names))
-    # ]
-    # selected_metric_values = all_metric_values[
-    #     (all_metric_values["dataset name"].isin(cfg.used_datasets))
-    #     & (all_metric_values["model"].isin(cfg.used_models))
-    #     & (all_metric_values["ts in-ds name"].isin(cfg.used_ts_names))
-    # ]
-
+    selected_metric_values = all_metric_values[
+        (all_metric_values["dataset name"].isin(cfg.used_datasets))
+        & (all_metric_values["model"].isin(cfg.used_models))
+        & (all_metric_values["ts in-ds name"].isin(cfg.used_ts_names))
+    ]
     # draw table
-
+    if hasattr(cfg, "draw_column"):
+        draw_column(
+            selected_metric_values,
+            cfg.pretty_name.model,
+            cfg.draw_column,
+            cfg.table_lable.split(":")[-1],
+        )
     next_ds_index = 1
-    
-
-    for dataset_name, dataset_metric_values in all_metric_values.groupby(
+    for dataset_name, dataset_metric_values in selected_metric_values.groupby(
         ["dataset name"], sort=True
     ):
         if "dataset name" in cfg.used_columns:
@@ -192,27 +214,27 @@ def create_table_tail(result_latex_code, cfg):
     return result_latex_code
 
 
-@hydra.main(config_path="configs/latex_tables", config_name=Path(__file__).stem)
+@hydra.main(config_path="configs", config_name=Path(__file__).stem)
 def run(cfg):
     result_latex_code = """"""
-    # dataset_names = [
-    #     getattr(cfg.pretty_name.dataset, dataset_name)
-    #     for dataset_name in cfg.used_datasets
-    # ]
-    # if "{dataset_name}" in cfg.caption:
-    #     caption = cfg.caption.format(dataset_name=" and ".join(dataset_names))
-    # else:
-    #     caption = cfg.caption
+    dataset_names = [
+        getattr(cfg.pretty_name.dataset, dataset_name)
+        for dataset_name in cfg.used_datasets
+    ]
+    if "{dataset_name}" in cfg.caption:
+        caption = cfg.caption.format(dataset_name=" and ".join(dataset_names))
+    else:
+        caption = cfg.caption
 
-    # if "{dataset_name}" in cfg.table_lable:
-    #     table_lable = cfg.table_lable.format(dataset_name=cfg.used_datasets[0])
-    # else:
-    #     table_lable = cfg.table_lable
+    if "{dataset_name}" in cfg.table_lable:
+        table_lable = cfg.table_lable.format(dataset_name=cfg.used_datasets[0])
+    else:
+        table_lable = cfg.table_lable
 
     result_latex_code = create_table_head(
         result_latex_code,
-        cfg.caption,
-        cfg.table_lable,
+        caption,
+        table_lable,
         cfg,
     )
 

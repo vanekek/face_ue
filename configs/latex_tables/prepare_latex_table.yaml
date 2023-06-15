@@ -6,12 +6,11 @@ exp_dir: outputs/${hydra.job.name}/${hydra.job.name}_${now:%Y-%m-%d_%H-%M-%S}
 
 defaults:
   - _self_
-  - pretty_names@pretty_name.model: model_pretty_name
   - pretty_names@pretty_name.column: column_pretty_name
-  - pretty_names@pretty_name.dataset: dataset_pretty_name
+
 
 # CHANGE
-metric_table_path: outputs/rank/surr/rank_results.csv
+metric_table_path: /app/outputs/experiments/pooling_methods/IJBC/open_set_identification/open_set_recognition.csv
 
 caption: >
   Ranks of calibration metrics of surrogate models aggregated over Dataset A, Dataset B and FD.
@@ -23,8 +22,6 @@ rank_values: True
 use_scriptsize: False
 use_adjustbox: False
 
-used_datasets: ["all_fd_and_datasets_A_B"]
-used_ts_names: ["none"]
 used_models:
   [
     "GPR_linear_with_cat_kernel",
@@ -38,10 +35,13 @@ used_models:
 
 used_columns:
   [
-    "model",
-    "Miscalibration Area",
-    "Root-mean-squared Calibration Error",
-    "ence",
+    "pretty_name",
+    "final_AUC_1_rank",
+    "final_top_1_recall_at_far_0.0001",
+    "final_top_1_recall_at_far_1",
+    "final_AUC_10_rank",
+    "final_top_10_recall_at_far_0.0001",
+    "final_top_10_recall_at_far_1",
   ]
 
 sort_models_with: "used_models"
