@@ -129,7 +129,7 @@ def plot_cmc_scores(scores, names=None):
     plt.xlabel("Rank")
     # plt.xlim([0.0001, 1])
     plt.xscale("log")
-    plt.ylabel("Identification rate")
+    plt.ylabel("Identification Rate")
     # plt.ylim([0, 1])
 
     plt.grid(linestyle="--", linewidth=1)

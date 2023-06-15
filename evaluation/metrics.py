@@ -47,8 +47,9 @@ class MeanDistanceReject:
 
 
 class CMC:
-    def __init__(self, top_n_ranks: List[int]) -> None:
+    def __init__(self, top_n_ranks: List[int], display_ranks: List[int]) -> None:
         self.top_n_ranks = top_n_ranks
+        self.display_ranks = display_ranks
 
     def __call__(
         self,
@@ -57,16 +58,30 @@ class CMC:
         similarity: np.ndarray,
         probe_score: np.ndarray,
     ):
-        raise NotImplemented
+        gallery_ids_argsort = np.argsort(gallery_ids)
+        gallery_ids = gallery_ids[gallery_ids_argsort]
+        # if not labels_sorted:
+        similarity = similarity[:, gallery_ids_argsort]
+
         # need to fix cmc computation
         cmc = []
         most_similar_classes = np.argsort(similarity, axis=1)[:, ::-1]
         for n in self.top_n_ranks:
-            n_similar_classes = gallery_ids[most_similar_classes[:, :n]]
-            is_seen = np.isin(probe_ids, n_similar_classes)
-            cmc.append(np.sum(is_seen) / probe_ids.shape[0])
+            n_similar_classes = []
+            for probe_similar_classes in most_similar_classes[:, :n]:
+                n_similar_classes.append(gallery_ids[probe_similar_classes])
+            correct_pos = []
+            for pos_id, similar_classes in zip(probe_ids, n_similar_classes):
+                correct_pos.append(np.isin([pos_id], similar_classes)[0])
+            correct_pos = np.array(correct_pos)
+            cmc.append(np.sum(correct_pos) / probe_ids.shape)
+        cmc = np.array(cmc)
+        metrics = {"ranks": self.top_n_ranks, "cmc": cmc}
 
-        metrics = {"ranks": self.top_n_ranks, "cmc": np.array(cmc)}
+        new_metrics = {}
+        for n in self.display_ranks:
+            new_metrics[f"final_cmc_at_rank_{n}"] = cmc[np.array(self.top_n_ranks) == n]
+        metrics.update(new_metrics)
         return metrics
 
 

@@ -11,4 +11,6 @@ final_top_10_recall_at_far_0.0001: ["TAR@FAR=$10^{-4}$", "Ранг 10"]
 final_top_10_recall_at_far_1: ["TAR@FAR=$1$", "Ранг 10"]
 final_auc: "AUC"
 final_recall_at_far_1e-06: "TAR@FAR=$10^{-6}$"
+final_recall_at_far_1e-05: "TAR@FAR=$10^{-5}$"
+final_recall_at_far_0.01: "TAR@FAR=$0.01$"
 final_recall_at_far_1: "TAR@FAR=$1$"

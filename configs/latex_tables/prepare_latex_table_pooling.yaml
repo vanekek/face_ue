@@ -56,14 +56,16 @@ used_columns_dict:
         "pretty_name",
         "final_auc",
         "final_recall_at_far_1e-06",
-        "final_recall_at_far_1",
+        "final_recall_at_far_1e-05",
+        "final_recall_at_far_0.01"
       ]
     IJBB:
       [
         "pretty_name",
         "final_auc",
         "final_recall_at_far_1e-06",
-        "final_recall_at_far_1",
+        "final_recall_at_far_1e-05",
+        "final_recall_at_far_0.01"
       ]
 
 

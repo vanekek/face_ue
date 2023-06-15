@@ -75,10 +75,46 @@ def create_open_set_ident_plots(
         fig.savefig(out_dir / f"rank_{rank}_di_far_plot.png", dpi=300)
 
 
+def create_closed_set_ident_plots(
+    recognition_result_dict: dict, out_dir: Path, pretty_names: dict
+):
+    model_names = []
+    scores = []
+    for method_name, metric in recognition_result_dict.items():
+        model_names.append(pretty_names[method_name])
+        scores.append((metric["ranks"], metric["cmc"]))
+
+    fig = plot_cmc_scores(
+        scores=scores,
+        names=model_names,
+    )
+    fig.savefig(out_dir / f"cmc_plot.png", dpi=300)
+
+
 def create_open_set_ident_uncertainty_metric_table(
     uncertainty_result_dict: dict,
 ) -> pd.DataFrame:
     pass
+
+
+def get_method_name(method, template_pooling, evaluation_function):
+    method_name_parts = []
+    method_name_parts.append(f"pooling-with-{template_pooling.__class__.__name__}")
+    method_name_parts.append(f"use-det-score-{method.use_detector_score}")
+    method_name_parts.append(f"eval-with-{evaluation_function.__class__.__name__}")
+    confidence_function = evaluation_function.__dict__["confidence_function"]
+    evaluation_function_args = dict(evaluation_function.__dict__)
+    evaluation_function_args.pop("confidence_function")
+    eval_args = get_args_string(evaluation_function_args)
+    if len(eval_args) != 0:
+        method_name_parts.append(f"eval-args-{eval_args}")
+    method_name_parts.append(f"conf-func-{confidence_function.__class__.__name__}")
+    conf_args = get_args_string(confidence_function.__dict__)
+    if len(conf_args) != 0:
+        method_name_parts.append(f"conf-args-{conf_args}")
+
+    method_name = "_".join(method_name_parts)
+    return method_name
 
 
 @hydra.main(
@@ -175,28 +211,7 @@ def main(cfg):
         if method_type == "open_set_identification":  # 1:N test
             # introduce method name that fully defines method features
 
-            method_name_parts = []
-            method_name_parts.append(
-                f"pooling-with-{template_pooling.__class__.__name__}"
-            )
-            method_name_parts.append(f"use-det-score-{method.use_detector_score}")
-            method_name_parts.append(
-                f"eval-with-{evaluation_function.__class__.__name__}"
-            )
-            confidence_function = evaluation_function.__dict__["confidence_function"]
-            evaluation_function_args = dict(evaluation_function.__dict__)
-            evaluation_function_args.pop("confidence_function")
-            eval_args = get_args_string(evaluation_function_args)
-            if len(eval_args) != 0:
-                method_name_parts.append(f"eval-args-{eval_args}")
-            method_name_parts.append(
-                f"conf-func-{confidence_function.__class__.__name__}"
-            )
-            conf_args = get_args_string(confidence_function.__dict__)
-            if len(conf_args) != 0:
-                method_name_parts.append(f"conf-args-{conf_args}")
-
-            method_name = "_".join(method_name_parts)
+            method_name = get_method_name(method, template_pooling, evaluation_function)
             print(method_name)
             # run recognition and uncertainty metric computation
             (
@@ -240,7 +255,7 @@ def main(cfg):
             method_name = "_".join(method_name_parts)
             print(method_name)
             # run recognition and uncertainty metric computation
-            #verification_metric_values, verification_uncertainty_metric_values = tt.run_model_test_verification()
+            # verification_metric_values, verification_uncertainty_metric_values = tt.run_model_test_verification()
             verification_metric_values = tt.run_model_test_verification()
             verification_recognition_result_metrics[
                 method_name
@@ -251,19 +266,20 @@ def main(cfg):
             # ] = verification_uncertainty_metric_values
 
             verication_pretty_names.update({method_name: method.pretty_name})
+            open_set_ident_pretty_names.update({method_name: method.pretty_name})
 
         elif method_type == "closed_set_identification":
-            continue
+            method_name = get_method_name(method, template_pooling, evaluation_function)
+            print(method_name)
+
             closed_set_identification_metric_values = (
                 tt.run_model_test_closedset_identification()
             )
-            closed_set_ident_scores.append(
-                [
-                    closed_set_identification_metric_values["ranks"],
-                    closed_set_identification_metric_values["cmc"],
-                ]
-            )
-            closed_set_ident_names.append(save_name)
+
+            closed_set_recognition_result_metrics[
+                method_name
+            ] = closed_set_identification_metric_values
+            closed_set_ident_pretty_names.update({method_name: method.pretty_name})
         else:
             raise ValueError
     # open set identif metric table
@@ -272,7 +288,8 @@ def main(cfg):
             open_set_recognition_result_metrics, open_set_ident_pretty_names
         )
         df.to_csv(
-            open_set_identification_result_dir / "open_set_identification.csv", index=False
+            open_set_identification_result_dir / "open_set_identification.csv",
+            index=False,
         )
         # identif plot
         create_open_set_ident_plots(
@@ -283,11 +300,26 @@ def main(cfg):
     if "verification_methods" in cfg:
         # verification table
 
-        df_verif = create_open_set_ident_recognition_metric_table(verification_recognition_result_metrics, verication_pretty_names)
-        df_verif.to_csv(
-            verification_result_dir / "verification.csv", index=False
+        df_verif = create_open_set_ident_recognition_metric_table(
+            verification_recognition_result_metrics, verication_pretty_names
         )
+        df_verif.to_csv(verification_result_dir / "verification.csv", index=False)
         # # verif plot
+    if "closed_set_identification_methods" in cfg:
+        # closed set ident table
+        df_closed = create_open_set_ident_recognition_metric_table(
+            closed_set_recognition_result_metrics, closed_set_ident_pretty_names
+        )
+        df_closed.to_csv(
+            closed_set_identification_result_dir / "closed_set_identification.csv",
+            index=False,
+        )
+        # closed plot
+        create_closed_set_ident_plots(
+            closed_set_recognition_result_metrics,
+            closed_set_identification_result_dir,
+            closed_set_ident_pretty_names,
+        )
 
     # fig_verif = plot_tar_far_scores(scores=verif_scores, names=verif_names)
     # fig_verif.savefig(Path(cfg.exp_dir) / "tar_far_plot.png", dpi=300)
