@@ -13,7 +13,7 @@ class SCF(Abstract1NEval):
         self,
         confidence_function: AbstractConfidence,
         k_shift: float,
-        use_cosine_sim_match: bool,
+        cosine_pred: bool,
     ) -> None:
         """
         Implements SCF mutual “likelihood” of distributions belonging to the same person (sharing the same latent code)
@@ -23,7 +23,7 @@ class SCF(Abstract1NEval):
         """
         self.confidence_function = confidence_function
         self.k_shift = k_shift
-        self.use_cosine_sim_match = use_cosine_sim_match
+        self.cosine_pred = cosine_pred
         self.compute_scf_sim = ScfSim()
 
     def __call__(
@@ -45,7 +45,7 @@ class SCF(Abstract1NEval):
             probe_feats, gallery_feats, gallery_unc, probe_unc
         )
 
-        if self.use_cosine_sim_match:
+        if self.cosine_pred:
             similarity = np.dot(probe_feats, gallery_feats.T)
         else:
             similarity = scf_similarity

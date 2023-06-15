@@ -49,7 +49,7 @@ open_set_identification_methods:
         _target_: evaluation.confidence_functions.MaxSimilarity_confidence
         foo: bar
       k_shift: 0
-      use_cosine_sim_match: False
+      cosine_pred: False
     embeddings_path: ${test_dataset.dataset_path}/embeddings/scf_embs_${test_dataset.dataset_name}.npz
     template_pooling_strategy:
       _target_: evaluation.template_pooling_strategies.PoolingSCF
@@ -62,7 +62,7 @@ open_set_identification_methods:
         _target_: evaluation.confidence_functions.MaxSimilarity_confidence
         foo: bar
       k_shift: 150
-      use_cosine_sim_match: False
+      cosine_pred: False
     embeddings_path: ${test_dataset.dataset_path}/embeddings/scf_embs_${test_dataset.dataset_name}.npz
     template_pooling_strategy:
       _target_: evaluation.template_pooling_strategies.PoolingSCF
@@ -75,7 +75,7 @@ open_set_identification_methods:
         _target_: evaluation.confidence_functions.MaxSimilarity_confidence
         foo: bar
       k_shift: 300
-      use_cosine_sim_match: False
+      cosine_pred: False
     embeddings_path: ${test_dataset.dataset_path}/embeddings/scf_embs_${test_dataset.dataset_name}.npz
     template_pooling_strategy:
       _target_: evaluation.template_pooling_strategies.PoolingSCF
@@ -88,7 +88,7 @@ open_set_identification_methods:
         _target_: evaluation.confidence_functions.MaxSimilarity_confidence
         foo: bar
       k_shift: 600
-      use_cosine_sim_match: False
+      cosine_pred: False
     embeddings_path: ${test_dataset.dataset_path}/embeddings/scf_embs_${test_dataset.dataset_name}.npz
     template_pooling_strategy:
       _target_: evaluation.template_pooling_strategies.PoolingSCF
@@ -101,7 +101,7 @@ open_set_identification_methods:
         _target_: evaluation.confidence_functions.MaxSimilarity_confidence
         foo: bar
       k_shift: 1200
-      use_cosine_sim_match: False
+      cosine_pred: False
     embeddings_path: ${test_dataset.dataset_path}/embeddings/scf_embs_${test_dataset.dataset_name}.npz
     template_pooling_strategy:
       _target_: evaluation.template_pooling_strategies.PoolingSCF

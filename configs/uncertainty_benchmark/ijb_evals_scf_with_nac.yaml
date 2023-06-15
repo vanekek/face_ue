@@ -35,7 +35,7 @@ open_set_identification_methods:
           init_args:
             foo: bar
         k_shift: 0
-        use_cosine_sim_match: False
+        cosine_pred: False
     restore_embs: /app/cache/features/scf_ijb_embs_${subset}.npz
     template_pooling_strategy:
       function_path: evaluation.template_pooling_strategies.pooling_SCF
@@ -54,7 +54,7 @@ open_set_identification_methods:
             shift: 0
             normalize: True
         k_shift: 0
-        use_cosine_sim_match: False
+        cosine_pred: False
     restore_embs: /app/cache/features/scf_ijb_embs_${subset}.npz
     template_pooling_strategy:
       function_path: evaluation.template_pooling_strategies.pooling_SCF
@@ -74,7 +74,7 @@ open_set_identification_methods:
             shift: 0
             normalize: True
         k_shift: 0
-        use_cosine_sim_match: False
+        cosine_pred: False
     restore_embs: /app/cache/features/scf_ijb_embs_${subset}.npz
     template_pooling_strategy:
       function_path: evaluation.template_pooling_strategies.pooling_SCF
@@ -93,7 +93,7 @@ open_set_identification_methods:
             shift: 0
             normalize: True
         k_shift: 0
-        use_cosine_sim_match: False
+        cosine_pred: False
     restore_embs: /app/cache/features/scf_ijb_embs_${subset}.npz
     template_pooling_strategy:
       function_path: evaluation.template_pooling_strategies.pooling_SCF
@@ -112,7 +112,7 @@ open_set_identification_methods:
             shift: 0
             normalize: True
         k_shift: 0
-        use_cosine_sim_match: False
+        cosine_pred: False
     restore_embs: /app/cache/features/scf_ijb_embs_${subset}.npz
     template_pooling_strategy:
       function_path: evaluation.template_pooling_strategies.pooling_SCF
@@ -131,7 +131,7 @@ open_set_identification_methods:
             shift: 0
             normalize: True
         k_shift: 0
-        use_cosine_sim_match: False
+        cosine_pred: False
     restore_embs: /app/cache/features/scf_ijb_embs_${subset}.npz
     template_pooling_strategy:
       function_path: evaluation.template_pooling_strategies.pooling_SCF
@@ -151,7 +151,7 @@ open_set_identification_methods:
             shift: 0
             normalize: True
         k_shift: 0
-        use_cosine_sim_match: False
+        cosine_pred: False
     restore_embs: /app/cache/features/scf_ijb_embs_${subset}.npz
     template_pooling_strategy:
       function_path: evaluation.template_pooling_strategies.pooling_SCF
@@ -170,7 +170,7 @@ open_set_identification_methods:
             shift: 0
             normalize: True
         k_shift: 0
-        use_cosine_sim_match: False
+        cosine_pred: False
     restore_embs: /app/cache/features/scf_ijb_embs_${subset}.npz
     template_pooling_strategy:
       function_path: evaluation.template_pooling_strategies.pooling_SCF

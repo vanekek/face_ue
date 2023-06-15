@@ -15,7 +15,7 @@ class PFE(Abstract1NEval):
         self,
         confidence_function: AbstractConfidence,
         variance_scale: float,
-        use_cosine_sim_match: bool,
+        cosine_pred: bool,
     ) -> None:
         """
         Implements PFE “likelihood” of distributions belonging to the same person (sharing the same latent code)
@@ -25,7 +25,7 @@ class PFE(Abstract1NEval):
         """
         self.confidence_function = confidence_function
         self.variance_scale = variance_scale
-        self.use_cosine_sim_match = use_cosine_sim_match
+        self.cosine_pred = cosine_pred
         # self.compute_pfe_sim = PfeSim()
 
     def __call__(
@@ -74,7 +74,7 @@ class PFE(Abstract1NEval):
             pfe_similarity = -0.5 * pfe_similarity
             np.save(pfe_cache_path, pfe_similarity)
 
-        if self.use_cosine_sim_match is False:
+        if self.cosine_pred is False:
             similarity = pfe_similarity
         else:
             similarity = np.dot(probe_feats, gallery_feats.T)  # (19593, 1772)

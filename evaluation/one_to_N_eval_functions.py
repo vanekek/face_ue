@@ -236,7 +236,7 @@ class SCF:
         self,
         confidence_function: dict,
         k_shift: float,
-        use_cosine_sim_match: bool,
+        cosine_pred: bool,
         normalize_similarities: bool,
     ) -> None:
         """
@@ -247,7 +247,7 @@ class SCF:
         """
         self.confidence_function = confidence_function
         self.k_shift = k_shift
-        self.use_cosine_sim_match = use_cosine_sim_match
+        self.cosine_pred = cosine_pred
         self.normalize_similarities = normalize_similarities
 
     def __call__(
@@ -303,7 +303,7 @@ class SCF:
                 scf_similarity
             )
 
-        if self.use_cosine_sim_match:
+        if self.cosine_pred:
             similarity = mu_ij / 2
         else:
             similarity = scf_similarity
@@ -360,7 +360,7 @@ class PFE:
         self,
         confidence_function: dict,
         variance_scale: float,
-        use_cosine_sim_match: bool,
+        cosine_pred: bool,
     ) -> None:
         """
         Implements PFE “likelihood” of distributions belonging to the same person (sharing the same latent code)
@@ -370,7 +370,7 @@ class PFE:
         """
         self.confidence_function = confidence_function
         self.variance_scale = variance_scale
-        self.use_cosine_sim_match = use_cosine_sim_match
+        self.cosine_pred = cosine_pred
 
     def __call__(
         self,
@@ -397,7 +397,7 @@ class PFE:
         pfe_cache_path = Path("/app/cache/pfe_cache") / (
             "default_pfe_variance_shift_"
             + str(self.variance_scale)
-            + f"_gallery_size_{gallery_feats.shape[1]}_{self.use_cosine_sim_match}"
+            + f"_gallery_size_{gallery_feats.shape[1]}_{self.cosine_pred}"
             + ".npy"
         )
 
@@ -424,7 +424,7 @@ class PFE:
             confidence_functions, self.confidence_function.class_name
         )(**self.confidence_function.init_args)
         probe_score = confidence_function(pfe_similarity)
-        if self.use_cosine_sim_match is False:
+        if self.cosine_pred is False:
             similarity = pfe_similarity
         else:
             similarity = np.dot(probe_feats, gallery_feats.T)  # (19593, 1772)

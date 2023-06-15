@@ -1,0 +1,47 @@
+# DO NOT CHANGE
+hydra:
+  run:
+    dir: ${exp_dir}
+exp_dir: outputs/${hydra.job.name}/${hydra.job.name}_${now:%Y-%m-%d_%H-%M-%S}
+
+defaults:
+  - _self_
+  - pretty_names@pretty_name.model: model_pretty_name
+  - pretty_names@pretty_name.column: column_pretty_name
+  - pretty_names@pretty_name.dataset: dataset_pretty_name
+
+# CHANGE
+metric_table_path: outputs/rank/surr/rank_results.csv
+
+caption: >
+  Ranks of calibration metrics of surrogate models aggregated over Dataset A, Dataset B and FD.
+  Best results are highlighted with \textbf{{bold}} font,
+  second best results are \underline{{underscored}}
+
+table_lable: "tab:rank_table_surr" #"tab:surrogate_results_full_{dataset_name}"
+rank_values: True
+use_scriptsize: False
+use_adjustbox: False
+
+used_datasets: ["all_fd_and_datasets_A_B"]
+used_ts_names: ["none"]
+used_models:
+  [
+    "GPR_linear_with_cat_kernel",
+    "Surr1_linear_kernel",
+    "Surr2_linear_kernel",
+    "Surr3_linear_kernel",
+    "Surr4_linear_kernel",
+    "surr-ind_base-OLS_linear-kernel_C-0.7_frac-1",
+    "surr-ind_base-arbased_linear-kernel_C-0.7_frac-1",
+  ]
+
+used_columns:
+  [
+    "model",
+    "Miscalibration Area",
+    "Root-mean-squared Calibration Error",
+    "ence",
+  ]
+
+sort_models_with: "used_models"

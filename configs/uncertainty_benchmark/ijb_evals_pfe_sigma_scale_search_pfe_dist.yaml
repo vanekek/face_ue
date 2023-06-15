@@ -34,7 +34,7 @@ open_set_identification_methods:
           class_name: MaxSimilarity_confidence
           init_args:
             foo: bar
-        use_cosine_sim_match: False
+        cosine_pred: False
         variance_scale: 1
     template_pooling_strategy:
       function_path: evaluation.template_pooling_strategies.pooling_PFE_harmonic_mean
@@ -50,7 +50,7 @@ open_set_identification_methods:
           class_name: MaxSimilarity_confidence
           init_args:
             foo: bar
-        use_cosine_sim_match: False
+        cosine_pred: False
         variance_scale: 1.2
     template_pooling_strategy:
       function_path: evaluation.template_pooling_strategies.pooling_PFE_harmonic_mean
@@ -66,7 +66,7 @@ open_set_identification_methods:
           class_name: MaxSimilarity_confidence
           init_args:
             foo: bar
-        use_cosine_sim_match: False
+        cosine_pred: False
         variance_scale: 1.5
     template_pooling_strategy:
       function_path: evaluation.template_pooling_strategies.pooling_PFE_harmonic_mean
@@ -82,7 +82,7 @@ open_set_identification_methods:
           class_name: MaxSimilarity_confidence
           init_args:
             foo: bar
-        use_cosine_sim_match: False
+        cosine_pred: False
         variance_scale: 1.6
     template_pooling_strategy:
       function_path: evaluation.template_pooling_strategies.pooling_PFE_harmonic_mean
@@ -98,7 +98,7 @@ open_set_identification_methods:
           class_name: MaxSimilarity_confidence
           init_args:
             foo: bar
-        use_cosine_sim_match: False
+        cosine_pred: False
         variance_scale: 1.7
     template_pooling_strategy:
       function_path: evaluation.template_pooling_strategies.pooling_PFE_harmonic_mean
@@ -114,7 +114,7 @@ open_set_identification_methods:
           class_name: MaxSimilarity_confidence
           init_args:
             foo: bar
-        use_cosine_sim_match: False
+        cosine_pred: False
         variance_scale: 1.8
     template_pooling_strategy:
       function_path: evaluation.template_pooling_strategies.pooling_PFE_harmonic_mean
@@ -130,7 +130,7 @@ open_set_identification_methods:
           class_name: MaxSimilarity_confidence
           init_args:
             foo: bar
-        use_cosine_sim_match: False
+        cosine_pred: False
         variance_scale: 2
     template_pooling_strategy:
       function_path: evaluation.template_pooling_strategies.pooling_PFE_harmonic_mean

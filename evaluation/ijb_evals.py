@@ -20,8 +20,11 @@ sys.path.insert(1, path)
 
 def instantiate_list(query_list):
     return [instantiate(value) for value in query_list]
-
-
+def get_args_string(d):
+    args=[]
+    for key, value in d.items():
+        args.append(f"{key}:{value}")
+    return '-'.join(args)
 @hydra.main(
     config_path=str(
         Path(__file__).resolve().parents[1] / "configs/uncertainty_benchmark"
@@ -48,27 +51,48 @@ def main(cfg):
 
     open_set_ident_rejection_scores, open_set_ident_rejection_names = [], []
 
-    # methods = cfg.open_set_identification_methods + cfg.verification_methods
-    # method_types = ["open_set_identification"] * len(
-    #     cfg.open_set_identification_methods
-    # ) + ["verification"] * len(cfg.verification_methods)
-    methods = (
-        cfg.closed_set_identification_methods
-        + cfg.verification_methods
-        + cfg.open_set_identification_methods
-    )
-    method_types = (
-        ["closed_set_identification"] * len(cfg.closed_set_identification_methods)
-        + ["verification"] * len(cfg.verification_methods)
-        + ["open_set_identification"] * len(cfg.open_set_identification_methods)
-    )
+    # create result dirs:
+
+    open_set_identification_result_dir = Path(cfg.exp_dir) / 'open_set_identification'
+    open_set_identification_result_dir.mkdir(exist_ok=True)
+
+    closed_set_identification_result_dir = Path(cfg.exp_dir) / 'closed_set_identification'
+    closed_set_identification_result_dir.mkdir(exist_ok=True)
+    
+    verification_result_dir = Path(cfg.exp_dir) / 'verification'
+    verification_result_dir.mkdir(exist_ok=True)
+    
+    # create result tables place holders
+    open_set_recognition_result_metrics = {}
+    open_set_uncertainty_result_metrics = {} 
+
+    closed_set_recognition_result_metrics = {}
+    closed_set_uncertainty_result_metrics = {} 
+
+    verification_recognition_result_metrics = {}
+    verification_uncertainty_result_metrics = {} 
+
+
+    methods = cfg.open_set_identification_methods + cfg.verification_methods
+    method_types = ["open_set_identification"] * len(
+        cfg.open_set_identification_methods
+    ) + ["verification"] * len(cfg.verification_methods)
+    # methods = (
+    #     cfg.closed_set_identification_methods
+    #     + cfg.verification_methods
+    #     + cfg.open_set_identification_methods
+    # )
+    # method_types = (
+    #     ["closed_set_identification"] * len(cfg.closed_set_identification_methods)
+    #     + ["verification"] * len(cfg.verification_methods)
+    #     + ["open_set_identification"] * len(cfg.open_set_identification_methods)
+    # )
     for method, method_type in zip(methods, method_types):
         evaluation_function = instantiate(method.evaluation_function)
-
-        if hasattr(evaluation_function, "__name__"):
-            save_name = evaluation_function.__name__
-        else:
-            save_name = os.path.splitext(os.path.basename(method.save_result))[0]
+        # if hasattr(evaluation_function, "__name__"):
+        #     save_name = evaluation_function.__name__
+        # else:
+        #     save_name = os.path.splitext(os.path.basename(method.save_result))[0]
 
         template_pooling = instantiate(method.template_pooling_strategy)
         tt = Face_Fecognition_test(
@@ -90,28 +114,43 @@ def main(cfg):
         if len(save_path) != 0 and not os.path.exists(save_path):
             os.makedirs(save_path)
         if method_type == "open_set_identification":  # 1:N test
+            # introduce method name that fully defines method features
+            
+            method_name_parts = []
+            method_name_parts.append(f"pooling-with-{template_pooling.__class__.__name__}")
+            method_name_parts.append(f"use-det-score-{method.use_detector_score}")
+            method_name_parts.append(f"eval-with-{evaluation_function.__class__.__name__}")
+            confidence_function = evaluation_function.__dict__['confidence_function']
+            evaluation_function_args = dict(evaluation_function.__dict__).pop('confidence_function')
+            method_name_parts.append(f"eval-args-{get_args_string(evaluation_function_args)}")
+            method_name_parts.append(f"conf-func-{confidence_function.__class__.__name__}")
+            method_name_parts.append(f"conf-args-{get_args_string(confidence_function.__dict__)}")
+
+            method_name = '_'.join(method_name_parts)
+            # run recognition and uncertainty metric computation
             open_set_identification_metric_values = (
                 tt.run_model_test_openset_identification()
             )
-            fars = open_set_identification_metric_values["fars"]
-            open_set_ident_scores.append(
-                (fars, open_set_identification_metric_values["recalls"])
-            )
+            open_set_recognition_result_metrics[method_name] = open_set_identification_metric_values
+            # fars = open_set_identification_metric_values["fars"]
+            # open_set_ident_scores.append(
+            #     (fars, open_set_identification_metric_values["recalls"])
+            # )
 
-            open_set_ident_rejection_scores.append(
-                (
-                    open_set_identification_metric_values["fractions"],
-                    open_set_identification_metric_values["auc_mean_dist_unc"],
-                )
-            )
-            open_set_ident_rejection_names.append(save_name)
+            # open_set_ident_rejection_scores.append(
+            #     (
+            #         open_set_identification_metric_values["fractions"],
+            #         open_set_identification_metric_values["auc_mean_dist_unc"],
+            #     )
+            # )
+            # open_set_ident_rejection_names.append(save_name)
 
-            open_set_ident_names.append(save_name)
-            for key in open_set_identification_metric_values.keys():
-                if "top" in key:
-                    print(
-                        f"{key}: {round(open_set_identification_metric_values[key],4)}"
-                    )
+            # open_set_ident_names.append(save_name)
+            # for key in open_set_identification_metric_values.keys():
+            #     if "top" in key:
+            #         print(
+            #             f"{key}: {round(open_set_identification_metric_values[key],4)}"
+            #         )
         elif method_type == "verification":  # Basic 1:1 N0D1F1 test
             continue
             verification_metric_values = tt.run_model_test_verification()
