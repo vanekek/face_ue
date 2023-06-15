@@ -133,7 +133,8 @@ def main(cfg):
     verification_uncertainty_result_metrics = {}
 
     open_set_ident_pretty_names = {}
-
+    closed_set_ident_pretty_names = {}
+    verication_pretty_names = {}
     # define methods
 
     methods = []
@@ -213,11 +214,44 @@ def main(cfg):
             open_set_ident_pretty_names.update({method_name: method.pretty_name})
 
         elif method_type == "verification":  # Basic 1:1 N0D1F1 test
-            continue
+            # introduce method name that fully defines method features
+
+            method_name_parts = []
+            method_name_parts.append(
+                f"pooling-with-{template_pooling.__class__.__name__}"
+            )
+            method_name_parts.append(f"use-det-score-{method.use_detector_score}")
+            method_name_parts.append(
+                f"eval-with-{evaluation_function.__class__.__name__}"
+            )
+            distance_function = evaluation_function.__dict__["distance_function"]
+            evaluation_function_args = dict(evaluation_function.__dict__)
+            evaluation_function_args.pop("distance_function")
+            eval_args = get_args_string(evaluation_function_args)
+            if len(eval_args) != 0:
+                method_name_parts.append(f"eval-args-{eval_args}")
+            method_name_parts.append(
+                f"conf-func-{distance_function.__class__.__name__}"
+            )
+            dist_args = get_args_string(distance_function.__dict__)
+            if len(dist_args) != 0:
+                method_name_parts.append(f"dist-args-{dist_args}")
+
+            method_name = "_".join(method_name_parts)
+            print(method_name)
+            # run recognition and uncertainty metric computation
+            #verification_metric_values, verification_uncertainty_metric_values = tt.run_model_test_verification()
             verification_metric_values = tt.run_model_test_verification()
-            verif_far = verification_metric_values["fars"]
-            verif_scores.append([verif_far, verification_metric_values["recalls"]])
-            verif_names.append(save_name)
+            verification_recognition_result_metrics[
+                method_name
+            ] = verification_metric_values
+
+            # verification_uncertainty_result_metrics[
+            #     method_name
+            # ] = verification_uncertainty_metric_values
+
+            verication_pretty_names.update({method_name: method.pretty_name})
+
         elif method_type == "closed_set_identification":
             continue
             closed_set_identification_metric_values = (
@@ -233,20 +267,27 @@ def main(cfg):
         else:
             raise ValueError
     # open set identif metric table
-    df = create_open_set_ident_recognition_metric_table(
-        open_set_recognition_result_metrics, open_set_ident_pretty_names
-    )
-    df.to_csv(
-        open_set_identification_result_dir / "open_set_identification.csv", index=False
-    )
-    # identif plot
-    create_open_set_ident_plots(
-        open_set_recognition_result_metrics,
-        open_set_identification_result_dir,
-        open_set_ident_pretty_names,
-    )
+    if "open_set_identification_methods" in cfg:
+        df = create_open_set_ident_recognition_metric_table(
+            open_set_recognition_result_metrics, open_set_ident_pretty_names
+        )
+        df.to_csv(
+            open_set_identification_result_dir / "open_set_identification.csv", index=False
+        )
+        # identif plot
+        create_open_set_ident_plots(
+            open_set_recognition_result_metrics,
+            open_set_identification_result_dir,
+            open_set_ident_pretty_names,
+        )
+    if "verification_methods" in cfg:
+        # verification table
 
-    # # verif plot
+        df_verif = create_open_set_ident_recognition_metric_table(verification_recognition_result_metrics, verication_pretty_names)
+        df_verif.to_csv(
+            verification_result_dir / "verification.csv", index=False
+        )
+        # # verif plot
 
     # fig_verif = plot_tar_far_scores(scores=verif_scores, names=verif_names)
     # fig_verif.savefig(Path(cfg.exp_dir) / "tar_far_plot.png", dpi=300)

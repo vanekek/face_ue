@@ -4,9 +4,8 @@ from tqdm import tqdm
 
 
 class VerifEval:
-    def __init__(self, distance_function, batch_size=10000) -> None:
+    def __init__(self, distance_function) -> None:
         self.distance_function = distance_function
-        self.batch_size = batch_size
 
     def __call__(
         self,
@@ -18,22 +17,22 @@ class VerifEval:
     ) -> Any:
         template2id = np.zeros(max(unique_templates) + 1, dtype=int)
         template2id[unique_templates] = np.arange(len(unique_templates))
-
-        steps = int(np.ceil(len(p1) / self.batch_size))
+        batch_size=10000
+        steps = int(np.ceil(len(p1) / batch_size))
         scores = []
         for id in tqdm(range(steps), "Verification"):
             feat1 = template_pooled_emb[
-                template2id[p1[id * self.batch_size : (id + 1) * self.batch_size]]
+                template2id[p1[id * batch_size : (id + 1) * batch_size]]
             ]
             feat2 = template_pooled_emb[
-                template2id[p2[id * self.batch_size : (id + 1) * self.batch_size]]
+                template2id[p2[id * batch_size : (id + 1) * batch_size]]
             ]
 
             unc1 = template_pooled_unc[
-                template2id[p1[id * self.batch_size : (id + 1) * self.batch_size]]
+                template2id[p1[id * batch_size : (id + 1) * batch_size]]
             ]
             unc2 = template_pooled_unc[
-                template2id[p2[id * self.batch_size : (id + 1) * self.batch_size]]
+                template2id[p2[id * batch_size : (id + 1) * batch_size]]
             ]
             scores.extend(self.distance_function(feat1, feat2, unc1, unc2))
         return np.array(scores)

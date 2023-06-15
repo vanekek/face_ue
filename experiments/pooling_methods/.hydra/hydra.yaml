@@ -140,7 +140,7 @@ hydra:
     - path: ''
       schema: structured
       provider: schema
-    output_dir: /app/outputs/experiments/pooling_methods
+    output_dir: /app/experiments/pooling_methods
     choices:
       hydra/env: default
       hydra/callbacks: null

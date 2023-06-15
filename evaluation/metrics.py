@@ -71,10 +71,11 @@ class CMC:
 
 
 class TarFar:
-    def __init__(self, far_range: List[int]) -> None:
+    def __init__(self, far_range: List[int], display_fars: List[float]) -> None:
         self.fars = [
             10**ii for ii in np.arange(far_range[0], far_range[1], 4.0 / far_range[2])
         ] + [1]
+        self.display_fars = display_fars
 
     def __call__(self, scores, labels):
         true_match_scores = scores[labels == 1]
@@ -92,8 +93,13 @@ class TarFar:
         metrics = {
             "fars": self.fars,
             "recalls": np.array(recalls),
-            "auc": auc(self.fars, np.array(recalls)),
+            "final_auc": auc(self.fars, np.array(recalls)),
         }
+        new_metrics = {}
+        f = interpolate.interp1d(metrics["fars"], metrics["recalls"])
+        for far in self.display_fars:
+            new_metrics[f"final_recall_at_far_{far}"] = f([far])[0]
+        metrics.update(new_metrics)
         return metrics
 
 

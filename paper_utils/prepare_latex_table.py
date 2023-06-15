@@ -106,10 +106,9 @@ def create_table_tail(result_latex_code, cfg):
 def run(cfg):
     result_latex_code = """"""
     if "{dataset_name}" in cfg.caption:
-        caption = cfg.caption.format(dataset_name=cfg.dataset)
+        caption = cfg.caption.format(dataset_name=cfg.dataset, task=cfg.pretty_name.task[cfg.task])
     else:
         caption = cfg.caption
-
     cfg.used_columns = OmegaConf.to_container(cfg.used_columns_dict)[cfg.task][
         cfg.dataset
     ]

@@ -1,10 +1,10 @@
-exp_dir: outputs/experiments/pooling_methods
+exp_dir: experiments/pooling_methods
 use_two_galleries: true
 recompute_template_pooling: false
 test_dataset:
   _target_: evaluation.test_datasets.FaceRecogntioniDataset
-  dataset_name: survFace
-  dataset_path: /app/datasets/QMUL-SurvFace/Face_Identification_Test_Set
+  dataset_name: IJBB
+  dataset_path: /app/datasets/arcface_ijb/IJBB
 open_set_identification_metrics:
 - _target_: evaluation.metrics.DetectionAndIdentificationRate
   top_n_ranks:
@@ -36,9 +36,17 @@ closed_set_identification_metrics:
 verification_metrics:
 - _target_: evaluation.metrics.TarFar
   far_range:
-  - -5
+  - -6
   - 0
   - 100
+  display_fars:
+  - 1.0e-06
+  - 1.0e-05
+  - 0.0001
+  - 0.001
+  - 0.01
+  - 0.1
+  - 1
 open_set_uncertainty_metrics:
 - _target_: evaluation.metrics.MeanDistanceReject
   metric_to_monitor:
@@ -57,56 +65,56 @@ open_set_uncertainty_metrics:
     - 0.01
     - 0.1
     - 1
-open_set_identification_methods:
+verification_methods:
 - evaluation_function:
-    _target_: evaluation.eval_functions.open_set_identification.CosineSim
-    confidence_function:
-      _target_: evaluation.confidence_functions.MaxSimilarity_confidence
+    _target_: evaluation.eval_functions.verification.distance_based_evaluation.VerifEval
+    distance_function:
+      _target_: evaluation.eval_functions.distaince_functions.CosineSimPairwise
   embeddings_path: ${test_dataset.dataset_path}/embeddings/scf_embs_${test_dataset.dataset_name}.npz
   template_pooling_strategy:
     _target_: evaluation.template_pooling_strategies.PoolingDefault
   use_detector_score: false
   pretty_name: CosineSim_MeanPool
 - evaluation_function:
-    _target_: evaluation.eval_functions.open_set_identification.CosineSim
-    confidence_function:
-      _target_: evaluation.confidence_functions.MaxSimilarity_confidence
+    _target_: evaluation.eval_functions.verification.distance_based_evaluation.VerifEval
+    distance_function:
+      _target_: evaluation.eval_functions.distaince_functions.CosineSimPairwise
   embeddings_path: ${test_dataset.dataset_path}/embeddings/scf_embs_${test_dataset.dataset_name}.npz
   template_pooling_strategy:
     _target_: evaluation.template_pooling_strategies.PoolingDefault
   use_detector_score: true
   pretty_name: CosineSim_DetScore_MeanPool
 - evaluation_function:
-    _target_: evaluation.eval_functions.open_set_identification.CosineSim
-    confidence_function:
-      _target_: evaluation.confidence_functions.MaxSimilarity_confidence
+    _target_: evaluation.eval_functions.verification.distance_based_evaluation.VerifEval
+    distance_function:
+      _target_: evaluation.eval_functions.distaince_functions.CosineSimPairwise
   embeddings_path: ${test_dataset.dataset_path}/embeddings/scf_embs_${test_dataset.dataset_name}.npz
   template_pooling_strategy:
     _target_: evaluation.template_pooling_strategies.PoolingSCF
   use_detector_score: false
   pretty_name: CosineSim_SCF-Pool
 - evaluation_function:
-    _target_: evaluation.eval_functions.open_set_identification.CosineSim
-    confidence_function:
-      _target_: evaluation.confidence_functions.MaxSimilarity_confidence
+    _target_: evaluation.eval_functions.verification.distance_based_evaluation.VerifEval
+    distance_function:
+      _target_: evaluation.eval_functions.distaince_functions.CosineSimPairwise
   embeddings_path: ${test_dataset.dataset_path}/embeddings/scf_embs_${test_dataset.dataset_name}.npz
   template_pooling_strategy:
     _target_: evaluation.template_pooling_strategies.PoolingSCF
   use_detector_score: true
   pretty_name: CosineSim_DetScore_SCF-Pool
 - evaluation_function:
-    _target_: evaluation.eval_functions.open_set_identification.CosineSim
-    confidence_function:
-      _target_: evaluation.confidence_functions.MaxSimilarity_confidence
+    _target_: evaluation.eval_functions.verification.distance_based_evaluation.VerifEval
+    distance_function:
+      _target_: evaluation.eval_functions.distaince_functions.CosineSimPairwise
   embeddings_path: ${test_dataset.dataset_path}/embeddings/pfe_embs_${test_dataset.dataset_name}.npz
   template_pooling_strategy:
     _target_: evaluation.template_pooling_strategies.PoolingPFEHarmonicMean
   use_detector_score: false
   pretty_name: CosineSim_PFEHarmonicMean-Pool
 - evaluation_function:
-    _target_: evaluation.eval_functions.open_set_identification.CosineSim
-    confidence_function:
-      _target_: evaluation.confidence_functions.MaxSimilarity_confidence
+    _target_: evaluation.eval_functions.verification.distance_based_evaluation.VerifEval
+    distance_function:
+      _target_: evaluation.eval_functions.distaince_functions.CosineSimPairwise
   embeddings_path: ${test_dataset.dataset_path}/embeddings/pfe_embs_${test_dataset.dataset_name}.npz
   template_pooling_strategy:
     _target_: evaluation.template_pooling_strategies.PoolingPFEHarmonicMean

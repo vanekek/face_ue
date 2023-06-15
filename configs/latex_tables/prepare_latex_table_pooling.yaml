@@ -6,20 +6,22 @@ exp_dir: outputs/latex_tables/${now:%Y-%m-%d_%H-%M-%S}
 
 defaults:
   - _self_
+  - pretty_names@pretty_name.task: task_pretty_name
   - pretty_names@pretty_name.model: model_pretty_name_pooling
   - pretty_names@pretty_name.column: column_pretty_name
 
-dataset: survFace
-#dataset: IJBB
-task: open_set_identification
+#dataset: survFace
+dataset: IJBB
+#task: open_set_identification
+task: verification
 # CHANGE
 metric_table_path: /app/experiments/pooling_methods/${dataset}/${task}/${task}.csv
 
 caption: >
-  Исследование влияния способа объединения шаблонов на метрики распознавания на наборе данных {dataset_name}.
+  Исследование влияния способа объединения шаблонов на метрики распознавания на наборе данных {dataset_name}, при решении задачи {task}.
   
 
-table_lable: "tab:openset_pool" #"tab:surrogate_results_full_{dataset_name}"
+table_lable: "tab:${task}_${dataset}_pool" #"tab:surrogate_results_full_{dataset_name}"
 round_num: 4
 use_scriptsize: False
 use_adjustbox: False
@@ -48,5 +50,21 @@ used_columns_dict:
         "final_top_1_recall_at_far_0.0001",
         "final_top_1_recall_at_far_1",
       ]
+  verification:
+    IJBC:
+      [
+        "pretty_name",
+        "final_auc",
+        "final_recall_at_far_1e-06",
+        "final_recall_at_far_1",
+      ]
+    IJBB:
+      [
+        "pretty_name",
+        "final_auc",
+        "final_recall_at_far_1e-06",
+        "final_recall_at_far_1",
+      ]
+
 
 sort_models_with: "used_models"
