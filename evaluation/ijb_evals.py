@@ -5,6 +5,7 @@ from pathlib import Path
 import hydra
 from hydra.utils import instantiate
 import sys
+import pandas as pd
 
 from evaluation.face_recognition_test import Face_Fecognition_test
 from evaluation.visualize import (
@@ -20,11 +21,30 @@ sys.path.insert(1, path)
 
 def instantiate_list(query_list):
     return [instantiate(value) for value in query_list]
+
+
 def get_args_string(d):
-    args=[]
+    args = []
     for key, value in d.items():
         args.append(f"{key}:{value}")
-    return '-'.join(args)
+    return "-".join(args)
+
+
+def create_open_set_ident_recognition_metric_table(
+    recognition_result_dict: dict,
+) -> pd.DataFrame:
+    df = {}
+    metric_names = ["AUC", "TAR@FAR=0.0001"]
+    recognition_result_dict
+    return pd.DataFrame(d.items(), columns=["Date", "DateValue"])
+
+
+def create_open_set_ident_uncertainty_metric_table(
+    uncertainty_result_dict: dict,
+) -> pd.DataFrame:
+    pass
+
+
 @hydra.main(
     config_path=str(
         Path(__file__).resolve().parents[1] / "configs/uncertainty_benchmark"
@@ -52,26 +72,29 @@ def main(cfg):
     open_set_ident_rejection_scores, open_set_ident_rejection_names = [], []
 
     # create result dirs:
+    dataset_name = cfg.test_dataset.dataset_name
+    open_set_identification_result_dir = (
+        Path(cfg.exp_dir) / dataset_name / "open_set_identification"
+    )
+    open_set_identification_result_dir.mkdir(exist_ok=True, parents=True)
 
-    open_set_identification_result_dir = Path(cfg.exp_dir) / 'open_set_identification'
-    open_set_identification_result_dir.mkdir(exist_ok=True)
+    closed_set_identification_result_dir = (
+        Path(cfg.exp_dir) / dataset_name / "closed_set_identification"
+    )
+    closed_set_identification_result_dir.mkdir(exist_ok=True, parents=True)
 
-    closed_set_identification_result_dir = Path(cfg.exp_dir) / 'closed_set_identification'
-    closed_set_identification_result_dir.mkdir(exist_ok=True)
-    
-    verification_result_dir = Path(cfg.exp_dir) / 'verification'
-    verification_result_dir.mkdir(exist_ok=True)
-    
+    verification_result_dir = Path(cfg.exp_dir) / dataset_name / "verification"
+    verification_result_dir.mkdir(exist_ok=True, parents=True)
+
     # create result tables place holders
     open_set_recognition_result_metrics = {}
-    open_set_uncertainty_result_metrics = {} 
+    open_set_uncertainty_result_metrics = {}
 
     closed_set_recognition_result_metrics = {}
-    closed_set_uncertainty_result_metrics = {} 
+    closed_set_uncertainty_result_metrics = {}
 
     verification_recognition_result_metrics = {}
-    verification_uncertainty_result_metrics = {} 
-
+    verification_uncertainty_result_metrics = {}
 
     methods = cfg.open_set_identification_methods + cfg.verification_methods
     method_types = ["open_set_identification"] * len(
@@ -109,48 +132,44 @@ def main(cfg):
             open_set_uncertainty_metrics=open_set_uncertainty_metrics,
         )
 
-        save_path = os.path.dirname(method.save_result)
-        save_items = {}
-        if len(save_path) != 0 and not os.path.exists(save_path):
-            os.makedirs(save_path)
         if method_type == "open_set_identification":  # 1:N test
             # introduce method name that fully defines method features
-            
+
             method_name_parts = []
-            method_name_parts.append(f"pooling-with-{template_pooling.__class__.__name__}")
-            method_name_parts.append(f"use-det-score-{method.use_detector_score}")
-            method_name_parts.append(f"eval-with-{evaluation_function.__class__.__name__}")
-            confidence_function = evaluation_function.__dict__['confidence_function']
-            evaluation_function_args = dict(evaluation_function.__dict__).pop('confidence_function')
-            method_name_parts.append(f"eval-args-{get_args_string(evaluation_function_args)}")
-            method_name_parts.append(f"conf-func-{confidence_function.__class__.__name__}")
-            method_name_parts.append(f"conf-args-{get_args_string(confidence_function.__dict__)}")
-
-            method_name = '_'.join(method_name_parts)
-            # run recognition and uncertainty metric computation
-            open_set_identification_metric_values = (
-                tt.run_model_test_openset_identification()
+            method_name_parts.append(
+                f"pooling-with-{template_pooling.__class__.__name__}"
             )
-            open_set_recognition_result_metrics[method_name] = open_set_identification_metric_values
-            # fars = open_set_identification_metric_values["fars"]
-            # open_set_ident_scores.append(
-            #     (fars, open_set_identification_metric_values["recalls"])
-            # )
+            method_name_parts.append(f"use-det-score-{method.use_detector_score}")
+            method_name_parts.append(
+                f"eval-with-{evaluation_function.__class__.__name__}"
+            )
+            confidence_function = evaluation_function.__dict__["confidence_function"]
+            evaluation_function_args = dict(evaluation_function.__dict__)
+            evaluation_function_args.pop("confidence_function")
+            eval_args = get_args_string(evaluation_function_args)
+            if len(eval_args) != 0:
+                method_name_parts.append(f"eval-args-{eval_args}")
+            method_name_parts.append(
+                f"conf-func-{confidence_function.__class__.__name__}"
+            )
+            conf_args = get_args_string(confidence_function.__dict__)
+            if len(conf_args) != 0:
+                method_name_parts.append(f"eval-args-{conf_args}")
 
-            # open_set_ident_rejection_scores.append(
-            #     (
-            #         open_set_identification_metric_values["fractions"],
-            #         open_set_identification_metric_values["auc_mean_dist_unc"],
-            #     )
-            # )
-            # open_set_ident_rejection_names.append(save_name)
+            method_name = "_".join(method_name_parts)
+            print(method_name)
+            # run recognition and uncertainty metric computation
+            (
+                open_set_identification_metric_values,
+                open_set_uncertainty_metric_values,
+            ) = tt.run_model_test_openset_identification()
+            open_set_recognition_result_metrics[
+                method_name
+            ] = open_set_identification_metric_values
+            open_set_uncertainty_result_metrics[
+                method_name
+            ] = open_set_uncertainty_metric_values
 
-            # open_set_ident_names.append(save_name)
-            # for key in open_set_identification_metric_values.keys():
-            #     if "top" in key:
-            #         print(
-            #             f"{key}: {round(open_set_identification_metric_values[key],4)}"
-            #         )
         elif method_type == "verification":  # Basic 1:1 N0D1F1 test
             continue
             verification_metric_values = tt.run_model_test_verification()
@@ -171,7 +190,8 @@ def main(cfg):
             closed_set_ident_names.append(save_name)
         else:
             raise ValueError
-        np.savez(os.path.join(save_path, save_name + ".npz"), **save_items)
+    # open set identif metric table
+
     # identif plot
     fig = plot_dir_far_scores(scores=open_set_ident_scores, names=open_set_ident_names)
     fig.savefig(Path(cfg.exp_dir) / "di_far_plot.png", dpi=300)

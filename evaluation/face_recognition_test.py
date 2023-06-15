@@ -267,10 +267,10 @@ class Face_Fecognition_test:
             )
 
         # uncertainty metrics
-
+        unc_metrics = {}
         for unc_metric in self.open_set_uncertainty_metrics:
             assert self.labels_sorted is False
-            metrics.update(
+            unc_metrics.update(
                 unc_metric(
                     probe_ids=probe_unique_ids,
                     gallery_ids=g1_unique_ids,
@@ -307,10 +307,10 @@ class Face_Fecognition_test:
                     )
                 )
             # uncertainty metrics
-
+            g2_unc_metrics = {}
             for unc_metric in self.open_set_uncertainty_metrics:
                 assert self.labels_sorted is False
-                g2_metrics.update(
+                g2_unc_metrics.update(
                     unc_metric(
                         probe_ids=probe_unique_ids,
                         gallery_ids=g2_unique_ids,
@@ -320,19 +320,21 @@ class Face_Fecognition_test:
                 )
             query_num = probe_templates_feature.shape[0]
             for key in g2_metrics.keys():
-                if key == "recalls" or key == "auc_mean_dist_unc":
+                if "recalls" in key:
                     metrics[key] = (metrics[key] + g2_metrics[key]) / 2
                 elif "top" in key:
                     metrics[key] = (metrics[key] + g2_metrics[key]) / query_num
-
+            for key in g2_unc_metrics.keys():
+                if key == "auc_mean_dist_unc":
+                    unc_metrics[key] = (unc_metrics[key] + g2_unc_metrics[key]) / 2
             print(">>>> Mean")
 
         else:
             is_seen = np.isin(probe_unique_ids, g1_unique_ids)
             query_num = len(is_seen)
             for key in metrics.keys():
-                if key == "recalls":
+                if "recalls" in key:
                     pass
                 elif "top" in key:
                     metrics[key] = (metrics[key]) / query_num
-        return metrics
+        return metrics, unc_metrics

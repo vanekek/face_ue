@@ -128,47 +128,50 @@ class DetectionAndIdentificationRate:
         is_seen = np.isin(probe_ids, gallery_ids)
 
         seen_sim: np.ndarray = similarity[is_seen]
+        most_similar_classes = np.argsort(seen_sim, axis=1)[:, ::-1]
         seen_probe_ids = probe_ids[is_seen]
 
-        # def topk(k) -> int:
-        #     raise NotImplemented
-        #     return top_k_accuracy_score(seen_probe_ids, seen_sim, k=k, normalize=False)  # type: ignore
-
-        # top_n_count = map(topk, self.top_n_ranks)
-
-        # Boolean mask (seen_probes, gallery_ids), 1 where the probe matches gallery sample
-        pos_mask: np.ndarray = (
-            probe_ids[is_seen, None] == gallery_ids[None, gallery_ids_argsort]
-        )
-
-        pos_sims = seen_sim[pos_mask]
-        neg_sims = seen_sim[~pos_mask].reshape(*pos_sims.shape, -1)
         pos_score = probe_score[is_seen]
         neg_score = probe_score[~is_seen]
-        non_gallery_sims = similarity[~is_seen]
-
-        # see which test gallery images have higher closeness to true class in gallery than
-        # to the wrong classes
-        correct_pos_cond = pos_sims > np.max(neg_sims, axis=1)
-
         neg_score_sorted = np.sort(neg_score)[::-1]
-        threshes, recalls = [], []
-        for far in self.fars:
-            # compute operating threshold τ, which gives neaded far
-            thresh = neg_score_sorted[
-                max(int((neg_score_sorted.shape[0]) * far) - 1, 0)
-            ]
 
-            # compute DI rate at given operating threshold τ
-            recall = (
-                np.sum(np.logical_and(correct_pos_cond, pos_score > thresh))
-                / pos_sims.shape[0]
-            )
-            threshes.append(thresh)
-            recalls.append(recall)
-        recalls = np.array(recalls)
+        # pos_sims = seen_sim[pos_mask]
+        # neg_sims = seen_sim[~pos_mask].reshape(*pos_sims.shape, -1)
+        # pos_score = probe_score[is_seen]
+        # neg_score = probe_score[~is_seen]
+        # non_gallery_sims = similarity[~is_seen]
+        #
+
+        recalls = {}
+        for rank in self.top_n_ranks:
+            n_similart_classes = gallery_ids[most_similar_classes[:, :rank]]
+
+            correct_pos = np.isin(
+                seen_probe_ids, n_similart_classes
+            )  # pos_sims > np.max(neg_sims, axis=1)
+
+            recall_values = []
+            for far in self.fars:
+                # compute operating threshold τ, which gives neaded far
+                if len(neg_score_sorted) == 0:
+                    thresh = -np.inf
+                else:
+                    thresh = neg_score_sorted[
+                        max(int((neg_score_sorted.shape[0]) * far) - 1, 0)
+                    ]
+
+                # compute DI rate at given operating threshold τ
+                recall = (
+                    np.sum(np.logical_and(correct_pos, pos_score > thresh))
+                    / seen_probe_ids.shape[0]
+                )
+                recall_values.append(recall)
+            recall_values = np.array(recall_values)
+            recall_name = f"top_{rank}_recalls"
+            recalls[recall_name] = recall_values
 
         # metrics = dict(zip([f"top_{k}_count" for k in self.top_n_ranks], top_n_count))
         metrics = {}
-        metrics.update({"fars": self.fars, "recalls": recalls})
+        metrics.update({"fars": self.fars})
+        metrics.update(recalls)
         return metrics

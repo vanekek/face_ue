@@ -194,7 +194,6 @@ def create_table_body(result_latex_code, cfg):
 
             # add hline at the end of ts
             if next_ts_index < len(cfg.used_ts_names):
-
                 result_latex_code += "\\hline\n"
             next_ts_index += 1
 

@@ -11,7 +11,7 @@ class AbstractConfidence(ABC):
 
 
 class NAC_confidence(AbstractConfidence):
-    def __init__(self, k: int, s: float, shift: float, normalize: bool) -> None:
+    def __init__(self, k: int, s: float, normalize: bool) -> None:
         """
         Implemetns Neighborhood Aware Cosine (NAC) that computes
         similarity based on neighborhood information
@@ -36,10 +36,7 @@ class NAC_confidence(AbstractConfidence):
                 similarity_matrix - np.mean(similarity_matrix, axis=1, keepdims=True)
             ) / np.std(similarity_matrix, axis=1, keepdims=True)
         top_k_logits = np.sort(similarity_matrix, axis=1)[:, -self.k :]
-        # if self.normalize:
-        #     top_k_logits = (
-        #         top_k_logits - np.mean(top_k_logits, axis=1, keepdims=True)
-        #     ) / np.std(top_k_logits, axis=1, keepdims=True)
+
         return softmax((top_k_logits) * self.s, axis=1)[:, -1]
 
 

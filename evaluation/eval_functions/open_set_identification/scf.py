@@ -24,7 +24,6 @@ class SCF(Abstract1NEval):
         self.confidence_function = confidence_function
         self.k_shift = k_shift
         self.cosine_pred = cosine_pred
-        self.compute_scf_sim = ScfSim()
 
     def __call__(
         self,
@@ -37,11 +36,11 @@ class SCF(Abstract1NEval):
             "probe_feats: %s, gallery_feats: %s"
             % (probe_feats.shape, gallery_feats.shape)
         )
-
+        compute_scf_sim = ScfSim()
         gallery_unc = gallery_unc + self.k_shift
         probe_unc = probe_unc + self.k_shift
 
-        scf_similarity = self.compute_scf_sim(
+        scf_similarity = compute_scf_sim(
             probe_feats, gallery_feats, gallery_unc, probe_unc
         )
 

@@ -19,7 +19,7 @@ test_dataset:
 
 open_set_identification_metrics:
   - _target_: evaluation.metrics.DetectionAndIdentificationRate
-    top_n_ranks: [1, 10, 20]
+    top_n_ranks: [1, 5, 10, 20]
     far_range: [-4, 0, 100]
 
 closed_set_identification_metrics:
@@ -96,18 +96,6 @@ open_set_identification_methods:
   #     _target_: evaluation.template_pooling_strategies.PoolingPFEHarmonicMean
   #   use_detector_score: True
   #
-
-  - evaluation_function: 
-      _target_: evaluation.eval_functions.open_set_identification.SCF
-      confidence_function: 
-        _target_: evaluation.confidence_functions.MaxSimilarity_confidence
-      k_shift: 0
-      cosine_pred: False
-    embeddings_path: ${test_dataset.dataset_path}/embeddings/scf_embs_${test_dataset.dataset_name}.npz
-    template_pooling_strategy:
-      _target_: evaluation.template_pooling_strategies.PoolingSCF
-    use_detector_score: True
-
   - evaluation_function: 
       _target_: evaluation.eval_functions.open_set_identification.CosineSim
       confidence_function: 
@@ -116,6 +104,36 @@ open_set_identification_methods:
     template_pooling_strategy:
       _target_: evaluation.template_pooling_strategies.PoolingSCF
     use_detector_score: True
+
+  - evaluation_function: 
+      _target_: evaluation.eval_functions.open_set_identification.CosineSim
+      confidence_function: 
+        _target_: evaluation.confidence_functions.NAC_confidence
+        k: 15
+        s: 1
+        normalize: False
+    embeddings_path: ${test_dataset.dataset_path}/embeddings/scf_embs_${test_dataset.dataset_name}.npz
+    template_pooling_strategy:
+      _target_: evaluation.template_pooling_strategies.PoolingSCF
+    use_detector_score: True
+
+
+
+
+
+  # - evaluation_function: 
+  #     _target_: evaluation.eval_functions.open_set_identification.SCF
+  #     confidence_function: 
+  #       _target_: evaluation.confidence_functions.MaxSimilarity_confidence
+  #     k_shift: 0
+  #     cosine_pred: False
+  #   embeddings_path: ${test_dataset.dataset_path}/embeddings/scf_embs_${test_dataset.dataset_name}.npz
+  #   template_pooling_strategy:
+  #     _target_: evaluation.template_pooling_strategies.PoolingSCF
+  #   use_detector_score: True
+
+
+
 
 
 
