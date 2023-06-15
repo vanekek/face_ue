@@ -320,7 +320,7 @@ class Face_Fecognition_test:
                 )
             query_num = probe_templates_feature.shape[0]
             for key in g2_metrics.keys():
-                if "recalls" in key or 'AUC' in key or 'top' in key:
+                if "recalls" in key or "AUC" in key or "top" in key:
                     metrics[key] = (metrics[key] + g2_metrics[key]) / 2
             for key in g2_unc_metrics.keys():
                 if key == "auc_mean_dist_unc":

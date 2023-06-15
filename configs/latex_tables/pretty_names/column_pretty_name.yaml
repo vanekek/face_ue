@@ -1,7 +1,7 @@
-pretty_name: "Название метода"
-final_AUC_1_rank: "Ранг 1 AUC"
-final_top_1_recall_at_far_0.0001: "Ранг 1 TAR@FAR=0.0001"
-final_top_1_recall_at_far_1: "Ранг 1 TAR@FAR=1.0"
-final_AUC_10_rank: "Ранг 10 AUC"
-final_top_10_recall_at_far_0.0001: "Ранг 10 TAR@FAR=0.0001"
-final_top_10_recall_at_far_1: "Ранг 10 TAR@FAR=1.0"
+pretty_name: "Метод"
+final_AUC_1_rank: ["AUC", "Ранг 1"]
+final_top_1_recall_at_far_0.0001: ["TAR@FAR=$10^{-4}$", "Ранг 1"]
+final_top_1_recall_at_far_1: ["TAR@FAR=$1$", "Ранг 1"]
+final_AUC_10_rank: ["AUC", "Ранг 10"]
+final_top_10_recall_at_far_0.0001: ["TAR@FAR=$10^{-4}$", "Ранг 10"]
+final_top_10_recall_at_far_1: ["TAR@FAR=$1$", "Ранг 10"]

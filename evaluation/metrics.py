@@ -35,11 +35,13 @@ class MeanDistanceReject:
                 probe_score=probe_score[good_probes_idx],
             )
             for key, value in metric.items():
-                if 'recalls' in key:
-                    rank = key.split('_')[1]
-                    aucs[f'auc_{rank}_rank_mean_dist_unc'] = auc(metric["fars"], metric[key])
+                if "recalls" in key:
+                    rank = key.split("_")[1]
+                    aucs[f"auc_{rank}_rank_mean_dist_unc"] = auc(
+                        metric["fars"], metric[key]
+                    )
 
-        unc_metric = {'fractions': self.fractions}
+        unc_metric = {"fractions": self.fractions}
         unc_metric.update(aucs)
         return unc_metric
 
@@ -96,12 +98,15 @@ class TarFar:
 
 
 class DetectionAndIdentificationRate:
-    def __init__(self, top_n_ranks: List[int], far_range: List[int], display_fars: List[float]) -> None:
+    def __init__(
+        self, top_n_ranks: List[int], far_range: List[int], display_fars: List[float]
+    ) -> None:
         self.top_n_ranks = top_n_ranks
         self.fars = [
             10**ii for ii in np.arange(far_range[0], far_range[1], 4.0 / far_range[2])
         ] + [1]
         self.display_fars = display_fars
+
     def __call__(
         self,
         probe_ids: np.ndarray,
@@ -192,13 +197,15 @@ class DetectionAndIdentificationRate:
         for key, value in metrics.items():
             if "top" in key:
                 # compute auc
-                rank = key.split('_')[1]
-                new_metrics[f"final_AUC_{rank}_rank"] = auc(metrics["fars"], metrics[key])
+                rank = key.split("_")[1]
+                new_metrics[f"final_AUC_{rank}_rank"] = auc(
+                    metrics["fars"], metrics[key]
+                )
 
                 # compute fars
                 # interpolate tar@far curve
                 f = interpolate.interp1d(metrics["fars"], metrics[key])
                 for far in self.display_fars:
-                    new_metrics[f'final_top_{rank}_recall_at_far_{far}'] = f([far])[0]
+                    new_metrics[f"final_top_{rank}_recall_at_far_{far}"] = f([far])[0]
         metrics.update(new_metrics)
         return metrics

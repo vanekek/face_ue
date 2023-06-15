@@ -32,16 +32,16 @@ def get_args_string(d):
 
 
 def create_open_set_ident_recognition_metric_table(
-    recognition_result_dict: dict, pretty_names:dict,
+    recognition_result_dict: dict,
+    pretty_names: dict,
 ) -> pd.DataFrame:
-
-    column_names = ['pretty_name', 'model_name']
+    column_names = ["pretty_name", "model_name"]
     data_rows = []
     for i, model_name in enumerate(recognition_result_dict.keys()):
         metrics = []
         for metric_key, metric_value in recognition_result_dict[model_name].items():
             if "final" in metric_key:
-                if i==0:
+                if i == 0:
                     column_names.append(metric_key)
                 metrics.append(metric_value)
         data_rows.append([pretty_names[model_name], model_name] + metrics)
@@ -49,22 +49,29 @@ def create_open_set_ident_recognition_metric_table(
     df = pd.DataFrame(data_rows, columns=column_names)
     return df
 
-def create_open_set_ident_plots(recognition_result_dict: dict, out_dir: Path, pretty_names: dict):
+
+def create_open_set_ident_plots(
+    recognition_result_dict: dict, out_dir: Path, pretty_names: dict
+):
     metric_names = []
     for _, metric in recognition_result_dict.items():
         for key in metric.keys():
-            if 'recalls' in key:
+            if "recalls" in key:
                 metric_names.append(key)
         break
     for metric_name in metric_names:
-        rank = metric_name.split('_')[1]
+        rank = metric_name.split("_")[1]
         model_names = []
         scores = []
         for model_name, metrics in recognition_result_dict.items():
             model_names.append(pretty_names[model_name])
-            scores.append((metrics['fars'], metrics[metric_name]))
+            scores.append((metrics["fars"], metrics[metric_name]))
 
-        fig = plot_dir_far_scores(scores=scores, names=model_names, y_label=f"Rank {rank} Detection & Identification Rate")
+        fig = plot_dir_far_scores(
+            scores=scores,
+            names=model_names,
+            y_label=f"Rank {rank} Detection & Identification Rate",
+        )
         fig.savefig(out_dir / f"rank_{rank}_di_far_plot.png", dpi=300)
 
 
@@ -131,21 +138,23 @@ def main(cfg):
 
     methods = []
     method_types = []
-    if 'open_set_identification_methods' in cfg:
-        methods+=cfg.open_set_identification_methods
-        method_types+=["open_set_identification"] * len(
-        cfg.open_set_identification_methods
-         )
-    if 'closed_set_identification_methods' in cfg:
+    if "open_set_identification_methods" in cfg:
+        methods += cfg.open_set_identification_methods
+        method_types += ["open_set_identification"] * len(
+            cfg.open_set_identification_methods
+        )
+    if "closed_set_identification_methods" in cfg:
         methods += cfg.closed_set_identification_methods
-        method_types += ["closed_set_identification"] * len(cfg.closed_set_identification_methods)
-    if 'verification_methods' in cfg:
-        methods+= cfg.verification_methods
+        method_types += ["closed_set_identification"] * len(
+            cfg.closed_set_identification_methods
+        )
+    if "verification_methods" in cfg:
+        methods += cfg.verification_methods
         method_types += ["verification"] * len(cfg.verification_methods)
 
     for method, method_type in zip(methods, method_types):
         evaluation_function = instantiate(method.evaluation_function)
-        if cfg.test_dataset.dataset_name == 'survFace' and method.use_detector_score:
+        if cfg.test_dataset.dataset_name == "survFace" and method.use_detector_score:
             continue
         template_pooling = instantiate(method.template_pooling_strategy)
         tt = Face_Fecognition_test(
@@ -203,7 +212,6 @@ def main(cfg):
 
             open_set_ident_pretty_names.update({method_name: method.pretty_name})
 
-
         elif method_type == "verification":  # Basic 1:1 N0D1F1 test
             continue
             verification_metric_values = tt.run_model_test_verification()
@@ -225,11 +233,18 @@ def main(cfg):
         else:
             raise ValueError
     # open set identif metric table
-    df = create_open_set_ident_recognition_metric_table(open_set_recognition_result_metrics, open_set_ident_pretty_names)
-    df.to_csv(open_set_identification_result_dir / 'open_set_recognition.csv', index=False)
+    df = create_open_set_ident_recognition_metric_table(
+        open_set_recognition_result_metrics, open_set_ident_pretty_names
+    )
+    df.to_csv(
+        open_set_identification_result_dir / "open_set_recognition.csv", index=False
+    )
     # identif plot
-    create_open_set_ident_plots(open_set_recognition_result_metrics, open_set_identification_result_dir, open_set_ident_pretty_names)
-    
+    create_open_set_ident_plots(
+        open_set_recognition_result_metrics,
+        open_set_identification_result_dir,
+        open_set_ident_pretty_names,
+    )
 
     # # verif plot
 

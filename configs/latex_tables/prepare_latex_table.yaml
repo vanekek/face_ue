@@ -2,23 +2,25 @@
 hydra:
   run:
     dir: ${exp_dir}
-exp_dir: outputs/${hydra.job.name}/${hydra.job.name}_${now:%Y-%m-%d_%H-%M-%S}
+exp_dir: outputs/latex_tables/${now:%Y-%m-%d_%H-%M-%S}
 
 defaults:
   - _self_
+  - pretty_names@pretty_name.model: model_pretty_name_pooling
   - pretty_names@pretty_name.column: column_pretty_name
 
 
 # CHANGE
-metric_table_path: /app/outputs/experiments/pooling_methods/IJBC/open_set_identification/open_set_recognition.csv
+metric_table_path: /app/experiments/pooling_methods/IJBC/open_set_identification/open_set_recognition.csv
 
 caption: >
-  Ranks of calibration metrics of surrogate models aggregated over Dataset A, Dataset B and FD.
-  Best results are highlighted with \textbf{{bold}} font,
-  second best results are \underline{{underscored}}
+  Исследование влияния способа объединения шаблонов на метрики распознавания.
+  В качестве модели распознавания используется косинусное расстояние.
+  Лучшие значения подчёркнуты \textbf{{жирным}} шрифтом,
+  вторые лучшие \underline{{подчёркнуты}}
 
-table_lable: "tab:rank_table_surr" #"tab:surrogate_results_full_{dataset_name}"
-rank_values: True
+table_lable: "tab:openset_pool" #"tab:surrogate_results_full_{dataset_name}"
+round_num: 4
 use_scriptsize: False
 use_adjustbox: False
 
@@ -39,9 +41,9 @@ used_columns:
     "final_AUC_1_rank",
     "final_top_1_recall_at_far_0.0001",
     "final_top_1_recall_at_far_1",
-    "final_AUC_10_rank",
-    "final_top_10_recall_at_far_0.0001",
-    "final_top_10_recall_at_far_1",
+    # "final_AUC_10_rank",
+    # "final_top_10_recall_at_far_0.0001",
+    # "final_top_10_recall_at_far_1",
   ]
 
 sort_models_with: "used_models"
