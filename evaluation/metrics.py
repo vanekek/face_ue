@@ -3,6 +3,7 @@ import numpy as np
 from sklearn.metrics import top_k_accuracy_score
 from tqdm import tqdm
 from sklearn.metrics import roc_curve, auc
+from scipy import interpolate
 
 EvalMetricsT = Tuple[int, int, int, List[float], List[float], List[Tuple[float, float]]]
 
@@ -23,7 +24,7 @@ class MeanDistanceReject:
         unc_score = -np.abs(probe_score - mean_probe_score)
 
         unc_indexes = np.argsort(unc_score)
-        aucs = []
+        aucs = {}
         for fraction in self.fractions:
             # drop worst fraction
             good_probes_idx = unc_indexes[: int((1 - fraction) * probe_ids.shape[0])]
@@ -33,8 +34,14 @@ class MeanDistanceReject:
                 similarity=similarity[good_probes_idx],
                 probe_score=probe_score[good_probes_idx],
             )
-            aucs.append(auc(metric["fars"], metric["recalls"]))
-        return {"fractions": self.fractions, "auc_mean_dist_unc": np.array(aucs)}
+            for key, value in metric.items():
+                if 'recalls' in key:
+                    rank = key.split('_')[1]
+                    aucs[f'auc_{rank}_rank_mean_dist_unc'] = auc(metric["fars"], metric[key])
+
+        unc_metric = {'fractions': self.fractions}
+        unc_metric.update(aucs)
+        return unc_metric
 
 
 class CMC:
@@ -48,6 +55,8 @@ class CMC:
         similarity: np.ndarray,
         probe_score: np.ndarray,
     ):
+        raise NotImplemented
+        # need to fix cmc computation
         cmc = []
         most_similar_classes = np.argsort(similarity, axis=1)[:, ::-1]
         for n in self.top_n_ranks:
@@ -87,12 +96,12 @@ class TarFar:
 
 
 class DetectionAndIdentificationRate:
-    def __init__(self, top_n_ranks: List[int], far_range: List[int]) -> None:
+    def __init__(self, top_n_ranks: List[int], far_range: List[int], display_fars: List[float]) -> None:
         self.top_n_ranks = top_n_ranks
         self.fars = [
             10**ii for ii in np.arange(far_range[0], far_range[1], 4.0 / far_range[2])
         ] + [1]
-
+        self.display_fars = display_fars
     def __call__(
         self,
         probe_ids: np.ndarray,
@@ -177,4 +186,19 @@ class DetectionAndIdentificationRate:
         metrics = {}
         metrics.update({"fars": self.fars})
         metrics.update(recalls)
+
+        # compute final metrics
+        new_metrics = {}
+        for key, value in metrics.items():
+            if "top" in key:
+                # compute auc
+                rank = key.split('_')[1]
+                new_metrics[f"final_AUC_{rank}_rank"] = auc(metrics["fars"], metrics[key])
+
+                # compute fars
+                # interpolate tar@far curve
+                f = interpolate.interp1d(metrics["fars"], metrics[key])
+                for far in self.display_fars:
+                    new_metrics[f'final_top_{rank}_recall_at_far_{far}'] = f([far])[0]
+        metrics.update(new_metrics)
         return metrics

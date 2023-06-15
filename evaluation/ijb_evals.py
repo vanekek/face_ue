@@ -6,6 +6,7 @@ import hydra
 from hydra.utils import instantiate
 import sys
 import pandas as pd
+from sklearn.metrics import roc_curve, auc
 
 from evaluation.face_recognition_test import Face_Fecognition_test
 from evaluation.visualize import (
@@ -33,14 +34,25 @@ def get_args_string(d):
 def create_open_set_ident_recognition_metric_table(
     recognition_result_dict: dict,
 ) -> pd.DataFrame:
-    df = {}
-    metric_names = ["AUC_TOP_1", "TAR@FAR=0.0001"]
-    fars = recognition_result_dict["fars"]
-    for key, value in recognition_result_dict.items():
-        if "top" in key:
-            pass
+
+    column_names = ['model_name']
+    data_rows = []
+    for i, model_name in enumerate(recognition_result_dict.keys()):
+        metrics = []
+        for metric_key, metric_value in recognition_result_dict[model_name].items():
+            if "final" in metric_key:
+                if i==0:
+                    column_names.append(metric_key)
+                metrics.append(metric_value)
+        data_rows.append([model_name] + metrics)
     # recognition_result_dict
-    return pd.DataFrame(d.items(), columns=["Date", "DateValue"])
+    df = pd.DataFrame(data_rows, columns=column_names)
+    return df
+def create_open_set_ident_plots(recognition_result_dict: dict, out_dir: Path):
+    fig = plot_dir_far_scores(scores=open_set_ident_scores, names=open_set_ident_names)
+    fig.savefig(Path(cfg.exp_dir) / "di_far_plot.png", dpi=300)
+    print("Plot open ident path:")
+    print(str(Path(cfg.exp_dir) / "di_far_plot.png"))
 
 
 def create_open_set_ident_uncertainty_metric_table(
@@ -158,7 +170,7 @@ def main(cfg):
             )
             conf_args = get_args_string(confidence_function.__dict__)
             if len(conf_args) != 0:
-                method_name_parts.append(f"eval-args-{conf_args}")
+                method_name_parts.append(f"conf-args-{conf_args}")
 
             method_name = "_".join(method_name_parts)
             print(method_name)
@@ -195,12 +207,11 @@ def main(cfg):
         else:
             raise ValueError
     # open set identif metric table
-
+    df = create_open_set_ident_recognition_metric_table(open_set_recognition_result_metrics)
+    df.to_csv(open_set_identification_result_dir / 'open_set_recognition.csv', index=False)
     # identif plot
-    fig = plot_dir_far_scores(scores=open_set_ident_scores, names=open_set_ident_names)
-    fig.savefig(Path(cfg.exp_dir) / "di_far_plot.png", dpi=300)
-    print("Plot open ident path:")
-    print(str(Path(cfg.exp_dir) / "di_far_plot.png"))
+    create_open_set_ident_plots(open_set_recognition_result_metrics, open_set_identification_result_dir)
+    
 
     # verif plot
 

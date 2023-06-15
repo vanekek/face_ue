@@ -320,21 +320,16 @@ class Face_Fecognition_test:
                 )
             query_num = probe_templates_feature.shape[0]
             for key in g2_metrics.keys():
-                if "recalls" in key:
+                if "recalls" in key or 'AUC' in key or 'top' in key:
                     metrics[key] = (metrics[key] + g2_metrics[key]) / 2
-                elif "top" in key:
-                    metrics[key] = (metrics[key] + g2_metrics[key]) / query_num
             for key in g2_unc_metrics.keys():
                 if key == "auc_mean_dist_unc":
                     unc_metrics[key] = (unc_metrics[key] + g2_unc_metrics[key]) / 2
-            print(">>>> Mean")
 
         else:
             is_seen = np.isin(probe_unique_ids, g1_unique_ids)
             query_num = len(is_seen)
-            for key in metrics.keys():
-                if "recalls" in key:
-                    pass
-                elif "top" in key:
-                    metrics[key] = (metrics[key]) / query_num
+            # for key in metrics.keys():
+            #     if "recalls" in key:
+            #         pass
         return metrics, unc_metrics
