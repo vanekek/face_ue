@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 from pathlib import Path
 import hydra
+from omegaconf import OmegaConf
 
 
 def compute_best_values(table):
@@ -104,10 +105,17 @@ def create_table_tail(result_latex_code, cfg):
 )
 def run(cfg):
     result_latex_code = """"""
+    if "{dataset_name}" in cfg.caption:
+        caption = cfg.caption.format(dataset_name=cfg.dataset)
+    else:
+        caption = cfg.caption
 
+    cfg.used_columns = OmegaConf.to_container(cfg.used_columns_dict)[cfg.task][
+        cfg.dataset
+    ]
     result_latex_code = create_table_head(
         result_latex_code,
-        cfg.caption,
+        caption,
         cfg.table_lable,
         cfg,
     )

@@ -237,7 +237,7 @@ def main(cfg):
         open_set_recognition_result_metrics, open_set_ident_pretty_names
     )
     df.to_csv(
-        open_set_identification_result_dir / "open_set_recognition.csv", index=False
+        open_set_identification_result_dir / "open_set_identification.csv", index=False
     )
     # identif plot
     create_open_set_ident_plots(
