@@ -3,7 +3,7 @@ docker run \
  --memory=80g \
  --cpus=40 \
  --user 1133:1134 \
- --name scf_train \
+ --name scf_predict \
  --rm \
  --init \
  -v /home/l.erlygin/face_ue:/app \

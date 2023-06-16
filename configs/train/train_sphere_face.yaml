@@ -20,7 +20,7 @@ trainer:
   - class_path: face_lib.models.scf.Prediction_writer
     init_args: 
       output_dir: /app/cache/features
-      file_name: scf_ms1m # subset: ${data.init_args.data_predict_subset}
+      file_name: scf_embs_IJBC_norm_image # subset: ${data.init_args.data_predict_subset}
       write_interval: epoch
   max_epochs: 5
   accelerator: gpu
@@ -71,18 +71,24 @@ model:
                 gamma: 0.5
             interval: "step"
             frequency: 1
-        permute_batch: False
+        permute_batch: True
 
 
 data:
     class_path: face_lib.datasets.lightning_datasets.UncertaintyDataModule
     init_args:
         data_train_dir: /app/datasets/ms1m/
+        # predict_dataset:
+        #     class_path: face_lib.datasets.lightning_datasets.MXFaceDataset
+        #     init_args: 
+        #         root_dir: /app/datasets/ms1m/
+        #         test: True
         predict_dataset:
-            class_path: face_lib.datasets.lightning_datasets.MXFaceDataset
-            init_args: 
-                root_dir: /app/datasets/ms1m/
-                test: True
+            class_path: face_lib.datasets.arcface_ijb.IJB_aligned_images
+            init_args:
+                dataset_path: /app/datasets/arcface_ijb/IJBC
+                dataset_name: IJBC
+                norm_image: True
         # predict_dataset:
         #     class_path: face_lib.datasets.qmul.SurvFace
         #     init_args:
