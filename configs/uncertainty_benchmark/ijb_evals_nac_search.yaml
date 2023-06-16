@@ -7,15 +7,15 @@ exp_dir: experiments/nac
 use_two_galleries: True
 recompute_template_pooling: False
 
-# test_dataset:
-#   _target_: evaluation.test_datasets.FaceRecogntioniDataset
-#   dataset_name: survFace
-#   dataset_path: /app/datasets/QMUL-SurvFace/Face_Identification_Test_Set
-
 test_dataset:
   _target_: evaluation.test_datasets.FaceRecogntioniDataset
-  dataset_name: IJBC
-  dataset_path: /app/datasets/arcface_ijb/IJBC
+  dataset_name: survFace
+  dataset_path: /app/datasets/QMUL-SurvFace/Face_Identification_Test_Set
+
+# test_dataset:
+#   _target_: evaluation.test_datasets.FaceRecogntioniDataset
+#   dataset_name: IJBC
+#   dataset_path: /app/datasets/arcface_ijb/IJBC
 
 open_set_identification_metrics:
   - _target_: evaluation.metrics.DetectionAndIdentificationRate

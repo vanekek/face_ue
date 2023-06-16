@@ -3,8 +3,8 @@ use_two_galleries: true
 recompute_template_pooling: false
 test_dataset:
   _target_: evaluation.test_datasets.FaceRecogntioniDataset
-  dataset_name: IJBC
-  dataset_path: /app/datasets/arcface_ijb/IJBC
+  dataset_name: survFace
+  dataset_path: /app/datasets/QMUL-SurvFace/Face_Identification_Test_Set
 open_set_identification_metrics:
 - _target_: evaluation.metrics.DetectionAndIdentificationRate
   top_n_ranks:

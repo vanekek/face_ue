@@ -35,6 +35,10 @@ class NAC_confidence(AbstractConfidence):
             similarity_matrix = (
                 similarity_matrix - np.mean(similarity_matrix, axis=1, keepdims=True)
             ) / np.std(similarity_matrix, axis=1, keepdims=True)
+        # if self.normalize:
+        #     similarity_matrix = (
+        #         similarity_matrix - np.mean(similarity_matrix)
+        #     ) / np.std(similarity_matrix)
         top_k_logits = np.sort(similarity_matrix, axis=1)[:, -self.k :]
 
         return softmax((top_k_logits) * self.s, axis=1)[:, -1]

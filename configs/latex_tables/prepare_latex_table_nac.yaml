@@ -7,22 +7,22 @@ exp_dir: outputs/latex_tables/${now:%Y-%m-%d_%H-%M-%S}
 defaults:
   - _self_
   - pretty_names@pretty_name.task: task_pretty_name
-  - pretty_names@pretty_name.model: model_pretty_name_nac_unc_dist_search
+  - pretty_names@pretty_name.model: model_pretty_name_nac_search
   - pretty_names@pretty_name.column: column_pretty_name_nac
 
-#dataset: survFace
-dataset: IJBB
+dataset: survFace
+#dataset: IJBC
 task: open_set_identification
 #task: verification
 #task: closed_set_identification
 # CHANGE
-metric_table_path: /app/experiments/nac_unc_dist/${dataset}/${task}/${task}.csv
+metric_table_path: /app/experiments/nac/${dataset}/${task}/${task}.csv
 
 caption: >
-  Совместное использование NAC и расстояний между распределениями на наборе данных {dataset_name} при решении задачи {task}. Для усреднения шаблонов использовались неопределённости детектора лиц.
+  Анализ метода NAC на наборе данных {dataset_name} при решении задачи {task}. Для усреднения шаблонов использовались неопределённости детектора лиц.
   
 fix_table: True
-table_lable: "tab:${task}_${dataset}_nac_unc_dist"
+table_lable: "tab:${task}_${dataset}_nac_search"
 round_num: 3
 use_scriptsize: False
 use_adjustbox: False
@@ -49,7 +49,7 @@ used_columns_dict:
         "pretty_name",
         "final_AUC_1_rank",
         "final_top_1_recall_at_far_0.001",
-        #"final_top_1_recall_at_far_1",
+        "final_top_1_recall_at_far_1",
       ]
   verification:
     IJBC:

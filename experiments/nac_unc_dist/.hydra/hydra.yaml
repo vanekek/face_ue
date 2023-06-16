@@ -118,7 +118,7 @@ hydra:
     override_dirname: ''
     id: ???
     num: ???
-    config_name: ijb_evals_nac_search
+    config_name: ijb_evals
     env_set: {}
     env_copy: []
     config:
@@ -140,7 +140,7 @@ hydra:
     - path: ''
       schema: structured
       provider: schema
-    output_dir: /app/experiments/nac
+    output_dir: /app/experiments/nac_unc_dist
     choices:
       hydra/env: default
       hydra/callbacks: null

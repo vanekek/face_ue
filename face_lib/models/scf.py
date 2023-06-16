@@ -45,7 +45,7 @@ class SphereConfidenceFace(LightningModule):
         softmax_weights: torch.nn.Module,
         optimizer_params,
         scheduler_params,
-        permute_batch: bool
+        permute_batch: bool,
     ):
         super().__init__()
         self.backbone = backbone
@@ -55,6 +55,7 @@ class SphereConfidenceFace(LightningModule):
         self.optimizer_params = optimizer_params
         self.scheduler_params = scheduler_params
         self.permute_batch = permute_batch
+
     def forward(self, x):
         backbone_outputs = self.backbone(x)
         log_kappa = self.head(backbone_outputs["bottleneck_feature"])
