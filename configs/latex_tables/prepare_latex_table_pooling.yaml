@@ -10,11 +10,11 @@ defaults:
   - pretty_names@pretty_name.model: model_pretty_name_pooling
   - pretty_names@pretty_name.column: column_pretty_name
 
-dataset: survFace
-#dataset: IJBC
+#dataset: survFace
+dataset: IJBB
 #task: open_set_identification
-#task: verification
-task: closed_set_identification
+task: verification
+#task: closed_set_identification
 # CHANGE
 metric_table_path: /app/experiments/pooling_methods/${dataset}/${task}/${task}.csv
 
@@ -23,7 +23,7 @@ caption: >
   
 
 table_lable: "tab:${task}_${dataset}_pool"
-round_num: 4
+round_num: 3
 use_scriptsize: False
 use_adjustbox: False
 
@@ -58,7 +58,7 @@ used_columns_dict:
         "final_auc",
         "final_recall_at_far_1e-06",
         "final_recall_at_far_1e-05",
-        "final_recall_at_far_0.01"
+        #"final_recall_at_far_0.01"
       ]
     IJBB:
       [
@@ -66,7 +66,7 @@ used_columns_dict:
         "final_auc",
         "final_recall_at_far_1e-06",
         "final_recall_at_far_1e-05",
-        "final_recall_at_far_0.01"
+        #"final_recall_at_far_0.01"
       ]
   closed_set_identification:
     survFace:
