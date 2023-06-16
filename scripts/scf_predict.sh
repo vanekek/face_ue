@@ -6,7 +6,7 @@ docker run \
  --name scf_train \
  --rm \
  --init \
- -v /home/l.erlygin/face-evaluation:/app \
+ -v /home/l.erlygin/face_ue:/app \
  --gpus all \
  -w="/app" \
  face-eval \
