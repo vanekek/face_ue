@@ -2,7 +2,7 @@ hydra:
   run:
     dir: ${exp_dir}
 #exp_dir: outputs/ijb_evals/ijb_evals_${now:%Y-%m-%d_%H-%M-%S}
-exp_dir: experiments/pooling_methods
+exp_dir: experiments/scf_k_search
 
 use_two_galleries: True
 recompute_template_pooling: False
@@ -41,36 +41,8 @@ open_set_uncertainty_metrics:
       far_range: [-4, 0, 100] 
       display_fars: [0.0001, 0.001, 0.01, 0.1, 1]
 
+
 open_set_identification_methods:
-  - evaluation_function: 
-      _target_: evaluation.eval_functions.open_set_identification.CosineSim
-      confidence_function: 
-        _target_: evaluation.confidence_functions.MaxSimilarity_confidence
-    embeddings_path: ${test_dataset.dataset_path}/embeddings/scf_embs_${test_dataset.dataset_name}.npz
-    template_pooling_strategy:
-      _target_: evaluation.template_pooling_strategies.PoolingDefault
-    use_detector_score: False
-    pretty_name: CosineSim_MeanPool
-
-  - evaluation_function: 
-      _target_: evaluation.eval_functions.open_set_identification.CosineSim
-      confidence_function: 
-        _target_: evaluation.confidence_functions.MaxSimilarity_confidence
-    embeddings_path: ${test_dataset.dataset_path}/embeddings/scf_embs_${test_dataset.dataset_name}.npz
-    template_pooling_strategy:
-      _target_: evaluation.template_pooling_strategies.PoolingDefault
-    use_detector_score: True
-    pretty_name: CosineSim_DetScore_MeanPool
-
-  - evaluation_function: 
-      _target_: evaluation.eval_functions.open_set_identification.CosineSim
-      confidence_function: 
-        _target_: evaluation.confidence_functions.MaxSimilarity_confidence
-    embeddings_path: ${test_dataset.dataset_path}/embeddings/scf_embs_${test_dataset.dataset_name}.npz
-    template_pooling_strategy:
-      _target_: evaluation.template_pooling_strategies.PoolingSCF
-    use_detector_score: False
-    pretty_name: CosineSim_SCF-Pool
 
   - evaluation_function: 
       _target_: evaluation.eval_functions.open_set_identification.CosineSim
@@ -80,27 +52,107 @@ open_set_identification_methods:
     template_pooling_strategy:
       _target_: evaluation.template_pooling_strategies.PoolingSCF
     use_detector_score: True
-    pretty_name: CosineSim_DetScore_SCF-Pool
+    pretty_name: CosineSim
 
   - evaluation_function: 
-      _target_: evaluation.eval_functions.open_set_identification.CosineSim
+      _target_: evaluation.eval_functions.open_set_identification.SCF
       confidence_function: 
         _target_: evaluation.confidence_functions.MaxSimilarity_confidence
-    embeddings_path: ${test_dataset.dataset_path}/embeddings/pfe_embs_${test_dataset.dataset_name}.npz
+      k_shift: 0
+      cosine_pred: False
+    embeddings_path: ${test_dataset.dataset_path}/embeddings/scf_embs_${test_dataset.dataset_name}.npz
     template_pooling_strategy:
-      _target_: evaluation.template_pooling_strategies.PoolingPFEHarmonicMean
-    use_detector_score: False
-    pretty_name: CosineSim_PFEHarmonicMean-Pool
-
-  - evaluation_function: 
-      _target_: evaluation.eval_functions.open_set_identification.CosineSim
-      confidence_function: 
-        _target_: evaluation.confidence_functions.MaxSimilarity_confidence
-    embeddings_path: ${test_dataset.dataset_path}/embeddings/pfe_embs_${test_dataset.dataset_name}.npz
-    template_pooling_strategy:
-      _target_: evaluation.template_pooling_strategies.PoolingPFEHarmonicMean
+      _target_: evaluation.template_pooling_strategies.PoolingSCF
     use_detector_score: True
-    pretty_name: CosineSim_DetScore_PFEHarmonicMean-Pool
+    pretty_name: SCF_k_shift_0
+
+
+  - evaluation_function: 
+      _target_: evaluation.eval_functions.open_set_identification.SCF
+      confidence_function: 
+        _target_: evaluation.confidence_functions.MaxSimilarity_confidence
+      k_shift: 10
+      cosine_pred: False
+    embeddings_path: ${test_dataset.dataset_path}/embeddings/scf_embs_${test_dataset.dataset_name}.npz
+    template_pooling_strategy:
+      _target_: evaluation.template_pooling_strategies.PoolingSCF
+    use_detector_score: True
+    pretty_name: SCF_k_shift_10
+
+  - evaluation_function: 
+      _target_: evaluation.eval_functions.open_set_identification.SCF
+      confidence_function: 
+        _target_: evaluation.confidence_functions.MaxSimilarity_confidence
+      k_shift: 150
+      cosine_pred: False
+    embeddings_path: ${test_dataset.dataset_path}/embeddings/scf_embs_${test_dataset.dataset_name}.npz
+    template_pooling_strategy:
+      _target_: evaluation.template_pooling_strategies.PoolingSCF
+    use_detector_score: True
+    pretty_name: SCF_k_shift_150
+
+
+  - evaluation_function: 
+      _target_: evaluation.eval_functions.open_set_identification.SCF
+      confidence_function: 
+        _target_: evaluation.confidence_functions.MaxSimilarity_confidence
+      k_shift: 300
+      cosine_pred: False
+    embeddings_path: ${test_dataset.dataset_path}/embeddings/scf_embs_${test_dataset.dataset_name}.npz
+    template_pooling_strategy:
+      _target_: evaluation.template_pooling_strategies.PoolingSCF
+    use_detector_score: True
+    pretty_name: SCF_k_shift_300
+
+
+  - evaluation_function: 
+      _target_: evaluation.eval_functions.open_set_identification.SCF
+      confidence_function: 
+        _target_: evaluation.confidence_functions.MaxSimilarity_confidence
+      k_shift: 600
+      cosine_pred: False
+    embeddings_path: ${test_dataset.dataset_path}/embeddings/scf_embs_${test_dataset.dataset_name}.npz
+    template_pooling_strategy:
+      _target_: evaluation.template_pooling_strategies.PoolingSCF
+    use_detector_score: True
+    pretty_name: SCF_k_shift_600
+
+
+  - evaluation_function: 
+      _target_: evaluation.eval_functions.open_set_identification.SCF
+      confidence_function: 
+        _target_: evaluation.confidence_functions.MaxSimilarity_confidence
+      k_shift: 1200
+      cosine_pred: False
+    embeddings_path: ${test_dataset.dataset_path}/embeddings/scf_embs_${test_dataset.dataset_name}.npz
+    template_pooling_strategy:
+      _target_: evaluation.template_pooling_strategies.PoolingSCF
+    use_detector_score: True
+    pretty_name: SCF_k_shift_1200
+
+  - evaluation_function: 
+      _target_: evaluation.eval_functions.open_set_identification.SCF
+      confidence_function: 
+        _target_: evaluation.confidence_functions.MaxSimilarity_confidence
+      k_shift: 10000
+      cosine_pred: False
+    embeddings_path: ${test_dataset.dataset_path}/embeddings/scf_embs_${test_dataset.dataset_name}.npz
+    template_pooling_strategy:
+      _target_: evaluation.template_pooling_strategies.PoolingSCF
+    use_detector_score: True
+    pretty_name: SCF_k_shift_10000
+
+  - evaluation_function: 
+      _target_: evaluation.eval_functions.open_set_identification.SCF
+      confidence_function: 
+        _target_: evaluation.confidence_functions.MaxSimilarity_confidence
+      k_shift: 50000
+      cosine_pred: False
+    embeddings_path: ${test_dataset.dataset_path}/embeddings/scf_embs_${test_dataset.dataset_name}.npz
+    template_pooling_strategy:
+      _target_: evaluation.template_pooling_strategies.PoolingSCF
+    use_detector_score: True
+    pretty_name: SCF_k_shift_50000
 
 
 

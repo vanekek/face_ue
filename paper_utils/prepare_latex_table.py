@@ -20,8 +20,10 @@ def compute_best_values(table):
 def create_table_head(result_latex_code, caption, table_lable, cfg):
     used_columns = cfg.used_columns
     column_pretty_name = cfg.pretty_name.column
-
-    result_latex_code += "\\begin{table}\n"
+    if cfg.fix_table:
+        result_latex_code += "\\begin{table}[H]\n"
+    else:
+        result_latex_code += "\\begin{table}\n"
     if cfg.use_scriptsize:
         result_latex_code += "\\scriptsize\n"
     result_latex_code += "\\caption{" + caption + "}\n"
@@ -67,7 +69,9 @@ def create_table_body(result_latex_code, cfg):
                 if metric_value == best_values[column_name][0]:
                     # best value
                     result_latex_code += (
-                        "\\textbf{" + str(np.round(metric_value * 100, cfg.round_num)) + "} "
+                        "\\textbf{"
+                        + str(np.round(metric_value * 100, cfg.round_num))
+                        + "} "
                     )
                 elif metric_value == best_values[column_name][1]:
                     # second best value

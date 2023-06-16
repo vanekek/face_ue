@@ -11,7 +11,7 @@ defaults:
   - pretty_names@pretty_name.column: column_pretty_name
 
 #dataset: survFace
-dataset: IJBB
+dataset: IJBC
 #task: open_set_identification
 task: verification
 #task: closed_set_identification
@@ -21,7 +21,7 @@ metric_table_path: /app/experiments/pooling_methods/${dataset}/${task}/${task}.c
 caption: >
   Исследование влияния способа объединения шаблонов на метрики распознавания на наборе данных {dataset_name} при решении задачи {task}.
   
-
+fix_table: True
 table_lable: "tab:${task}_${dataset}_pool"
 round_num: 3
 use_scriptsize: False
@@ -34,21 +34,21 @@ used_columns_dict:
       [
         "pretty_name",
         "final_AUC_5_rank",
-        "final_top_5_recall_at_far_0.0001",
+        "final_top_5_recall_at_far_0.001",
         "final_top_5_recall_at_far_1",
       ]
     IJBC:
       [
         "pretty_name",
         "final_AUC_1_rank",
-        "final_top_1_recall_at_far_0.0001",
+        "final_top_1_recall_at_far_0.001",
         "final_top_1_recall_at_far_1",
       ]
     IJBB:
       [
         "pretty_name",
         "final_AUC_1_rank",
-        "final_top_1_recall_at_far_0.0001",
+        "final_top_1_recall_at_far_0.001",
         "final_top_1_recall_at_far_1",
       ]
   verification:
