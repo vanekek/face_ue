@@ -7,22 +7,22 @@ exp_dir: outputs/latex_tables/${now:%Y-%m-%d_%H-%M-%S}
 defaults:
   - _self_
   - pretty_names@pretty_name.task: task_pretty_name
-  - pretty_names@pretty_name.model: model_pretty_name_dist_comparison
+  - pretty_names@pretty_name.model: model_pretty_name_scf_k_search
   - pretty_names@pretty_name.column: column_pretty_name_scf_k_search
 
 #dataset: survFace
 dataset: IJBC
-#task: open_set_identification
-task: verification
+task: open_set_identification
+#task: verification
 #task: closed_set_identification
 # CHANGE
-metric_table_path: /app/experiments/dist_comparison/${dataset}/${task}/${task}.csv
+metric_table_path: /app/experiments/scf_k_search/${dataset}/${task}/${task}.csv
 
 caption: >
-  Сравнение функций расстояния на наборе данных {dataset_name} при решении задачи {task}. Для усреднения шаблонов использовались неопределённости SCF и детектора лиц.
+  Исследование SCF расстояния на наборе данных {dataset_name} при решении задачи {task}. Для усреднения шаблонов использовались неопределённости SCF и детектора лиц.
   
 fix_table: True
-table_lable: "tab:${task}_${dataset}_dist_comp"
+table_lable: "tab:${task}_${dataset}_scf_search"
 round_num: 3
 use_scriptsize: False
 use_adjustbox: False

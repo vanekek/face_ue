@@ -34,7 +34,7 @@ class Face_Fecognition_test:
 
         print(">>>> Reload embeddings from:", embeddings_path)
         aa = np.load(embeddings_path)
-
+        self.embeddings_path = embeddings_path
         self.embs = aa["embs"]
         self.embs_f = []
         self.unc = aa["unc"]

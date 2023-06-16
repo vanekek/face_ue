@@ -192,8 +192,8 @@ def main(cfg):
     for method, method_type in zip(methods, method_types):
         evaluation_function = instantiate(method.evaluation_function)
         assert evaluation_function is not None
-        if cfg.test_dataset.dataset_name == "survFace" and method.use_detector_score:
-            continue
+        # if cfg.test_dataset.dataset_name == "survFace" and method.use_detector_score:
+        #     continue
         template_pooling = instantiate(method.template_pooling_strategy)
         tt = Face_Fecognition_test(
             evaluation_function=evaluation_function,
