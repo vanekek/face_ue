@@ -1,4 +1,4 @@
-CosineSim: "Консинусный MaxProb"
+CosineSim: "Косинусный MaxProb"
 CosineSim_NAC-k=5: "Кос. NAC, $k=5$"
 CosineSim_NAC-k=15: "Кос. NAC, $k=15$"
 CosineSim_NAC-k=30: "Кос. NAC, $k=30$"

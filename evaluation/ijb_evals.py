@@ -90,6 +90,31 @@ def create_closed_set_ident_plots(
     )
     fig.savefig(out_dir / f"cmc_plot.png", dpi=300)
 
+def create_rejection_plots(
+    open_set_uncertainty_result_metrics: dict, out_dir: Path, pretty_names: dict
+):
+    metric_names = []
+    for _, metric in open_set_uncertainty_result_metrics.items():
+        for key in metric.keys():
+            if "plot_auc_" in key:
+                metric_names.append(key)
+        break
+    for metric_name in metric_names:
+        rank = metric_name.split("_")[2]
+        model_names = []
+        scores = []
+        for model_name, metrics in open_set_uncertainty_result_metrics.items():
+            model_names.append(pretty_names[model_name])
+            scores.append((metrics["fractions"], metrics[metric_name]))
+
+        fig = plot_rejection_scores(
+            scores=scores,
+            names=model_names,
+            y_label=f"Ранг {rank} AUC",
+        )
+        fig.savefig(out_dir / f"rank_{rank}_rejection.png", dpi=300)
+
+
 
 def create_open_set_ident_uncertainty_metric_table(
     uncertainty_result_dict: dict,
@@ -298,6 +323,23 @@ def main(cfg):
             open_set_identification_result_dir,
             open_set_ident_pretty_names,
         )
+
+        # unc metric table
+        df_unc = create_open_set_ident_recognition_metric_table(
+            open_set_uncertainty_result_metrics, open_set_ident_pretty_names
+        )
+        df_unc.to_csv(
+            open_set_identification_result_dir / "open_set_unc.csv",
+            index=False,
+        )
+        create_rejection_plots(
+            open_set_uncertainty_result_metrics,
+            open_set_identification_result_dir,
+            open_set_ident_pretty_names
+        )
+        # unc plot
+
+
     if "verification_methods" in cfg:
         # verification table
 

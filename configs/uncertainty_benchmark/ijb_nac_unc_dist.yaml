@@ -2,7 +2,7 @@ hydra:
   run:
     dir: ${exp_dir}
 #exp_dir: outputs/ijb_evals/ijb_evals_${now:%Y-%m-%d_%H-%M-%S}
-exp_dir: experiments/unc_metrics
+exp_dir: experiments/nac_unc_dist
 
 use_two_galleries: True
 recompute_template_pooling: False
@@ -34,17 +34,7 @@ verification_metrics:
     display_fars: [0.000001, 0.00001, 0.0001, 0.001, 0.01, 0.1, 1]
 
 open_set_uncertainty_metrics:
-  # - _target_: evaluation.metrics.MeanDistanceReject
-  #   fractions: [0, 0.9, 0.1]
-  #   with_unc: False
-  #   metric_to_monitor:
-  #     _target_: evaluation.metrics.DetectionAndIdentificationRate
-  #     top_n_ranks: [1, 10, 20]
-  #     far_range: [-4, 0, 100] 
-  #     display_fars: [0.0001, 0.001, 0.01, 0.1, 1]
   - _target_: evaluation.metrics.MeanDistanceReject
-    fractions: [0, 0.8, 0.1]
-    with_unc: False
     metric_to_monitor:
       _target_: evaluation.metrics.DetectionAndIdentificationRate
       top_n_ranks: [1, 10, 20]
@@ -90,32 +80,32 @@ open_set_identification_methods:
     use_detector_score: True
     pretty_name: SCF_NAC-k=120
 
-  # - evaluation_function: 
-  #     _target_: evaluation.eval_functions.open_set_identification.PFE
-  #     confidence_function: 
-  #       _target_: evaluation.confidence_functions.MaxSimilarity_confidence
-  #     variance_scale: 1
-  #     cosine_pred: False
-  #   embeddings_path: ${test_dataset.dataset_path}/embeddings/pfe_embs_${test_dataset.dataset_name}.npz
-  #   template_pooling_strategy:
-  #     _target_: evaluation.template_pooling_strategies.PoolingPFEHarmonicMean
-  #   use_detector_score: True
-  #   pretty_name: PFE_dist
+  - evaluation_function: 
+      _target_: evaluation.eval_functions.open_set_identification.PFE
+      confidence_function: 
+        _target_: evaluation.confidence_functions.MaxSimilarity_confidence
+      variance_scale: 1
+      cosine_pred: False
+    embeddings_path: ${test_dataset.dataset_path}/embeddings/pfe_embs_${test_dataset.dataset_name}.npz
+    template_pooling_strategy:
+      _target_: evaluation.template_pooling_strategies.PoolingPFEHarmonicMean
+    use_detector_score: True
+    pretty_name: PFE_dist
 
-  # - evaluation_function: 
-  #     _target_: evaluation.eval_functions.open_set_identification.PFE
-  #     confidence_function: 
-  #       _target_: evaluation.confidence_functions.NAC_confidence
-  #       k: 120
-  #       s: 1
-  #       normalize: True
-  #     variance_scale: 1
-  #     cosine_pred: False
-  #   embeddings_path: ${test_dataset.dataset_path}/embeddings/pfe_embs_${test_dataset.dataset_name}.npz
-  #   template_pooling_strategy:
-  #     _target_: evaluation.template_pooling_strategies.PoolingPFEHarmonicMean
-  #   use_detector_score: True
-  #   pretty_name: PFE_NAC-k=120
+  - evaluation_function: 
+      _target_: evaluation.eval_functions.open_set_identification.PFE
+      confidence_function: 
+        _target_: evaluation.confidence_functions.NAC_confidence
+        k: 120
+        s: 1
+        normalize: True
+      variance_scale: 1
+      cosine_pred: False
+    embeddings_path: ${test_dataset.dataset_path}/embeddings/pfe_embs_${test_dataset.dataset_name}.npz
+    template_pooling_strategy:
+      _target_: evaluation.template_pooling_strategies.PoolingPFEHarmonicMean
+    use_detector_score: True
+    pretty_name: PFE_NAC-k=120
 
 
 

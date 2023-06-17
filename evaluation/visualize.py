@@ -4,7 +4,7 @@ import pandas as pd
 from sklearn.metrics import roc_curve, auc
 
 
-def plot_rejection_scores(scores, names=None):
+def plot_rejection_scores(scores,y_label, names=None):
     import matplotlib.pyplot as plt
 
     fig = plt.figure()
@@ -20,10 +20,10 @@ def plot_rejection_scores(scores, names=None):
         label = "[%s]" % (name)
         plt.plot(fractions, metric_value, lw=1, label=label)
 
-    plt.xlabel("Reject fraction")
+    plt.xlabel("Доля отбошенного набора")
     # plt.xlim([0.0001, 1])
     # plt.xscale("log")
-    plt.ylabel("AUC value")
+    plt.ylabel(y_label)
     # plt.ylim([0, 1])
 
     plt.grid(linestyle="--", linewidth=1)

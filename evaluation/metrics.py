@@ -9,13 +9,15 @@ EvalMetricsT = Tuple[int, int, int, List[float], List[float], List[Tuple[float, 
 
 
 class MeanDistanceReject:
-    def __init__(self, metric_to_monitor: any) -> None:
-        self.fractions = np.arange(0, 0.9, step=0.1)
+    def __init__(self, metric_to_monitor: any, fractions: List[int], with_unc: bool) -> None:
+        self.fractions = np.arange(fractions[0], fractions[1], step=fractions[2])
         self.metric_to_monitor = metric_to_monitor
+        self.with_unc = with_unc
 
     def __call__(
         self,
         probe_ids: np.ndarray,
+        probe_template_unc:np.ndarray,
         gallery_ids: np.ndarray,
         similarity: np.ndarray,
         probe_score: np.ndarray,
@@ -37,10 +39,16 @@ class MeanDistanceReject:
             for key, value in metric.items():
                 if "recalls" in key:
                     rank = key.split("_")[1]
-                    aucs[f"auc_{rank}_rank_mean_dist_unc"] = auc(
-                        metric["fars"], metric[key]
-                    )
-
+                    auc_res = auc(metric["fars"], metric[key])
+                    aucs[f"final_auc_{rank}_unc_frac_{np.round(fraction, 3)}"] = auc_res
+                    if f"plot_auc_{rank}_rank_mean_dist_unc" in aucs:
+                        aucs[f"plot_auc_{rank}_rank_mean_dist_unc"].append(auc_res)
+                    else:
+                        aucs[f"plot_auc_{rank}_rank_mean_dist_unc"]=[auc_res]
+                    
+        for key in aucs:
+            if 'plot_auc_' in key:
+                aucs[key] = np.array(aucs[key])
         unc_metric = {"fractions": self.fractions}
         unc_metric.update(aucs)
         return unc_metric

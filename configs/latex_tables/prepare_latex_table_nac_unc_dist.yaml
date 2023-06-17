@@ -8,56 +8,27 @@ defaults:
   - _self_
   - pretty_names@pretty_name.task: task_pretty_name
   - pretty_names@pretty_name.model: model_pretty_name_nac_unc_dist_search
-  - pretty_names@pretty_name.column: column_pretty_name_unc
+  - pretty_names@pretty_name.column: column_pretty_name_nac
 
-dataset: survFace
-#dataset: IJBC
-#task: open_set_identification
-task: unc
+#dataset: survFace
+dataset: IJBB
+task: open_set_identification
 #task: verification
 #task: closed_set_identification
 # CHANGE
-metric_table_path: /app/experiments/unc_metrics/${dataset}/open_set_identification/open_set_${task}.csv
+metric_table_path: /app/experiments/nac_unc_dist/${dataset}/${task}/${task}.csv
 
 caption: >
-  Исследование методов оценки неопределённости на наборе данных {dataset_name} при решении задачи {task}.
+  Совместное использование NAC и расстояний между распределениями на наборе данных {dataset_name} при решении задачи {task}.
   
 fix_table: True
-table_lable: "tab:${task}_${dataset}_unc_metrics"
+table_lable: "tab:${task}_${dataset}_nac_unc_dist"
 round_num: 3
 use_scriptsize: False
 use_adjustbox: False
 
 used_columns: []
 used_columns_dict:
-  unc:
-    IJBB:
-      [
-        "pretty_name",
-        "final_auc_1_unc_frac_0.0",
-        "final_auc_1_unc_frac_0.2",
-        "final_auc_1_unc_frac_0.3",
-        "final_auc_1_unc_frac_0.6",
-        "final_auc_1_unc_frac_0.7",
-      ]
-    IJBC:
-      [
-        "pretty_name",
-        "final_auc_1_unc_frac_0.0",
-        "final_auc_1_unc_frac_0.2",
-        "final_auc_1_unc_frac_0.3",
-        "final_auc_1_unc_frac_0.6",
-        "final_auc_1_unc_frac_0.7",
-      ]
-    survFace:
-      [
-        "pretty_name",
-        "final_auc_10_unc_frac_0.0",
-        "final_auc_10_unc_frac_0.2",
-        "final_auc_10_unc_frac_0.3",
-        "final_auc_10_unc_frac_0.6",
-        "final_auc_10_unc_frac_0.7",
-      ]
   open_set_identification:
     survFace:
       [

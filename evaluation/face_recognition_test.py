@@ -272,6 +272,7 @@ class Face_Fecognition_test:
             unc_metrics.update(
                 unc_metric(
                     probe_ids=probe_unique_ids,
+                    probe_template_unc = probe_template_unc,
                     gallery_ids=g1_unique_ids,
                     similarity=similarity,
                     probe_score=probe_score,
@@ -312,6 +313,7 @@ class Face_Fecognition_test:
                 g2_unc_metrics.update(
                     unc_metric(
                         probe_ids=probe_unique_ids,
+                        probe_template_unc = probe_template_unc,
                         gallery_ids=g2_unique_ids,
                         similarity=similarity,
                         probe_score=probe_score,
@@ -322,7 +324,7 @@ class Face_Fecognition_test:
                 if "recalls" in key or "AUC" in key or "top" in key:
                     metrics[key] = (metrics[key] + g2_metrics[key]) / 2
             for key in g2_unc_metrics.keys():
-                if key == "auc_mean_dist_unc":
+                if "final_auc" in key:
                     unc_metrics[key] = (unc_metrics[key] + g2_unc_metrics[key]) / 2
 
         else:
