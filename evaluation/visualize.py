@@ -4,7 +4,7 @@ import pandas as pd
 from sklearn.metrics import roc_curve, auc
 
 
-def plot_rejection_scores(scores,y_label, names=None):
+def plot_rejection_scores(scores, y_label, names=None):
     import matplotlib.pyplot as plt
 
     fig = plt.figure()
@@ -17,7 +17,7 @@ def plot_rejection_scores(scores,y_label, names=None):
         name = name if name is not None else str(id)
 
         # auc_value = auc(rank, cmc)
-        label = "[%s]" % (name)
+        label = f"{name}, AUC={np.round(auc(fractions, metric_value)*100, 3)}%"
         plt.plot(fractions, metric_value, lw=1, label=label)
 
     plt.xlabel("Доля отбошенного набора")
@@ -27,7 +27,7 @@ def plot_rejection_scores(scores,y_label, names=None):
     # plt.ylim([0, 1])
 
     plt.grid(linestyle="--", linewidth=1)
-    plt.legend(fontsize="x-small")
+    plt.legend()  # (fontsize="x-small")
     plt.tight_layout()
     return fig
 

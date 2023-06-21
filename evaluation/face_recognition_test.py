@@ -272,7 +272,7 @@ class Face_Fecognition_test:
             unc_metrics.update(
                 unc_metric(
                     probe_ids=probe_unique_ids,
-                    probe_template_unc = probe_template_unc,
+                    probe_template_unc=probe_template_unc,
                     gallery_ids=g1_unique_ids,
                     similarity=similarity,
                     probe_score=probe_score,
@@ -313,7 +313,7 @@ class Face_Fecognition_test:
                 g2_unc_metrics.update(
                     unc_metric(
                         probe_ids=probe_unique_ids,
-                        probe_template_unc = probe_template_unc,
+                        probe_template_unc=probe_template_unc,
                         gallery_ids=g2_unique_ids,
                         similarity=similarity,
                         probe_score=probe_score,

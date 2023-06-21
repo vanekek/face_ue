@@ -7,15 +7,15 @@ exp_dir: experiments/unc_metrics
 use_two_galleries: True
 recompute_template_pooling: False
 
-test_dataset:
-  _target_: evaluation.test_datasets.FaceRecogntioniDataset
-  dataset_name: survFace
-  dataset_path: /app/datasets/QMUL-SurvFace/Face_Identification_Test_Set
-
 # test_dataset:
 #   _target_: evaluation.test_datasets.FaceRecogntioniDataset
-#   dataset_name: IJBB
-#   dataset_path: /app/datasets/arcface_ijb/IJBB
+#   dataset_name: survFace
+#   dataset_path: /app/datasets/QMUL-SurvFace/Face_Identification_Test_Set
+
+test_dataset:
+  _target_: evaluation.test_datasets.FaceRecogntioniDataset
+  dataset_name: IJBC
+  dataset_path: /app/datasets/arcface_ijb/IJBC
 
 open_set_identification_metrics:
   - _target_: evaluation.metrics.DetectionAndIdentificationRate
@@ -34,16 +34,8 @@ verification_metrics:
     display_fars: [0.000001, 0.00001, 0.0001, 0.001, 0.01, 0.1, 1]
 
 open_set_uncertainty_metrics:
-  # - _target_: evaluation.metrics.MeanDistanceReject
-  #   fractions: [0, 0.9, 0.1]
-  #   with_unc: False
-  #   metric_to_monitor:
-  #     _target_: evaluation.metrics.DetectionAndIdentificationRate
-  #     top_n_ranks: [1, 10, 20]
-  #     far_range: [-4, 0, 100] 
-  #     display_fars: [0.0001, 0.001, 0.01, 0.1, 1]
   - _target_: evaluation.metrics.MeanDistanceReject
-    fractions: [0, 0.8, 0.1]
+    fractions: [0, 0.55, 0.01]
     with_unc: False
     metric_to_monitor:
       _target_: evaluation.metrics.DetectionAndIdentificationRate
@@ -61,7 +53,7 @@ open_set_identification_methods:
     template_pooling_strategy:
       _target_: evaluation.template_pooling_strategies.PoolingSCF
     use_detector_score: True
-    pretty_name: CosineSim
+    pretty_name: "Косинусный MaxProb"
   
   - evaluation_function: 
       _target_: evaluation.eval_functions.open_set_identification.SCF
@@ -73,7 +65,7 @@ open_set_identification_methods:
     template_pooling_strategy:
       _target_: evaluation.template_pooling_strategies.PoolingSCF
     use_detector_score: True
-    pretty_name: SCF_dist
+    pretty_name: "SCF MaxProb"
   
   - evaluation_function: 
       _target_: evaluation.eval_functions.open_set_identification.SCF
@@ -88,7 +80,10 @@ open_set_identification_methods:
     template_pooling_strategy:
       _target_: evaluation.template_pooling_strategies.PoolingSCF
     use_detector_score: True
-    pretty_name: SCF_NAC-k=120
+    pretty_name: "SCF NAC"
+
+
+
 
   # - evaluation_function: 
   #     _target_: evaluation.eval_functions.open_set_identification.PFE

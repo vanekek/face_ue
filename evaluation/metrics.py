@@ -9,7 +9,9 @@ EvalMetricsT = Tuple[int, int, int, List[float], List[float], List[Tuple[float, 
 
 
 class MeanDistanceReject:
-    def __init__(self, metric_to_monitor: any, fractions: List[int], with_unc: bool) -> None:
+    def __init__(
+        self, metric_to_monitor: any, fractions: List[int], with_unc: bool
+    ) -> None:
         self.fractions = np.arange(fractions[0], fractions[1], step=fractions[2])
         self.metric_to_monitor = metric_to_monitor
         self.with_unc = with_unc
@@ -17,7 +19,7 @@ class MeanDistanceReject:
     def __call__(
         self,
         probe_ids: np.ndarray,
-        probe_template_unc:np.ndarray,
+        probe_template_unc: np.ndarray,
         gallery_ids: np.ndarray,
         similarity: np.ndarray,
         probe_score: np.ndarray,
@@ -44,10 +46,10 @@ class MeanDistanceReject:
                     if f"plot_auc_{rank}_rank_mean_dist_unc" in aucs:
                         aucs[f"plot_auc_{rank}_rank_mean_dist_unc"].append(auc_res)
                     else:
-                        aucs[f"plot_auc_{rank}_rank_mean_dist_unc"]=[auc_res]
-                    
+                        aucs[f"plot_auc_{rank}_rank_mean_dist_unc"] = [auc_res]
+
         for key in aucs:
-            if 'plot_auc_' in key:
+            if "plot_auc_" in key:
                 aucs[key] = np.array(aucs[key])
         unc_metric = {"fractions": self.fractions}
         unc_metric.update(aucs)

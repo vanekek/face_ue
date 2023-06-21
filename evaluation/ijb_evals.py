@@ -90,6 +90,7 @@ def create_closed_set_ident_plots(
     )
     fig.savefig(out_dir / f"cmc_plot.png", dpi=300)
 
+
 def create_rejection_plots(
     open_set_uncertainty_result_metrics: dict, out_dir: Path, pretty_names: dict
 ):
@@ -113,7 +114,6 @@ def create_rejection_plots(
             y_label=f"Ранг {rank} AUC",
         )
         fig.savefig(out_dir / f"rank_{rank}_rejection.png", dpi=300)
-
 
 
 def create_open_set_ident_uncertainty_metric_table(
@@ -335,10 +335,9 @@ def main(cfg):
         create_rejection_plots(
             open_set_uncertainty_result_metrics,
             open_set_identification_result_dir,
-            open_set_ident_pretty_names
+            open_set_ident_pretty_names,
         )
         # unc plot
-
 
     if "verification_methods" in cfg:
         # verification table
