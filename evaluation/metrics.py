@@ -146,7 +146,6 @@ class DetectionAndIdentificationRate:
         gallery_ids: np.ndarray,
         similarity: np.ndarray,
         probe_score: np.ndarray,
-        labels_sorted: bool = False,
     ) -> EvalMetricsT:
         """
         Computes Detection & identification rate for open set recognition
@@ -182,13 +181,6 @@ class DetectionAndIdentificationRate:
         pos_score = probe_score[is_seen]
         neg_score = probe_score[~is_seen]
         neg_score_sorted = np.sort(neg_score)[::-1]
-
-        # pos_sims = seen_sim[pos_mask]
-        # neg_sims = seen_sim[~pos_mask].reshape(*pos_sims.shape, -1)
-        # pos_score = probe_score[is_seen]
-        # neg_score = probe_score[~is_seen]
-        # non_gallery_sims = similarity[~is_seen]
-        #
 
         recalls = {}
         for rank in self.top_n_ranks:

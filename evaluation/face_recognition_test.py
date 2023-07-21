@@ -118,22 +118,6 @@ class Face_Fecognition_test:
     def run_model_test_verification(
         self,
     ):
-        # scores = self.evaluation_function(
-        #     self.template_pooled_emb,
-        #     self.template_pooled_unc,
-        #     self.template_ids[:20003],
-        #     self.test_dataset.p1[:20003],
-        #     self.test_dataset.p2[:20003],
-        # )
-
-        # metrics = {}
-        # for metric in self.verification_metrics:
-        #     metrics.update(
-        #         metric(
-        #             scores=scores,
-        #             labels=self.test_dataset.label[:20003],
-        #         )
-        #     )
         scores = self.evaluation_function(
             self.template_pooled_emb,
             self.template_pooled_unc,
@@ -215,7 +199,6 @@ class Face_Fecognition_test:
                         probe_score,
                     )
                 )
-            query_num = probe_templates_feature.shape[0]
             for key in g2_metrics.keys():
                 if "cmc" in key:
                     metrics[key] = (metrics[key] + g2_metrics[key]) / 2
@@ -319,7 +302,6 @@ class Face_Fecognition_test:
                         probe_score=probe_score,
                     )
                 )
-            query_num = probe_templates_feature.shape[0]
             for key in g2_metrics.keys():
                 if "recalls" in key or "AUC" in key or "top" in key:
                     metrics[key] = (metrics[key] + g2_metrics[key]) / 2
@@ -329,8 +311,5 @@ class Face_Fecognition_test:
 
         else:
             is_seen = np.isin(probe_unique_ids, g1_unique_ids)
-            query_num = len(is_seen)
-            # for key in metrics.keys():
-            #     if "recalls" in key:
-            #         pass
+
         return metrics, unc_metrics

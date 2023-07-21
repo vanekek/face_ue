@@ -1,6 +1,6 @@
 import numpy as np
 
-# from evaluation.metrics import compute_detection_and_identification_rate
+
 from evaluation.eval_functions.open_set_identification.abc import Abstract1NEval
 from evaluation.confidence_functions import AbstractConfidence
 from evaluation.eval_functions.distaince_functions import CosineSimDistance
@@ -28,5 +28,3 @@ class CosineSim(Abstract1NEval):
         probe_score = self.confidence_function(similarity)
 
         return similarity, probe_score
-
-        # Compute Detection & identification rate for open set recognition

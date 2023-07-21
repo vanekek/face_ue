@@ -32,7 +32,6 @@ class MXFaceDataset(Dataset):
                 ]
             )
         else:
-
             self.transform = transforms.Compose(
                 [
                     transforms.ToPILImage(),
@@ -98,8 +97,8 @@ class UncertaintyDataModule(pl.LightningDataModule):
 
         if stage == "predict":
             pass
-            #self.ijb_dataset = IJB_aligned_images(self.data_predict_dir, self.data_predict_subset)
-            #self.predict_dataset = torch.utils.data.Subset(self.predict_dataset, np.random.choice(len(self.predict_dataset), 5000, replace=False))
+            # self.ijb_dataset = IJB_aligned_images(self.data_predict_dir, self.data_predict_subset)
+            # self.predict_dataset = torch.utils.data.Subset(self.predict_dataset, np.random.choice(len(self.predict_dataset), 5000, replace=False))
 
     def train_dataloader(self):
         return DataLoader(

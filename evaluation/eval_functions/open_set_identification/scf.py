@@ -50,6 +50,6 @@ class SCF(Abstract1NEval):
             similarity = scf_similarity
 
         # compute confidences
-        probe_score = self.confidence_function(scf_similarity)
+        probe_score = self.confidence_function(similarity)
 
         return similarity, probe_score
