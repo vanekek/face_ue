@@ -154,7 +154,10 @@ def main(cfg):
     open_set_identification_metrics = instantiate_list(
         cfg.open_set_identification_metrics
     )
-    open_set_uncertainty_metrics = instantiate_list(cfg.open_set_uncertainty_metrics)
+    if "open_set_uncertainty_metrics" in cfg:
+        open_set_uncertainty_metrics = instantiate_list(cfg.open_set_uncertainty_metrics)
+    else:
+        open_set_uncertainty_metrics = []
     closed_set_identification_metrics = instantiate_list(
         cfg.closed_set_identification_metrics
     )

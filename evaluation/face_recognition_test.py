@@ -244,7 +244,6 @@ class Face_Fecognition_test:
                     gallery_ids=g1_unique_ids,
                     similarity=similarity,
                     probe_score=probe_score,
-                    labels_sorted=self.labels_sorted,
                 )
             )
 
@@ -286,7 +285,6 @@ class Face_Fecognition_test:
                         gallery_ids=g2_unique_ids,
                         similarity=similarity,
                         probe_score=probe_score,
-                        labels_sorted=self.labels_sorted,
                     )
                 )
             # uncertainty metrics
