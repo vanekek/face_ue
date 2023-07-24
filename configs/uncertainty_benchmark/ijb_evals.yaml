@@ -55,14 +55,14 @@ open_set_identification_methods:
     use_detector_score: True
     pretty_name: "Косинусный MaxProb"
   
-  - evaluation_function: 
-      _target_: evaluation.eval_functions.open_set_identification.CosineSim
-      confidence_function: 
-        _target_: evaluation.confidence_functions.MisesProb
-        k: 150
-        reject_prior: 0.5
-    embeddings_path: ${test_dataset.dataset_path}/embeddings/scf_embs_${test_dataset.dataset_name}.npz
-    template_pooling_strategy:
-      _target_: evaluation.template_pooling_strategies.PoolingSCF
-    use_detector_score: True
-    pretty_name: "Reject option as class"
+  # - evaluation_function: 
+  #     _target_: evaluation.eval_functions.open_set_identification.CosineSim
+  #     confidence_function: 
+  #       _target_: evaluation.confidence_functions.MisesProb
+  #       k: 150
+  #       reject_prior: 0.5
+  #   embeddings_path: ${test_dataset.dataset_path}/embeddings/scf_embs_${test_dataset.dataset_name}.npz
+  #   template_pooling_strategy:
+  #     _target_: evaluation.template_pooling_strategies.PoolingSCF
+  #   use_detector_score: True
+  #   pretty_name: "Reject option as class"
