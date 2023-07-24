@@ -9,9 +9,11 @@ class AbstractConfidence(ABC):
     def __call__(self, similarity_matrix) -> Any:
         raise NotImplementedError
 
+from scipy.special import ive, hyp0f1, loggamma
+
 
 class MisesProb(AbstractConfidence):
-    def __init__(self, k: float, reject_prior: float) -> None:
+    def __init__(self, kappa: float, beta: float, d=512) -> None:
         """
         Performes K+1 class classification, with K being number of gallery classed and
         K+1-th class is ood class.
@@ -19,13 +21,17 @@ class MisesProb(AbstractConfidence):
         where
         1. p(z|K+1) is uniform disribution on sphere
         2. p(z|c), c \leq K is von Mises-Fisher (vMF) distribution with koncentration k
-        3. p(K+1) = reject_prior and p(1)= ... =p(K) = (1 - reject_prior)/K
+        3. p(K+1) = beta and p(1)= ... =p(K) = (1 - beta)/K
 
-        :param k: von Mises-Fisher (vMF) distribution with koncentration
-        :param reject_prior: prior probability of ood sample, p(K+1)
+        :param kappa: koncentration for von Mises-Fisher (vMF) distribution
+        :param beta: prior probability of ood sample, p(K+1)
         """
-        self.k = k
-        self.reject_prior = reject_prior
+        self.kappa = kappa
+        self.beta = beta
+        self.n = d / 2
+        self.alpha = hyp0f1(self.n, self.kappa**2 / 4, dtype=np.float64)
+        self.log_iv = np.log(ive(self.n - 1, self.kappa, dtype=np.float64)) + self.kappa
+        self.log_c = (self.n-1)*np.log(kappa) - self.n*np.log(2*np.pi) - self.log_iv
 
     def __call__(self, similarity_matrix: np.ndarray) -> Any:
         """
@@ -33,11 +39,30 @@ class MisesProb(AbstractConfidence):
         :return probe_score: specifies confinence that particular test image belongs to predicted class
             image's probe_score is less than operating threshold τ, then this image get rejected as imposter
         """
-        p_uniform = 0.1  # dencity of uniform distribution on sphere
-        probe_score = similarity_matrix
 
-        return probe_score
+        return -self.compute_uniform_aposteriory(similarity_matrix)
+    def compute_log_z_prob(self, similarities):
+        K = similarities.shape[1]
+        
+        logit_sum = np.sum(np.exp(similarities * self.kappa), axis=1)*(1 - self.beta) / K
+        #print(f'Logit sum: {logit_sum}')
+        
+        #print(f'Alpha value: {alpha_value}')
+        log_z_prob = self.log_c + np.log(logit_sum + self.alpha * self.beta)
+        #print(f'Log z prob: {log_z_prob}')
+        return log_z_prob
 
+    def compute_uniform_aposteriory(self, similarities):
+        # compute log z prob
+        log_z_prob = self.compute_log_z_prob(similarities)
+        #print(f'Log z prob: {log_z_prob}')
+        log_uniform_dencity = loggamma(self.n, dtype=np.float64) - np.log(2) - self.n * np.log(np.pi)
+        #print(f'Log uniform dencity: {log_uniform_dencity}')
+        log_beta = np.log(self.beta)
+        #print(f'Log beta : {log_beta}')
+        log_prob = log_uniform_dencity + log_beta - log_z_prob
+        #print(f'Log uniform prob: {log_prob}')
+        return log_prob
 
 class NAC_confidence(AbstractConfidence):
     def __init__(self, k: int, s: float, normalize: bool) -> None:
