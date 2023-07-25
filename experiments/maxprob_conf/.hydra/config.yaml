@@ -1,4 +1,4 @@
-exp_dir: experiments/unified_osr
+exp_dir: experiments/maxprob_conf
 use_two_galleries: true
 recompute_template_pooling: false
 test_dataset:

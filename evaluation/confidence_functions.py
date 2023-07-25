@@ -40,8 +40,8 @@ class MisesProb(AbstractConfidence):
             image's probe_score is less than operating threshold τ, then this image get rejected as imposter
         """
 
-        return -self.compute_uniform_aposteriory(similarity_matrix)
-    def compute_log_z_prob(self, similarities):
+        return -self.compute_uniform_log_probability(similarity_matrix)
+    def compute_log_z_prob(self, similarities: np.ndarray):
         K = similarities.shape[1]
         
         logit_sum = np.sum(np.exp(similarities * self.kappa), axis=1)*(1 - self.beta) / K
@@ -51,8 +51,16 @@ class MisesProb(AbstractConfidence):
         log_z_prob = self.log_c + np.log(logit_sum + self.alpha * self.beta)
         #print(f'Log z prob: {log_z_prob}')
         return log_z_prob
+    def compute_all_class_log_probabilities(self, similarities: np.ndarray):
+        uniform_log_prob = self.compute_uniform_log_probability(similarities)
 
-    def compute_uniform_aposteriory(self, similarities):
+        # compute gallery classes log prob
+        K = similarities.shape[1]
+        log_z_prob = self.compute_log_z_prob(similarities)
+        gallery_log_probs = self.log_c+ self.kappa*similarities + np.log((1-self.beta)/K) - log_z_prob[:, np.newaxis]
+
+        return np.concatenate([gallery_log_probs, uniform_log_prob[:, np.newaxis]], axis=1)
+    def compute_uniform_log_probability(self, similarities: np.ndarray):
         # compute log z prob
         log_z_prob = self.compute_log_z_prob(similarities)
         #print(f'Log z prob: {log_z_prob}')
