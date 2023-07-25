@@ -140,7 +140,7 @@ hydra:
     - path: ''
       schema: structured
       provider: schema
-    output_dir: /app/experiments/maxprob_conf
+    output_dir: /app/experiments/open_set_uncertainty
     choices:
       hydra/env: default
       hydra/callbacks: null

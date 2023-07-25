@@ -35,10 +35,10 @@ class PFE(Abstract1NEval):
         gallery_feats,
         gallery_unc,
     ):
-        print(
-            "probe_feats: %s, gallery_feats: %s"
-            % (probe_feats.shape, gallery_feats.shape)
-        )
+        # print(
+        #     "probe_feats: %s, gallery_feats: %s"
+        #     % (probe_feats.shape, gallery_feats.shape)
+        # )
 
         # compute pfe likelihood
         probe_feats = probe_feats[:, np.newaxis, :]

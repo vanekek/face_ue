@@ -32,10 +32,10 @@ class SCF(Abstract1NEval):
         gallery_feats,
         gallery_unc,
     ):
-        print(
-            "probe_feats: %s, gallery_feats: %s"
-            % (probe_feats.shape, gallery_feats.shape)
-        )
+        # print(
+        #     "probe_feats: %s, gallery_feats: %s"
+        #     % (probe_feats.shape, gallery_feats.shape)
+        # )
         compute_scf_sim = ScfSim()
         gallery_unc = gallery_unc + self.k_shift
         probe_unc = probe_unc + self.k_shift

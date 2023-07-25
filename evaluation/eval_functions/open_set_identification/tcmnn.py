@@ -29,10 +29,10 @@ class TcmNN(Abstract1NEval):
         gallery_ids,
         fars,
     ):
-        print(
-            "probe_feats: %s, gallery_feats: %s"
-            % (probe_feats.shape, gallery_feats.shape)
-        )
+        # print(
+        #     "probe_feats: %s, gallery_feats: %s"
+        #     % (probe_feats.shape, gallery_feats.shape)
+        # )
 
         # 1. compute distances from each gallery class to other gallery classes
         # here each class has exact one feature vector

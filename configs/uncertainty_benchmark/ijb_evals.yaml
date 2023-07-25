@@ -2,9 +2,9 @@ hydra:
   run:
     dir: ${exp_dir}
 
-exp_dir: experiments/maxprob_conf
+exp_dir: experiments/open_set_uncertainty
 
-use_two_galleries: True
+use_two_galleries: False
 recompute_template_pooling: False
 
 # test_dataset:
@@ -34,24 +34,29 @@ verification_metrics:
     display_fars: [0.000001, 0.00001, 0.0001, 0.001, 0.01, 0.1, 1]
 
 open_set_uncertainty_metrics:
-  # - _target_: evaluation.uncertainty_metrics.CombinedMaxProb
-  #   fractions: [0, 0.55, 0.05]
-  #   with_unc: False
-  #   kappa: 200
-  #   beta: 0.5
-
-  #   metric_to_monitor:
-  #     _target_: evaluation.metrics.DetectionAndIdentificationRate
-  #     top_n_ranks: [1] #[1, 10, 20]
-  #     far_range: [-4, 0, 100] 
-  #     display_fars: [0.0001, 0.001, 0.01, 0.1, 1]
-
+  - _target_: evaluation.uncertainty_metrics.CombinedMaxProb
+    fractions: [0, 0.5, 0.05]
+    with_unc: False
+    kappa: 200
+    beta: 0.5
+    metric_to_monitor:
+      _target_: evaluation.metrics.DetectionAndIdentificationRate
+      top_n_ranks: [1] #[1, 10, 20]
+      far_range: [-4, 0, 100] 
+      display_fars: [0.0001, 0.001, 0.01, 0.1, 1]
+  - _target_: evaluation.uncertainty_metrics.BernoulliVarianceReject
+    fractions: [0, 0.5, 0.05]
+    metric_to_monitor:
+      _target_: evaluation.metrics.DetectionAndIdentificationRate
+      top_n_ranks: [1] #[1, 10, 20]
+      far_range: [-4, 0, 100] 
+      display_fars: [0.0001, 0.001, 0.01, 0.1, 1]
   - _target_: evaluation.uncertainty_metrics.MeanDistanceReject
-    fractions: [0, 0.55, 0.05]
+    fractions: [0, 0.5, 0.05]
     with_unc: False
     metric_to_monitor:
       _target_: evaluation.metrics.DetectionAndIdentificationRate
-      top_n_ranks: [1, 10, 20]
+      top_n_ranks: [1]
       far_range: [-4, 0, 100] 
       display_fars: [0.0001, 0.001, 0.01, 0.1, 1]
 
@@ -65,16 +70,16 @@ open_set_identification_methods:
     template_pooling_strategy:
       _target_: evaluation.template_pooling_strategies.PoolingSCF
     use_detector_score: True
-    pretty_name: "Косинусный MaxProb"
+    pretty_name: r"$s(p) =  \max_{c\in\{1,\dots,K\}}\mu^T_{c}z$"
   
-  - evaluation_function: 
-      _target_: evaluation.eval_functions.open_set_identification.CosineSim
-      confidence_function: 
-        _target_: evaluation.confidence_functions.MisesProb
-        kappa: 200
-        beta: 0.5
-    embeddings_path: ${test_dataset.dataset_path}/embeddings/scf_embs_${test_dataset.dataset_name}.npz
-    template_pooling_strategy:
-      _target_: evaluation.template_pooling_strategies.PoolingSCF
-    use_detector_score: True
-    pretty_name: "Uniform prob conf kappa=200"
+  # - evaluation_function: 
+  #     _target_: evaluation.eval_functions.open_set_identification.CosineSim
+  #     confidence_function: 
+  #       _target_: evaluation.confidence_functions.MisesProb
+  #       kappa: 200
+  #       beta: 0.5
+  #   embeddings_path: ${test_dataset.dataset_path}/embeddings/scf_embs_${test_dataset.dataset_name}.npz
+  #   template_pooling_strategy:
+  #     _target_: evaluation.template_pooling_strategies.PoolingSCF
+  #   use_detector_score: True
+  #   pretty_name: "Uniform prob conf kappa=200"

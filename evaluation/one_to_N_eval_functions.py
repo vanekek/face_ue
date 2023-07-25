@@ -34,10 +34,10 @@ class TcmNN:
         gallery_ids,
         fars,
     ):
-        print(
-            "probe_feats: %s, gallery_feats: %s"
-            % (probe_feats.shape, gallery_feats.shape)
-        )
+        # print(
+        #     "probe_feats: %s, gallery_feats: %s"
+        #     % (probe_feats.shape, gallery_feats.shape)
+        # )
 
         # 1. compute distances from each gallery class to other gallery classes
         # here each class has exact one feature vector
@@ -197,10 +197,10 @@ class CosineSim:
         gallery_ids,
         fars,
     ):
-        print(
-            "probe_feats: %s, gallery_feats: %s"
-            % (probe_feats.shape, gallery_feats.shape)
-        )
+        # print(
+        #     "probe_feats: %s, gallery_feats: %s"
+        #     % (probe_feats.shape, gallery_feats.shape)
+        # )
         similarity = np.dot(probe_feats, gallery_feats.T)  # (19593, 1772)
 
         # compute confidences
@@ -260,10 +260,10 @@ class SCF:
         gallery_ids,
         fars,
     ):
-        print(
-            "probe_feats: %s, gallery_feats: %s"
-            % (probe_feats.shape, gallery_feats.shape)
-        )
+        # print(
+        #     "probe_feats: %s, gallery_feats: %s"
+        #     % (probe_feats.shape, gallery_feats.shape)
+        # )
         gallery_unc = gallery_unc[np.newaxis, :, 0]
 
         gallery_unc = gallery_unc + self.k_shift
@@ -382,10 +382,10 @@ class PFE:
         gallery_ids,
         fars,
     ):
-        print(
-            "probe_feats: %s, gallery_feats: %s"
-            % (probe_feats.shape, gallery_feats.shape)
-        )
+        # print(
+        #     "probe_feats: %s, gallery_feats: %s"
+        #     % (probe_feats.shape, gallery_feats.shape)
+        # )
 
         # compute pfe likelihood
         probe_feats = probe_feats[:, np.newaxis, :]

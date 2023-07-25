@@ -1,6 +1,6 @@
 import numpy as np
 from pathlib import Path
-
+import warnings
 
 from .embeddings import process_embeddings
 from .image2template import image2template_feature
@@ -32,7 +32,7 @@ class Face_Fecognition_test:
         self.verification_metrics = verification_metrics
         self.open_set_uncertainty_metrics = open_set_uncertainty_metrics
 
-        print(">>>> Reload embeddings from:", embeddings_path)
+        #print(">>>> Reload embeddings from:", embeddings_path)
         aa = np.load(embeddings_path)
         self.embeddings_path = embeddings_path
         self.embs = aa["embs"]
@@ -213,7 +213,7 @@ class Face_Fecognition_test:
         ) = self.get_template_subsets(
             self.test_dataset.g1_templates, self.test_dataset.g1_ids
         )
-        print("g1_templates_feature:", g1_templates_feature.shape)  # (1772, 512)
+        #print("g1_templates_feature:", g1_templates_feature.shape)  # (1772, 512)
 
         (
             probe_templates_feature,
@@ -222,11 +222,11 @@ class Face_Fecognition_test:
         ) = self.get_template_subsets(
             self.test_dataset.probe_templates, self.test_dataset.probe_ids
         )
-        print("probe_templates_feature:", probe_templates_feature.shape)  # (19593, 512)
+        #print("probe_templates_feature:", probe_templates_feature.shape)  # (19593, 512)
 
-        print("probe_unique_ids:", probe_unique_ids.shape)  # (19593,)
+        #print("probe_unique_ids:", probe_unique_ids.shape)  # (19593,)
 
-        print(">>>> Gallery 1")
+        #print(">>>> Gallery 1")
 
         similarity, probe_score = self.evaluation_function(
             probe_templates_feature,
@@ -269,8 +269,8 @@ class Face_Fecognition_test:
             ) = self.get_template_subsets(
                 self.test_dataset.g2_templates, self.test_dataset.g2_ids
             )
-            print("g2_templates_feature:", g2_templates_feature.shape)  # (1759, 512)
-            print(">>>> Gallery 2")
+            #print("g2_templates_feature:", g2_templates_feature.shape)  # (1759, 512)
+            #print(">>>> Gallery 2")
             similarity, probe_score = self.evaluation_function(
                 probe_templates_feature,
                 probe_template_unc,
@@ -300,6 +300,7 @@ class Face_Fecognition_test:
                         probe_score=probe_score,
                     )
                 )
+            warnings.warn("Aggregation of unc metrics is unchecked")
             for key in g2_metrics.keys():
                 if "recalls" in key or "AUC" in key or "top" in key:
                     metrics[key] = (metrics[key] + g2_metrics[key]) / 2

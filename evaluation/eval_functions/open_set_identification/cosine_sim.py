@@ -17,10 +17,10 @@ class CosineSim(Abstract1NEval):
         gallery_feats,
         gallery_unc,
     ):
-        print(
-            "probe_feats: %s, gallery_feats: %s"
-            % (probe_feats.shape, gallery_feats.shape)
-        )
+        # print(
+        #     "probe_feats: %s, gallery_feats: %s"
+        #     % (probe_feats.shape, gallery_feats.shape)
+        # )
         compute_cosine_sim = CosineSimDistance()
         similarity = compute_cosine_sim(
             probe_feats, gallery_feats

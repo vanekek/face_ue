@@ -1,17 +1,15 @@
 #!/usr/bin/env python3
-import os
-import numpy as np
+
 from pathlib import Path
 import hydra
 from hydra.utils import instantiate
 import sys
 import pandas as pd
-from sklearn.metrics import roc_curve, auc
+
 
 from evaluation.face_recognition_test import Face_Fecognition_test
 from evaluation.visualize import (
     plot_dir_far_scores,
-    plot_tar_far_scores,
     plot_cmc_scores,
     plot_rejection_scores,
 )
@@ -113,8 +111,32 @@ def create_rejection_plots(
             names=model_names,
             y_label=f"Ранг {rank} AUC",
         )
-        fig.savefig(out_dir / f"rank_{rank}_rejection.png", dpi=300)
+        fig.savefig(out_dir / f"rank_{rank}_{metric_name.split('_')[-1]}_rejection.png", dpi=300)
 
+    # create unified plot of different rejection metrics for each rank
+    rank_to_unc_metrics = {}
+    for metric_name in metric_names:
+        rank = metric_name.split("_")[2]
+        if rank in rank_to_unc_metrics:
+            rank_to_unc_metrics[rank].append(metric_name)
+        else:
+            rank_to_unc_metrics[rank] = [metric_name]
+
+    for rank, rank_metric_names in rank_to_unc_metrics.items():
+        model_names = []
+        scores = []
+        for metric_name in rank_metric_names:
+            pretty_unc_metric_name = metric_name.split('_')[-1]
+            for model_name, metrics in open_set_uncertainty_result_metrics.items():
+                model_names.append(pretty_names[model_name] + '_' + pretty_unc_metric_name)
+                scores.append((metrics["fractions"], metrics[metric_name]))
+
+        fig = plot_rejection_scores(
+            scores=scores,
+            names=model_names,
+            y_label=f"Ранг {rank} AUC",
+        )
+        fig.savefig(out_dir / f"rank_{rank}_rejection.png", dpi=300)
 
 def create_open_set_ident_uncertainty_metric_table(
     uncertainty_result_dict: dict,
@@ -335,12 +357,13 @@ def main(cfg):
             open_set_identification_result_dir / "open_set_unc.csv",
             index=False,
         )
+        # unc plot
         create_rejection_plots(
             open_set_uncertainty_result_metrics,
             open_set_identification_result_dir,
             open_set_ident_pretty_names,
         )
-        # unc plot
+        
 
     if "verification_methods" in cfg:
         # verification table
