@@ -58,7 +58,7 @@ class CombinedMaxProb:
     ) -> Any:
         mises_maxprob = MisesProb(kappa=self.kappa, beta=self.beta)
         all_classes_log_prob = mises_maxprob.compute_all_class_log_probabilities(similarity)
-        unc_score = np.max(all_classes_log_prob, axis=1)
+        unc_score = -np.max(all_classes_log_prob, axis=1)
         unc_metric = get_reject_metrics(unc_score, self.metric_to_monitor, probe_ids, gallery_ids, similarity, probe_score, self.fractions)
         return unc_metric
 

@@ -57,6 +57,29 @@ verification_metrics:
   - 0.01
   - 0.1
   - 1
+open_set_uncertainty_metrics:
+- _target_: evaluation.uncertainty_metrics.MeanDistanceReject
+  fractions:
+  - 0
+  - 0.55
+  - 0.05
+  with_unc: false
+  metric_to_monitor:
+    _target_: evaluation.metrics.DetectionAndIdentificationRate
+    top_n_ranks:
+    - 1
+    - 10
+    - 20
+    far_range:
+    - -4
+    - 0
+    - 100
+    display_fars:
+    - 0.0001
+    - 0.001
+    - 0.01
+    - 0.1
+    - 1
 open_set_identification_methods:
 - evaluation_function:
     _target_: evaluation.eval_functions.open_set_identification.CosineSim
