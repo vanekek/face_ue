@@ -111,7 +111,9 @@ def create_rejection_plots(
             names=model_names,
             y_label=f"Ранг {rank} AUC",
         )
-        fig.savefig(out_dir / f"rank_{rank}_{metric_name.split('_')[-1]}_rejection.png", dpi=300)
+        fig.savefig(
+            out_dir / f"rank_{rank}_{metric_name.split('_')[-1]}_rejection.png", dpi=300
+        )
 
     # create unified plot of different rejection metrics for each rank
     rank_to_unc_metrics = {}
@@ -126,9 +128,11 @@ def create_rejection_plots(
         model_names = []
         scores = []
         for metric_name in rank_metric_names:
-            pretty_unc_metric_name = metric_name.split('_')[-1]
+            pretty_unc_metric_name = metric_name.split("_")[-1]
             for model_name, metrics in open_set_uncertainty_result_metrics.items():
-                model_names.append(pretty_names[model_name] + '_' + pretty_unc_metric_name)
+                model_names.append(
+                    pretty_names[model_name] + "_" + pretty_unc_metric_name
+                )
                 scores.append((metrics["fractions"], metrics[metric_name]))
 
         fig = plot_rejection_scores(
@@ -137,6 +141,7 @@ def create_rejection_plots(
             y_label=f"Ранг {rank} AUC",
         )
         fig.savefig(out_dir / f"rank_{rank}_rejection.png", dpi=300)
+
 
 def create_open_set_ident_uncertainty_metric_table(
     uncertainty_result_dict: dict,
@@ -177,7 +182,9 @@ def main(cfg):
         cfg.open_set_identification_metrics
     )
     if "open_set_uncertainty_metrics" in cfg:
-        open_set_uncertainty_metrics = instantiate_list(cfg.open_set_uncertainty_metrics)
+        open_set_uncertainty_metrics = instantiate_list(
+            cfg.open_set_uncertainty_metrics
+        )
     else:
         open_set_uncertainty_metrics = []
     closed_set_identification_metrics = instantiate_list(
@@ -363,7 +370,6 @@ def main(cfg):
             open_set_identification_result_dir,
             open_set_ident_pretty_names,
         )
-        
 
     if "verification_methods" in cfg:
         # verification table

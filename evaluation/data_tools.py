@@ -108,7 +108,7 @@ def extract_gallery_prob_data(
     if save_path == None:
         save_path = data_path / "gallery_prob_backup.npz"
     if not force_reload and save_path.is_file():
-        #print(">>>> Reload from backup: %s ..." % save_path)
+        # print(">>>> Reload from backup: %s ..." % save_path)
         aa = np.load(save_path, allow_pickle=True)
         return (
             aa["s1_templates"],
@@ -182,7 +182,7 @@ def extract_IJB_data_11(data_path, subset, save_path=None, force_reload=False):
     if save_path == None:
         save_path = os.path.join(data_path, subset + "_backup.npz")
     if not force_reload and os.path.exists(save_path):
-        #print(">>>> Reload from backup: %s ..." % save_path)
+        # print(">>>> Reload from backup: %s ..." % save_path)
         aa = np.load(save_path)
         return (
             aa["templates"],

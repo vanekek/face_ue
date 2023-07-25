@@ -185,7 +185,9 @@ class DetectionAndIdentificationRate:
         recalls = {}
         for rank in self.top_n_ranks:
             n_similar_classes = gallery_ids[most_similar_classes[:, :rank]]
-            correct_pos = np.any(seen_probe_ids[:,np.newaxis] == n_similar_classes, axis=1)
+            correct_pos = np.any(
+                seen_probe_ids[:, np.newaxis] == n_similar_classes, axis=1
+            )
             recall_values = []
             for far in self.fars:
                 # compute operating threshold τ, which gives neaded far

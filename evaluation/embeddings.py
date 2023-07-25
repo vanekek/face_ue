@@ -72,6 +72,6 @@ def process_embeddings(
     if use_norm_score:
         embs = normalize(embs)
     if use_detector_score and not np.isnan(face_scores).any():
-        #print("Using detection score normalization")
+        # print("Using detection score normalization")
         embs = embs * np.expand_dims(face_scores, -1)
     return embs

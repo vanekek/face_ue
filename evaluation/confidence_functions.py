@@ -9,6 +9,7 @@ class AbstractConfidence(ABC):
     def __call__(self, similarity_matrix) -> Any:
         raise NotImplementedError
 
+
 from scipy.special import ive, hyp0f1, loggamma
 
 
@@ -31,7 +32,9 @@ class MisesProb(AbstractConfidence):
         self.n = d / 2
         self.alpha = hyp0f1(self.n, self.kappa**2 / 4, dtype=np.float64)
         self.log_iv = np.log(ive(self.n - 1, self.kappa, dtype=np.float64)) + self.kappa
-        self.log_c = (self.n-1)*np.log(kappa) - self.n*np.log(2*np.pi) - self.log_iv
+        self.log_c = (
+            (self.n - 1) * np.log(kappa) - self.n * np.log(2 * np.pi) - self.log_iv
+        )
 
     def __call__(self, similarity_matrix: np.ndarray) -> Any:
         """
@@ -41,36 +44,51 @@ class MisesProb(AbstractConfidence):
         """
 
         return -self.compute_uniform_log_probability(similarity_matrix)
+
     def compute_log_z_prob(self, similarities: np.ndarray):
         K = similarities.shape[1]
-        
-        logit_sum = np.sum(np.exp(similarities * self.kappa), axis=1)*(1 - self.beta) / K
-        #print(f'Logit sum: {logit_sum}')
-        
-        #print(f'Alpha value: {alpha_value}')
+
+        logit_sum = (
+            np.sum(np.exp(similarities * self.kappa), axis=1) * (1 - self.beta) / K
+        )
+        # print(f'Logit sum: {logit_sum}')
+
+        # print(f'Alpha value: {alpha_value}')
         log_z_prob = self.log_c + np.log(logit_sum + self.alpha * self.beta)
-        #print(f'Log z prob: {log_z_prob}')
+        # print(f'Log z prob: {log_z_prob}')
         return log_z_prob
+
     def compute_all_class_log_probabilities(self, similarities: np.ndarray):
         uniform_log_prob = self.compute_uniform_log_probability(similarities)
 
         # compute gallery classes log prob
         K = similarities.shape[1]
         log_z_prob = self.compute_log_z_prob(similarities)
-        gallery_log_probs = self.log_c+ self.kappa*similarities + np.log((1-self.beta)/K) - log_z_prob[:, np.newaxis]
+        gallery_log_probs = (
+            self.log_c
+            + self.kappa * similarities
+            + np.log((1 - self.beta) / K)
+            - log_z_prob[:, np.newaxis]
+        )
 
-        return np.concatenate([gallery_log_probs, uniform_log_prob[:, np.newaxis]], axis=1)
+        return np.concatenate(
+            [gallery_log_probs, uniform_log_prob[:, np.newaxis]], axis=1
+        )
+
     def compute_uniform_log_probability(self, similarities: np.ndarray):
         # compute log z prob
         log_z_prob = self.compute_log_z_prob(similarities)
-        #print(f'Log z prob: {log_z_prob}')
-        log_uniform_dencity = loggamma(self.n, dtype=np.float64) - np.log(2) - self.n * np.log(np.pi)
-        #print(f'Log uniform dencity: {log_uniform_dencity}')
+        # print(f'Log z prob: {log_z_prob}')
+        log_uniform_dencity = (
+            loggamma(self.n, dtype=np.float64) - np.log(2) - self.n * np.log(np.pi)
+        )
+        # print(f'Log uniform dencity: {log_uniform_dencity}')
         log_beta = np.log(self.beta)
-        #print(f'Log beta : {log_beta}')
+        # print(f'Log beta : {log_beta}')
         log_prob = log_uniform_dencity + log_beta - log_z_prob
-        #print(f'Log uniform prob: {log_prob}')
+        # print(f'Log uniform prob: {log_prob}')
         return log_prob
+
 
 class NAC_confidence(AbstractConfidence):
     def __init__(self, k: int, s: float, normalize: bool) -> None:
