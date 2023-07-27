@@ -106,14 +106,14 @@ def create_rejection_plots(
             model_names.append(pretty_names[model_name])
             scores.append((metrics["fractions"], metrics[metric_name]))
 
-        fig = plot_rejection_scores(
-            scores=scores,
-            names=model_names,
-            y_label=f"Ранг {rank} AUC",
-        )
-        fig.savefig(
-            out_dir / f"rank_{rank}_{metric_name.split('_')[-1]}_rejection.png", dpi=300
-        )
+        # fig = plot_rejection_scores(
+        #     scores=scores,
+        #     names=model_names,
+        #     y_label=f"Ранг {rank} AUC",
+        # )
+        # fig.savefig(
+        #     out_dir / f"rank_{rank}_{metric_name.split('_')[-1]}_rejection.png", dpi=300
+        # )
 
     # create unified plot of different rejection metrics for each rank
     rank_to_unc_metrics = {}

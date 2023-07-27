@@ -1,4 +1,4 @@
-exp_dir: experiments/open_set_uncertainty
+exp_dir: experiments/open_set_uncertainty_scf_dist
 use_two_galleries: true
 recompute_template_pooling: false
 test_dataset:
@@ -62,6 +62,23 @@ fractions:
 - 0.55
 - 0.05
 open_set_uncertainty_metrics:
+- _target_: evaluation.uncertainty_metrics.BernoulliVarianceReject
+  fractions: ${fractions}
+  metric_to_monitor:
+    _target_: evaluation.metrics.DetectionAndIdentificationRate
+    top_n_ranks:
+    - 1
+    - 20
+    far_range:
+    - -4
+    - 0
+    - 100
+    display_fars:
+    - 0.0001
+    - 0.001
+    - 0.01
+    - 0.1
+    - 1
 - _target_: evaluation.uncertainty_metrics.DataUncertaintyReject
   fractions: ${fractions}
   is_confidence: true
@@ -100,31 +117,9 @@ open_set_uncertainty_metrics:
     - 0.01
     - 0.1
     - 1
-- _target_: evaluation.uncertainty_metrics.CombinedMaxProb
+- _target_: evaluation.uncertainty_metrics.MeanDistanceReject
   fractions: ${fractions}
   with_unc: false
-  kappa: 200
-  beta: 0.3
-  metric_to_monitor:
-    _target_: evaluation.metrics.DetectionAndIdentificationRate
-    top_n_ranks:
-    - 1
-    - 20
-    far_range:
-    - -4
-    - 0
-    - 100
-    display_fars:
-    - 0.0001
-    - 0.001
-    - 0.01
-    - 0.1
-    - 1
-- _target_: evaluation.uncertainty_metrics.CombinedMaxProb
-  fractions: ${fractions}
-  with_unc: false
-  kappa: 200
-  beta: 0.05
   metric_to_monitor:
     _target_: evaluation.metrics.DetectionAndIdentificationRate
     top_n_ranks:
@@ -142,22 +137,13 @@ open_set_uncertainty_metrics:
     - 1
 open_set_identification_methods:
 - evaluation_function:
-    _target_: evaluation.eval_functions.open_set_identification.CosineSim
+    _target_: evaluation.eval_functions.open_set_identification.SCF
+    k_shift: 0
+    cosine_pred: false
     confidence_function:
       _target_: evaluation.confidence_functions.MaxSimilarity_confidence
   embeddings_path: ${test_dataset.dataset_path}/embeddings/scf_embs_${test_dataset.dataset_name}.npz
   template_pooling_strategy:
     _target_: evaluation.template_pooling_strategies.PoolingSCF
   use_detector_score: true
-  pretty_name: $s(p) =  \max_{c\in\{1,\dots,K\}}\mu^T_{c}z$
-- evaluation_function:
-    _target_: evaluation.eval_functions.open_set_identification.CosineSim
-    confidence_function:
-      _target_: evaluation.confidence_functions.MisesProb
-      kappa: 200
-      beta: 0.5
-  embeddings_path: ${test_dataset.dataset_path}/embeddings/scf_embs_${test_dataset.dataset_name}.npz
-  template_pooling_strategy:
-    _target_: evaluation.template_pooling_strategies.PoolingSCF
-  use_detector_score: true
-  pretty_name: Uniform prob conf kappa=200
+  pretty_name: $s(p) =  \max_{c\in\{1,\dots,K\}}sim_{scf}(mu_{c}, z)$

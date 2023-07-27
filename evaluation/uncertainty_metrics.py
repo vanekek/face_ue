@@ -157,7 +157,7 @@ class CombinedMaxProb:
         unc_score = -np.max(all_classes_log_prob, axis=1)
         unc_metric_name = (
             self.__class__.__name__
-        )
+        ) +"_beta="+ str(self.beta)
         #unc_metric_name = r"$m(p) = \max_{c\in {1,\dots,K+1}}p(c|z)$"
         unc_metric = get_reject_metrics(
             unc_metric_name,
