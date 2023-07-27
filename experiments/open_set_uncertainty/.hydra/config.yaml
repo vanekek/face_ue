@@ -1,10 +1,10 @@
 exp_dir: experiments/open_set_uncertainty
-use_two_galleries: false
+use_two_galleries: true
 recompute_template_pooling: false
 test_dataset:
   _target_: evaluation.test_datasets.FaceRecogntioniDataset
-  dataset_name: IJBC
-  dataset_path: /app/datasets/arcface_ijb/IJBC
+  dataset_name: IJBB
+  dataset_path: /app/datasets/arcface_ijb/IJBB
 open_set_identification_metrics:
 - _target_: evaluation.metrics.DetectionAndIdentificationRate
   top_n_ranks:
@@ -57,12 +57,47 @@ verification_metrics:
   - 0.01
   - 0.1
   - 1
+reject_fraction_top: 0.5
+fractions:
+- 0
+- 0.6
+- 0.05
 open_set_uncertainty_metrics:
+- _target_: evaluation.uncertainty_metrics.BernoulliVarianceReject
+  fractions: ${fractions}
+  metric_to_monitor:
+    _target_: evaluation.metrics.DetectionAndIdentificationRate
+    top_n_ranks:
+    - 1
+    far_range:
+    - -4
+    - 0
+    - 100
+    display_fars:
+    - 0.0001
+    - 0.001
+    - 0.01
+    - 0.1
+    - 1
+- _target_: evaluation.uncertainty_metrics.DataUncertaintyReject
+  fractions: ${fractions}
+  is_confidence: true
+  metric_to_monitor:
+    _target_: evaluation.metrics.DetectionAndIdentificationRate
+    top_n_ranks:
+    - 1
+    far_range:
+    - -4
+    - 0
+    - 100
+    display_fars:
+    - 0.0001
+    - 0.001
+    - 0.01
+    - 0.1
+    - 1
 - _target_: evaluation.uncertainty_metrics.CombinedMaxProb
-  fractions:
-  - 0
-  - 0.5
-  - 0.05
+  fractions: ${fractions}
   with_unc: false
   kappa: 200
   beta: 0.5
@@ -80,30 +115,8 @@ open_set_uncertainty_metrics:
     - 0.01
     - 0.1
     - 1
-- _target_: evaluation.uncertainty_metrics.BernoulliVarianceReject
-  fractions:
-  - 0
-  - 0.5
-  - 0.05
-  metric_to_monitor:
-    _target_: evaluation.metrics.DetectionAndIdentificationRate
-    top_n_ranks:
-    - 1
-    far_range:
-    - -4
-    - 0
-    - 100
-    display_fars:
-    - 0.0001
-    - 0.001
-    - 0.01
-    - 0.1
-    - 1
 - _target_: evaluation.uncertainty_metrics.MeanDistanceReject
-  fractions:
-  - 0
-  - 0.5
-  - 0.05
+  fractions: ${fractions}
   with_unc: false
   metric_to_monitor:
     _target_: evaluation.metrics.DetectionAndIdentificationRate
@@ -128,4 +141,4 @@ open_set_identification_methods:
   template_pooling_strategy:
     _target_: evaluation.template_pooling_strategies.PoolingSCF
   use_detector_score: true
-  pretty_name: r"$s(p) =  \max_{c\in\{1,\dots,K\}}\mu^T_{c}z$"
+  pretty_name: $s(p) =  \max_{c\in\{1,\dots,K\}}\mu^T_{c}z$

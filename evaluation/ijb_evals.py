@@ -131,7 +131,7 @@ def create_rejection_plots(
             pretty_unc_metric_name = metric_name.split("_")[-1]
             for model_name, metrics in open_set_uncertainty_result_metrics.items():
                 model_names.append(
-                    pretty_names[model_name] + "_" + pretty_unc_metric_name
+                    pretty_names[model_name] + ";  " + pretty_unc_metric_name
                 )
                 scores.append((metrics["fractions"], metrics[metric_name]))
 

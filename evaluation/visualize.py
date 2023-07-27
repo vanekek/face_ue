@@ -4,12 +4,12 @@ import pandas as pd
 from sklearn.metrics import roc_curve, auc
 
 
-def plot_rejection_scores(scores, y_label, names=None):
+def plot_rejection_scores(scores, y_label, names):
     import matplotlib.pyplot as plt
 
     fig = plt.figure()
     for id, score in enumerate(scores):
-        name = None if names is None else names[id]
+        name = names[id]
         if isinstance(score, str) and score.endswith(".npz"):
             aa = np.load(score)
             score, name = aa.get("scores")[0], aa.get("names")[0]
@@ -17,7 +17,7 @@ def plot_rejection_scores(scores, y_label, names=None):
         name = name if name is not None else str(id)
 
         # auc_value = auc(rank, cmc)
-        label = f"{name}, AUC={np.round(auc(fractions, metric_value)*100, 3)}%"
+        label = name + f", AUC={np.round(auc(fractions, metric_value)*100, 3)}%"
         plt.plot(fractions, metric_value, lw=1, label=label)
 
     plt.xlabel("Доля отбошенного набора")

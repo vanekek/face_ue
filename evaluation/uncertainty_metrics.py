@@ -49,7 +49,52 @@ def get_reject_metrics(
     unc_metric.update(aucs)
     return unc_metric
 
+class OptimalReject:
+    def __init__(self, metric_to_monitor: any, fractions: List[int]) -> None:
+        self.fractions = np.arange(fractions[0], fractions[1], step=fractions[2])
+        self.metric_to_monitor = metric_to_monitor
+    
+    def __call__(
+            self,
+            probe_ids: np.ndarray,
+            probe_template_unc: np.ndarray,
+            gallery_ids: np.ndarray,
+            similarity: np.ndarray,
+            probe_score: np.ndarray,
+        ) -> Any:
+        pass
 
+class DataUncertaintyReject:
+    def __init__(self, metric_to_monitor: any, fractions: List[int], is_confidence: bool) -> None:
+        self.fractions = np.arange(fractions[0], fractions[1], step=fractions[2])
+        self.metric_to_monitor = metric_to_monitor
+        self.is_confidence = is_confidence
+    def __call__(
+            self,
+            probe_ids: np.ndarray,
+            probe_template_unc: np.ndarray,
+            gallery_ids: np.ndarray,
+            similarity: np.ndarray,
+            probe_score: np.ndarray,
+        ) -> Any:
+        if self.is_confidence:
+            unc_score = -probe_template_unc[:, 0]
+        else:
+            unc_score = probe_template_unc
+        unc_metric_name = (
+            self.__class__.__name__
+        )
+        unc_metric = get_reject_metrics(
+            unc_metric_name,
+            unc_score,
+            self.metric_to_monitor,
+            probe_ids,
+            gallery_ids,
+            similarity,
+            probe_score,
+            self.fractions,
+        )
+        return unc_metric
 class BernoulliVarianceReject:
     def __init__(self, metric_to_monitor: any, fractions: List[int]) -> None:
         self.fractions = np.arange(fractions[0], fractions[1], step=fractions[2])
@@ -67,7 +112,8 @@ class BernoulliVarianceReject:
         unc_score = probe_score_norm * (1 - probe_score_norm)
         unc_metric_name = (
             self.__class__.__name__
-        )  # r"$m(p) = \max_{c\in\{1,\dots,K+1\}}p(c|z)$" #
+        ) 
+        #unc_metric_name = r"$m(p) = \frac{s(p)+1}{2}\left(1 - \frac{s(p)+1}{2}\right)$" #
         unc_metric = get_reject_metrics(
             unc_metric_name,
             unc_score,
@@ -111,7 +157,8 @@ class CombinedMaxProb:
         unc_score = -np.max(all_classes_log_prob, axis=1)
         unc_metric_name = (
             self.__class__.__name__
-        )  # r"$m(p) = \max_{c\in\{1,\dots,K+1\}}p(c|z)$" #
+        )
+        #unc_metric_name = r"$m(p) = \max_{c\in {1,\dots,K+1}}p(c|z)$"
         unc_metric = get_reject_metrics(
             unc_metric_name,
             unc_score,
@@ -145,7 +192,8 @@ class MeanDistanceReject:
         unc_score = -np.abs(probe_score - mean_probe_score)
         unc_metric_name = (
             self.__class__.__name__
-        )  # r"$m(p) = \left|s(p)-\frac{1}{N}\sum_{p\in TestSet}s(p)\right|$" #
+        ) 
+        #unc_metric_name = r"$m(p) = \left|s(p)-\frac{1}{N}\sum_{p\in TestSet}s(p)\right|$" #
         unc_metric = get_reject_metrics(
             unc_metric_name,
             unc_score,
