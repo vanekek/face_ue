@@ -7,15 +7,15 @@ exp_dir: experiments/open_set_uncertainty
 use_two_galleries: True
 recompute_template_pooling: False
 
-# test_dataset:
-#   _target_: evaluation.test_datasets.FaceRecogntioniDataset
-#   dataset_name: survFace
-#   dataset_path: /app/datasets/QMUL-SurvFace/Face_Identification_Test_Set
-
 test_dataset:
   _target_: evaluation.test_datasets.FaceRecogntioniDataset
-  dataset_name: IJBB
-  dataset_path: /app/datasets/arcface_ijb/IJBB
+  dataset_name: survFace
+  dataset_path: /app/datasets/QMUL-SurvFace/Face_Identification_Test_Set
+
+# test_dataset:
+#   _target_: evaluation.test_datasets.FaceRecogntioniDataset
+#   dataset_name: IJBB
+#   dataset_path: /app/datasets/arcface_ijb/IJBB
 
 open_set_identification_metrics:
   - _target_: evaluation.metrics.DetectionAndIdentificationRate
@@ -40,7 +40,7 @@ open_set_uncertainty_metrics:
     fractions: ${fractions}
     metric_to_monitor:
       _target_: evaluation.metrics.DetectionAndIdentificationRate
-      top_n_ranks: [1] #[1, 10, 20]
+      top_n_ranks: [1, 20] #[1, 10, 20]
       far_range: [-4, 0, 100] 
       display_fars: [0.0001, 0.001, 0.01, 0.1, 1]
   - _target_: evaluation.uncertainty_metrics.DataUncertaintyReject
@@ -48,7 +48,7 @@ open_set_uncertainty_metrics:
     is_confidence: True
     metric_to_monitor:
       _target_: evaluation.metrics.DetectionAndIdentificationRate
-      top_n_ranks: [1] #[1, 10, 20]
+      top_n_ranks: [1, 20] #[1, 10, 20]
       far_range: [-4, 0, 100] 
       display_fars: [0.0001, 0.001, 0.01, 0.1, 1]
   - _target_: evaluation.uncertainty_metrics.CombinedMaxProb
@@ -58,7 +58,7 @@ open_set_uncertainty_metrics:
     beta: 0.5
     metric_to_monitor:
       _target_: evaluation.metrics.DetectionAndIdentificationRate
-      top_n_ranks: [1] #[1, 10, 20]
+      top_n_ranks: [1, 20] #[1, 10, 20]
       far_range: [-4, 0, 100] 
       display_fars: [0.0001, 0.001, 0.01, 0.1, 1]
   - _target_: evaluation.uncertainty_metrics.MeanDistanceReject
@@ -66,7 +66,7 @@ open_set_uncertainty_metrics:
     with_unc: False
     metric_to_monitor:
       _target_: evaluation.metrics.DetectionAndIdentificationRate
-      top_n_ranks: [1]
+      top_n_ranks: [1, 20]
       far_range: [-4, 0, 100] 
       display_fars: [0.0001, 0.001, 0.01, 0.1, 1]
 
