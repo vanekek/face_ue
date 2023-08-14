@@ -299,12 +299,12 @@ class Face_Fecognition_test:
                         probe_score=probe_score,
                     )
                 )
-            # warnings.warn("Aggregation of unc metrics is unchecked")
+            #warnings.warn("Aggregation of unc metrics is unchecked")
             for key in g2_metrics.keys():
-                if "recalls" in key or "AUC" in key or "top" in key:
+                if "metric:" in key:
                     metrics[key] = (metrics[key] + g2_metrics[key]) / 2
             for key in g2_unc_metrics.keys():
-                if "final_auc" in key or "plot_auc" in key:
+                if "final_auc" in key or "plot_reject" in key:
                     unc_metrics[key] = (unc_metrics[key] + g2_unc_metrics[key]) / 2
 
         else:

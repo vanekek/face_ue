@@ -21,7 +21,7 @@ def get_reject_metrics(
     fractions,
 ):
     unc_indexes = np.argsort(unc_score)
-    aucs = {}
+    unc_metrics ={"fractions": fractions}
     for fraction in fractions:
         # drop worst fraction
         good_probes_idx = unc_indexes[: int((1 - fraction) * probe_ids.shape[0])]
@@ -32,23 +32,32 @@ def get_reject_metrics(
             probe_score=probe_score[good_probes_idx],
         )
         for key, value in metric.items():
-            if "recalls" in key:
+            if "metric:AUC" in key:
                 rank = key.split("_")[1]
-                auc_res = auc(metric["fars"], metric[key])
-                aucs[
+                auc_res = metric[key]
+                unc_metrics[
                     f"final_auc_{rank}_unc_{metric_name}_frac_{np.round(fraction, 3)}"
                 ] = auc_res
-                if f"plot_auc_{rank}_rank_{metric_name}" in aucs:
-                    aucs[f"plot_auc_{rank}_rank_{metric_name}"].append(auc_res)
+                auc_metric_name = f"plot_reject_AUCS_{rank}_rank_{metric_name}"
+                if auc_metric_name in unc_metrics:
+                    unc_metrics[auc_metric_name].append(auc_res)
                 else:
-                    aucs[f"plot_auc_{rank}_rank_{metric_name}"] = [auc_res]
+                    unc_metrics[auc_metric_name] = [auc_res]
+            elif "metric:recall-at-far" in key:
+                far = key.split("_")[-3]
+                rank = key.split("_")[-2]
+                recall_at_far_metric_name = f"plot_reject_DIR-at-FAR-{far}_{rank}_rank_{metric_name}"
+                if recall_at_far_metric_name in unc_metrics:
+                    unc_metrics[recall_at_far_metric_name].append(metric[key])
+                else:
+                    unc_metrics[recall_at_far_metric_name] = [metric[key]]
+    
 
-    for key in aucs:
-        if "plot_auc_" in key:
-            aucs[key] = np.array(aucs[key])
-    unc_metric = {"fractions": fractions}
-    unc_metric.update(aucs)
-    return unc_metric
+    for key in unc_metrics:
+        if "plot_reject" in key:
+            unc_metrics[key] = np.array(unc_metrics[key])
+
+    return unc_metrics
 
 
 class OptimalReject:

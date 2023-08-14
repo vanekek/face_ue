@@ -95,36 +95,22 @@ def create_rejection_plots(
     metric_names = []
     for _, metric in open_set_uncertainty_result_metrics.items():
         for key in metric.keys():
-            if "plot_auc_" in key:
+            if "plot_reject" in key:
                 metric_names.append(key)
         break
-    for metric_name in metric_names:
-        rank = metric_name.split("_")[2]
-        model_names = []
-        scores = []
-        for model_name, metrics in open_set_uncertainty_result_metrics.items():
-            model_names.append(pretty_names[model_name])
-            scores.append((metrics["fractions"], metrics[metric_name]))
 
-        # fig = plot_rejection_scores(
-        #     scores=scores,
-        #     names=model_names,
-        #     y_label=f"Ранг {rank} AUC",
-        # )
-        # fig.savefig(
-        #     out_dir / f"rank_{rank}_{metric_name.split('_')[-1]}_rejection.png", dpi=300
-        # )
 
     # create unified plot of different rejection metrics for each rank
-    rank_to_unc_metrics = {}
+    rank_metric_to_unc_metrics = {}
     for metric_name in metric_names:
-        rank = metric_name.split("_")[2]
-        if rank in rank_to_unc_metrics:
-            rank_to_unc_metrics[rank].append(metric_name)
+        rank = metric_name.split("_")[-3]
+        metric = metric_name.split("_")[-4]
+        if (rank, metric) in rank_metric_to_unc_metrics:
+            rank_metric_to_unc_metrics[(rank, metric)].append(metric_name)
         else:
-            rank_to_unc_metrics[rank] = [metric_name]
+            rank_metric_to_unc_metrics[(rank, metric)] = [metric_name]
 
-    for rank, rank_metric_names in rank_to_unc_metrics.items():
+    for (rank, metric), rank_metric_names in rank_metric_to_unc_metrics.items():
         model_names = []
         scores = []
         for metric_name in rank_metric_names:
@@ -134,13 +120,13 @@ def create_rejection_plots(
                     pretty_names[model_name] + ";  " + pretty_unc_metric_name
                 )
                 scores.append((metrics["fractions"], metrics[metric_name]))
-
+        
         fig = plot_rejection_scores(
             scores=scores,
             names=model_names,
-            y_label=f"Ранг {rank} AUC",
+            y_label=f"Ранг {rank} {metric}",
         )
-        fig.savefig(out_dir / f"rank_{rank}_rejection.png", dpi=300)
+        fig.savefig(out_dir / f"rank_{rank}_{metric}_rejection.png", dpi=300)
 
 
 def create_open_set_ident_uncertainty_metric_table(

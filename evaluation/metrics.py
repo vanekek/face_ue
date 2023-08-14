@@ -8,52 +8,7 @@ from scipy import interpolate
 EvalMetricsT = Tuple[int, int, int, List[float], List[float], List[Tuple[float, float]]]
 
 
-class MeanDistanceReject:
-    def __init__(
-        self, metric_to_monitor: any, fractions: List[int], with_unc: bool
-    ) -> None:
-        self.fractions = np.arange(fractions[0], fractions[1], step=fractions[2])
-        self.metric_to_monitor = metric_to_monitor
-        self.with_unc = with_unc
 
-    def __call__(
-        self,
-        probe_ids: np.ndarray,
-        probe_template_unc: np.ndarray,
-        gallery_ids: np.ndarray,
-        similarity: np.ndarray,
-        probe_score: np.ndarray,
-    ) -> Any:
-        mean_probe_score = np.mean(probe_score)
-        unc_score = -np.abs(probe_score - mean_probe_score)
-
-        unc_indexes = np.argsort(unc_score)
-        aucs = {}
-        for fraction in self.fractions:
-            # drop worst fraction
-            good_probes_idx = unc_indexes[: int((1 - fraction) * probe_ids.shape[0])]
-            metric = self.metric_to_monitor(
-                probe_ids=probe_ids[good_probes_idx],
-                gallery_ids=gallery_ids,
-                similarity=similarity[good_probes_idx],
-                probe_score=probe_score[good_probes_idx],
-            )
-            for key, value in metric.items():
-                if "recalls" in key:
-                    rank = key.split("_")[1]
-                    auc_res = auc(metric["fars"], metric[key])
-                    aucs[f"final_auc_{rank}_unc_frac_{np.round(fraction, 3)}"] = auc_res
-                    if f"plot_auc_{rank}_rank_mean_dist_unc" in aucs:
-                        aucs[f"plot_auc_{rank}_rank_mean_dist_unc"].append(auc_res)
-                    else:
-                        aucs[f"plot_auc_{rank}_rank_mean_dist_unc"] = [auc_res]
-
-        for key in aucs:
-            if "plot_auc_" in key:
-                aucs[key] = np.array(aucs[key])
-        unc_metric = {"fractions": self.fractions}
-        unc_metric.update(aucs)
-        return unc_metric
 
 
 class CMC:
@@ -130,6 +85,9 @@ class TarFar:
         return metrics
 
 
+class DIRatFixedFAR:
+    def __init__(self, top_n_ranks: List[int], far) -> None:
+        pass
 class DetectionAndIdentificationRate:
     def __init__(
         self, top_n_ranks: List[int], far_range: List[int], display_fars: List[float]
@@ -206,21 +164,20 @@ class DetectionAndIdentificationRate:
                 )
                 recall_values.append(recall)
             recall_values = np.array(recall_values)
-            recall_name = f"top_{rank}_recalls"
+            recall_name = f"metric:recalls_{rank}_rank"
             recalls[recall_name] = recall_values
 
-        # metrics = dict(zip([f"top_{k}_count" for k in self.top_n_ranks], top_n_count))
         metrics = {}
         metrics.update({"fars": self.fars})
         metrics.update(recalls)
 
-        # compute final metrics
+        # compute metrics
         new_metrics = {}
         for key, value in metrics.items():
-            if "top" in key:
+            if "metric:recalls" in key:
                 # compute auc
                 rank = key.split("_")[1]
-                new_metrics[f"final_AUC_{rank}_rank"] = auc(
+                new_metrics[f"metric:AUC_{rank}_rank"] = auc(
                     metrics["fars"], metrics[key]
                 )
 
@@ -228,6 +185,6 @@ class DetectionAndIdentificationRate:
                 # interpolate tar@far curve
                 f = interpolate.interp1d(metrics["fars"], metrics[key])
                 for far in self.display_fars:
-                    new_metrics[f"final_top_{rank}_recall_at_far_{far}"] = f([far])[0]
+                    new_metrics[f"metric:recall-at-far_{far}_{rank}_rank"] = f([far])[0]
         metrics.update(new_metrics)
         return metrics

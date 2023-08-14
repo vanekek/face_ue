@@ -3,8 +3,8 @@ use_two_galleries: true
 recompute_template_pooling: false
 test_dataset:
   _target_: evaluation.test_datasets.FaceRecogntioniDataset
-  dataset_name: survFace
-  dataset_path: /app/datasets/QMUL-SurvFace/Face_Identification_Test_Set
+  dataset_name: IJBB
+  dataset_path: /app/datasets/arcface_ijb/IJBB
 open_set_identification_metrics:
 - _target_: evaluation.metrics.DetectionAndIdentificationRate
   top_n_ranks:
@@ -61,6 +61,22 @@ fractions:
 - 0
 - 0.55
 - 0.05
+metric_to_monitor:
+  _target_: evaluation.metrics.DetectionAndIdentificationRate
+  top_n_ranks:
+  - 1
+  - 20
+  far_range:
+  - -5
+  - 0
+  - 100
+  display_fars:
+  - 1.0e-05
+  - 0.0001
+  - 0.001
+  - 0.01
+  - 0.1
+  - 1
 open_set_uncertainty_metrics:
 - _target_: evaluation.uncertainty_metrics.CombinedMaxProb
   fractions: ${fractions}
@@ -68,126 +84,21 @@ open_set_uncertainty_metrics:
   beta: 0.05
   use_maxprob_variance: false
   data_variance_weight: 0
-  metric_to_monitor:
-    _target_: evaluation.metrics.DetectionAndIdentificationRate
-    top_n_ranks:
-    - 1
-    - 20
-    far_range:
-    - -4
-    - 0
-    - 100
-    display_fars:
-    - 0.0001
-    - 0.001
-    - 0.01
-    - 0.1
-    - 1
-- _target_: evaluation.uncertainty_metrics.CombinedMaxProb
-  fractions: ${fractions}
-  kappa: 200
-  beta: 0.05
-  use_maxprob_variance: false
-  data_variance_weight: 0.3
-  metric_to_monitor:
-    _target_: evaluation.metrics.DetectionAndIdentificationRate
-    top_n_ranks:
-    - 1
-    - 20
-    far_range:
-    - -4
-    - 0
-    - 100
-    display_fars:
-    - 0.0001
-    - 0.001
-    - 0.01
-    - 0.1
-    - 1
-- _target_: evaluation.uncertainty_metrics.CombinedMaxProb
-  fractions: ${fractions}
-  kappa: 200
-  beta: 0.05
-  use_maxprob_variance: false
-  data_variance_weight: 0.5
-  metric_to_monitor:
-    _target_: evaluation.metrics.DetectionAndIdentificationRate
-    top_n_ranks:
-    - 1
-    - 20
-    far_range:
-    - -4
-    - 0
-    - 100
-    display_fars:
-    - 0.0001
-    - 0.001
-    - 0.01
-    - 0.1
-    - 1
+  metric_to_monitor: ${metric_to_monitor}
 - _target_: evaluation.uncertainty_metrics.CombinedMaxProb
   fractions: ${fractions}
   kappa: 200
   beta: 0.05
   use_maxprob_variance: false
   data_variance_weight: 0.7
-  metric_to_monitor:
-    _target_: evaluation.metrics.DetectionAndIdentificationRate
-    top_n_ranks:
-    - 1
-    - 20
-    far_range:
-    - -4
-    - 0
-    - 100
-    display_fars:
-    - 0.0001
-    - 0.001
-    - 0.01
-    - 0.1
-    - 1
-- _target_: evaluation.uncertainty_metrics.CombinedMaxProb
-  fractions: ${fractions}
-  kappa: 200
-  beta: 0.05
-  use_maxprob_variance: false
-  data_variance_weight: 0.9
-  metric_to_monitor:
-    _target_: evaluation.metrics.DetectionAndIdentificationRate
-    top_n_ranks:
-    - 1
-    - 20
-    far_range:
-    - -4
-    - 0
-    - 100
-    display_fars:
-    - 0.0001
-    - 0.001
-    - 0.01
-    - 0.1
-    - 1
+  metric_to_monitor: ${metric_to_monitor}
 - _target_: evaluation.uncertainty_metrics.CombinedMaxProb
   fractions: ${fractions}
   kappa: 200
   beta: 0.05
   use_maxprob_variance: false
   data_variance_weight: 1
-  metric_to_monitor:
-    _target_: evaluation.metrics.DetectionAndIdentificationRate
-    top_n_ranks:
-    - 1
-    - 20
-    far_range:
-    - -4
-    - 0
-    - 100
-    display_fars:
-    - 0.0001
-    - 0.001
-    - 0.01
-    - 0.1
-    - 1
+  metric_to_monitor: ${metric_to_monitor}
 open_set_identification_methods:
 - sampler:
     _target_: evaluation.samplers.VonMisesFisher
