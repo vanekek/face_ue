@@ -5,6 +5,7 @@ from tqdm import tqdm
 from sklearn.metrics import roc_curve, auc
 from scipy import interpolate
 from evaluation.confidence_functions import MisesProb
+import scipy
 
 EvalMetricsT = Tuple[int, int, int, List[float], List[float], List[Tuple[float, float]]]
 
@@ -49,41 +50,44 @@ def get_reject_metrics(
     unc_metric.update(aucs)
     return unc_metric
 
+
 class OptimalReject:
     def __init__(self, metric_to_monitor: any, fractions: List[int]) -> None:
         self.fractions = np.arange(fractions[0], fractions[1], step=fractions[2])
         self.metric_to_monitor = metric_to_monitor
-    
+
     def __call__(
-            self,
-            probe_ids: np.ndarray,
-            probe_template_unc: np.ndarray,
-            gallery_ids: np.ndarray,
-            similarity: np.ndarray,
-            probe_score: np.ndarray,
-        ) -> Any:
+        self,
+        probe_ids: np.ndarray,
+        probe_template_unc: np.ndarray,
+        gallery_ids: np.ndarray,
+        similarity: np.ndarray,
+        probe_score: np.ndarray,
+    ) -> Any:
         pass
 
+
 class DataUncertaintyReject:
-    def __init__(self, metric_to_monitor: any, fractions: List[int], is_confidence: bool) -> None:
+    def __init__(
+        self, metric_to_monitor: any, fractions: List[int], is_confidence: bool
+    ) -> None:
         self.fractions = np.arange(fractions[0], fractions[1], step=fractions[2])
         self.metric_to_monitor = metric_to_monitor
         self.is_confidence = is_confidence
+
     def __call__(
-            self,
-            probe_ids: np.ndarray,
-            probe_template_unc: np.ndarray,
-            gallery_ids: np.ndarray,
-            similarity: np.ndarray,
-            probe_score: np.ndarray,
-        ) -> Any:
+        self,
+        probe_ids: np.ndarray,
+        probe_template_unc: np.ndarray,
+        gallery_ids: np.ndarray,
+        similarity: np.ndarray,
+        probe_score: np.ndarray,
+    ) -> Any:
         if self.is_confidence:
             unc_score = -probe_template_unc[:, 0]
         else:
             unc_score = probe_template_unc
-        unc_metric_name = (
-            self.__class__.__name__
-        )
+        unc_metric_name = self.__class__.__name__
         unc_metric = get_reject_metrics(
             unc_metric_name,
             unc_score,
@@ -95,6 +99,8 @@ class DataUncertaintyReject:
             self.fractions,
         )
         return unc_metric
+
+
 class BernoulliVarianceReject:
     def __init__(self, metric_to_monitor: any, fractions: List[int]) -> None:
         self.fractions = np.arange(fractions[0], fractions[1], step=fractions[2])
@@ -110,10 +116,41 @@ class BernoulliVarianceReject:
     ) -> Any:
         probe_score_norm = (probe_score + 1) / 2
         unc_score = probe_score_norm * (1 - probe_score_norm)
-        unc_metric_name = (
-            self.__class__.__name__
-        ) 
-        #unc_metric_name = r"$m(p) = \frac{s(p)+1}{2}\left(1 - \frac{s(p)+1}{2}\right)$" #
+        unc_metric_name = self.__class__.__name__
+        # unc_metric_name = r"$m(p) = \frac{s(p)+1}{2}\left(1 - \frac{s(p)+1}{2}\right)$" #
+        unc_metric = get_reject_metrics(
+            unc_metric_name,
+            unc_score,
+            self.metric_to_monitor,
+            probe_ids,
+            gallery_ids,
+            similarity,
+            probe_score,
+            self.fractions,
+        )
+        return unc_metric
+
+
+class MaxProb:
+    def __init__(
+        self,
+        metric_to_monitor: any,
+        fractions: List[int],
+    ) -> None:
+        self.fractions = np.arange(fractions[0], fractions[1], step=fractions[2])
+        self.metric_to_monitor = metric_to_monitor
+
+    def __call__(
+        self,
+        probe_ids: np.ndarray,
+        probe_template_unc: np.ndarray,
+        gallery_ids: np.ndarray,
+        similarity: np.ndarray,
+        probe_score: np.ndarray,
+    ) -> Any:
+        unc_score = -np.max(similarity, axis=1)
+        unc_metric_name = self.__class__.__name__
+        # unc_metric_name = r"$m(p) = \max_{c\in {1,\dots,K+1}}p(c|z)$"
         unc_metric = get_reject_metrics(
             unc_metric_name,
             unc_score,
@@ -134,13 +171,13 @@ class CombinedMaxProb:
         fractions: List[int],
         kappa: float,
         beta: float,
-        with_unc: bool,
+        use_maxprob_variance: bool,
     ) -> None:
         self.fractions = np.arange(fractions[0], fractions[1], step=fractions[2])
         self.metric_to_monitor = metric_to_monitor
         self.kappa = kappa
         self.beta = beta
-        self.with_unc = with_unc
+        self.use_maxprob_variance = use_maxprob_variance
 
     def __call__(
         self,
@@ -151,21 +188,22 @@ class CombinedMaxProb:
         probe_score: np.ndarray,
     ) -> Any:
         mises_maxprob = MisesProb(kappa=self.kappa, beta=self.beta)
+
         all_classes_log_prob = mises_maxprob.compute_all_class_log_probabilities(
-            similarity
+            similarity[np.newaxis, ...]
         )
+
+        unc_metric_name = (self.__class__.__name__) + ",beta=" + str(self.beta)
+
         unc_score = -np.max(all_classes_log_prob, axis=1)
-        unc_metric_name = (
-            self.__class__.__name__
-        ) +"_beta="+ str(self.beta)
-        #unc_metric_name = r"$m(p) = \max_{c\in {1,\dots,K+1}}p(c|z)$"
+        # unc_metric_name = r"$m(p) = \max_{c\in {1,\dots,K+1}}p(c|z)$"
         unc_metric = get_reject_metrics(
             unc_metric_name,
             unc_score,
             self.metric_to_monitor,
             probe_ids,
             gallery_ids,
-            similarity,
+            np.mean(similarity, axis=1),
             probe_score,
             self.fractions,
         )
@@ -190,10 +228,8 @@ class MeanDistanceReject:
     ) -> Any:
         mean_probe_score = np.mean(probe_score)
         unc_score = -np.abs(probe_score - mean_probe_score)
-        unc_metric_name = (
-            self.__class__.__name__
-        ) 
-        #unc_metric_name = r"$m(p) = \left|s(p)-\frac{1}{N}\sum_{p\in TestSet}s(p)\right|$" #
+        unc_metric_name = self.__class__.__name__
+        # unc_metric_name = r"$m(p) = \left|s(p)-\frac{1}{N}\sum_{p\in TestSet}s(p)\right|$" #
         unc_metric = get_reject_metrics(
             unc_metric_name,
             unc_score,

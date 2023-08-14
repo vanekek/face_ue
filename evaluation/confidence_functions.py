@@ -46,10 +46,10 @@ class MisesProb(AbstractConfidence):
         return -self.compute_uniform_log_probability(similarity_matrix)
 
     def compute_log_z_prob(self, similarities: np.ndarray):
-        K = similarities.shape[1]
+        K = similarities.shape[-1]
 
         logit_sum = (
-            np.sum(np.exp(similarities * self.kappa), axis=1) * (1 - self.beta) / K
+            np.sum(np.exp(similarities * self.kappa), axis=-1) * (1 - self.beta) / K
         )
         # print(f'Logit sum: {logit_sum}')
 
@@ -72,7 +72,7 @@ class MisesProb(AbstractConfidence):
         )
 
         return np.concatenate(
-            [gallery_log_probs, uniform_log_prob[:, np.newaxis]], axis=1
+            [gallery_log_probs, uniform_log_prob[:, np.newaxis]], axis=-1
         )
 
     def compute_uniform_log_probability(self, similarities: np.ndarray):
@@ -133,4 +133,4 @@ class MaxSimilarity_confidence(AbstractConfidence):
         :return probe_score: specifies confinence that particular test image belongs to predicted class
             image's probe_score is less than operating threshold τ, then this image get rejected as imposter
         """
-        return np.max(similarity_matrix, axis=1)
+        return np.max(similarity_matrix, axis=-1)

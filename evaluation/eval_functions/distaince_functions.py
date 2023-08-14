@@ -44,7 +44,7 @@ class CosineSimDistance:
         X_unc: np.ndarray = None,
         Y_unc: np.ndarray = None,
     ):
-        return np.dot(X_1, X_2.T)
+        return X_2 @ X_1
 
 
 class PfeSimPairwise:

@@ -12,6 +12,7 @@ from .test_datasets import FaceRecogntioniDataset
 class Face_Fecognition_test:
     def __init__(
         self,
+        sampler,
         evaluation_function: Abstract1NEval,
         test_dataset: FaceRecogntioniDataset,
         embeddings_path: str,
@@ -43,6 +44,7 @@ class Face_Fecognition_test:
             self.test_dataset.face_scores = self.test_dataset.face_scores.astype(
                 self.embs.dtype
             )
+        self.sampler = sampler
         self.evaluation_function = evaluation_function
         self.template_pooling_strategy = template_pooling_strategy
 
@@ -222,11 +224,13 @@ class Face_Fecognition_test:
         ) = self.get_template_subsets(
             self.test_dataset.probe_templates, self.test_dataset.probe_ids
         )
-        # print("probe_templates_feature:", probe_templates_feature.shape)  # (19593, 512)
 
-        # print("probe_unique_ids:", probe_unique_ids.shape)  # (19593,)
+        # sample probe feature vectors
 
-        # print(">>>> Gallery 1")
+        probe_templates_feature = self.sampler(
+            probe_templates_feature,
+            probe_template_unc,
+        )
 
         similarity, probe_score = self.evaluation_function(
             probe_templates_feature,
@@ -242,7 +246,7 @@ class Face_Fecognition_test:
                 metric(
                     probe_ids=probe_unique_ids,
                     gallery_ids=g1_unique_ids,
-                    similarity=similarity,
+                    similarity=np.mean(similarity, axis=1),
                     probe_score=probe_score,
                 )
             )
@@ -300,7 +304,7 @@ class Face_Fecognition_test:
                         probe_score=probe_score,
                     )
                 )
-            #warnings.warn("Aggregation of unc metrics is unchecked")
+            # warnings.warn("Aggregation of unc metrics is unchecked")
             for key in g2_metrics.keys():
                 if "recalls" in key or "AUC" in key or "top" in key:
                     metrics[key] = (metrics[key] + g2_metrics[key]) / 2

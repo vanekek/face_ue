@@ -17,14 +17,18 @@ class CosineSim(Abstract1NEval):
         gallery_feats,
         gallery_unc,
     ):
-        # print(
-        #     "probe_feats: %s, gallery_feats: %s"
-        #     % (probe_feats.shape, gallery_feats.shape)
-        # )
+        """
+        probe_feats: n x num_z_samples x 512
+        """
+        print(
+            "probe_feats: %s, gallery_feats: %s"
+            % (probe_feats.shape, gallery_feats.shape)
+        )
         compute_cosine_sim = CosineSimDistance()
-        similarity = compute_cosine_sim(
-            probe_feats, gallery_feats
-        )  # np.dot(probe_feats, gallery_feats.T)  # (19593, 1772)
+        probe_feats = np.moveaxis(probe_feats, 2, 1)  # n x 512 x num_z_samples
+        similarity = compute_cosine_sim(probe_feats, gallery_feats)
+        assert similarity.shape[0] == probe_feats.shape[0]
+        similarity = np.moveaxis(similarity, 2, 1)  # n x num_z_samples x K
         probe_score = self.confidence_function(similarity)
-
+        probe_score = np.mean(probe_score, axis=-1)
         return similarity, probe_score
