@@ -20,10 +20,6 @@ class CosineSim(Abstract1NEval):
         """
         probe_feats: n x num_z_samples x 512
         """
-        print(
-            "probe_feats: %s, gallery_feats: %s"
-            % (probe_feats.shape, gallery_feats.shape)
-        )
         compute_cosine_sim = CosineSimDistance()
         probe_feats = np.moveaxis(probe_feats, 2, 1)  # n x 512 x num_z_samples
         similarity = compute_cosine_sim(probe_feats, gallery_feats)

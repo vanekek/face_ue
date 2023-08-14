@@ -149,8 +149,9 @@ def create_open_set_ident_uncertainty_metric_table(
     pass
 
 
-def get_method_name(method, template_pooling, evaluation_function):
+def get_method_name(method, sampler, template_pooling, evaluation_function):
     method_name_parts = []
+    method_name_parts.append(f"sampler-{sampler.__class__.__name__}-num-samples-{sampler.num_samples}")
     method_name_parts.append(f"pooling-with-{template_pooling.__class__.__name__}")
     method_name_parts.append(f"use-det-score-{method.use_detector_score}")
     method_name_parts.append(f"eval-with-{evaluation_function.__class__.__name__}")
@@ -271,7 +272,7 @@ def main(cfg):
         if method_type == "open_set_identification":  # 1:N test
             # introduce method name that fully defines method features
 
-            method_name = get_method_name(method, template_pooling, evaluation_function)
+            method_name = get_method_name(method, sampler, template_pooling, evaluation_function)
             print(method_name)
             # run recognition and uncertainty metric computation
             (
@@ -397,28 +398,7 @@ def main(cfg):
             closed_set_ident_pretty_names,
         )
 
-    # fig_verif = plot_tar_far_scores(scores=verif_scores, names=verif_names)
-    # fig_verif.savefig(Path(cfg.exp_dir) / "tar_far_plot.png", dpi=300)
-    # print("Plot verif path:")
-    # print(str(Path(cfg.exp_dir) / "tar_far_plot.png"))
 
-    # # cmc plot
-
-    # fig_verif = plot_cmc_scores(
-    #     scores=closed_set_ident_scores, names=closed_set_ident_names
-    # )
-    # fig_verif.savefig(Path(cfg.exp_dir) / "cmc_plot.png", dpi=300)
-    # print("Plot closed ident path:")
-    # print(str(Path(cfg.exp_dir) / "cmc_plot.png"))
-
-    # # rejection plot
-
-    # fig_rejection = plot_rejection_scores(
-    #     scores=open_set_ident_rejection_scores, names=open_set_ident_rejection_names
-    # )
-    # fig_rejection.savefig(Path(cfg.exp_dir) / "rejection_plot.png", dpi=300)
-    # print("Plot open ident rejection path:")
-    # print(str(Path(cfg.exp_dir) / "rejection_plot.png"))
 
 
 if __name__ == "__main__":

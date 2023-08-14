@@ -169,7 +169,9 @@ class DetectionAndIdentificationRate:
         """
         gallery_ids_argsort = np.argsort(gallery_ids)
         gallery_ids = gallery_ids[gallery_ids_argsort]
-        # if not labels_sorted:
+
+        
+        # sort labels
         similarity = similarity[:, gallery_ids_argsort]
 
         is_seen = np.isin(probe_ids, gallery_ids)

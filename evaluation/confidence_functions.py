@@ -62,17 +62,17 @@ class MisesProb(AbstractConfidence):
         uniform_log_prob = self.compute_uniform_log_probability(similarities)
 
         # compute gallery classes log prob
-        K = similarities.shape[1]
+        K = similarities.shape[-1]
         log_z_prob = self.compute_log_z_prob(similarities)
         gallery_log_probs = (
             self.log_c
             + self.kappa * similarities
             + np.log((1 - self.beta) / K)
-            - log_z_prob[:, np.newaxis]
+            - log_z_prob[..., np.newaxis]
         )
 
         return np.concatenate(
-            [gallery_log_probs, uniform_log_prob[:, np.newaxis]], axis=-1
+            [gallery_log_probs, uniform_log_prob[..., np.newaxis]], axis=-1
         )
 
     def compute_uniform_log_probability(self, similarities: np.ndarray):

@@ -63,9 +63,6 @@ class Face_Fecognition_test:
 
         self.pool_templates(cache_dir="/app/cache/template_cache")
 
-        self.labels_sorted = (
-            True if self.evaluation_function.__class__.__name__ == "SVM" else False
-        )
 
     def pool_templates(self, cache_dir: str):
         cache_dir = Path(cache_dir)
@@ -254,7 +251,6 @@ class Face_Fecognition_test:
         # uncertainty metrics
         unc_metrics = {}
         for unc_metric in self.open_set_uncertainty_metrics:
-            assert self.labels_sorted is False
             unc_metrics.update(
                 unc_metric(
                     probe_ids=probe_unique_ids,
@@ -287,14 +283,13 @@ class Face_Fecognition_test:
                     metric(
                         probe_ids=probe_unique_ids,
                         gallery_ids=g2_unique_ids,
-                        similarity=similarity,
+                        similarity=np.mean(similarity, axis=1),
                         probe_score=probe_score,
                     )
                 )
             # uncertainty metrics
             g2_unc_metrics = {}
             for unc_metric in self.open_set_uncertainty_metrics:
-                assert self.labels_sorted is False
                 g2_unc_metrics.update(
                     unc_metric(
                         probe_ids=probe_unique_ids,

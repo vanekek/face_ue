@@ -94,7 +94,7 @@ class DataUncertaintyReject:
             self.metric_to_monitor,
             probe_ids,
             gallery_ids,
-            similarity,
+            np.mean(similarity, axis=1),
             probe_score,
             self.fractions,
         )
@@ -172,13 +172,16 @@ class CombinedMaxProb:
         kappa: float,
         beta: float,
         use_maxprob_variance: bool,
+        data_variance_weight: float,
     ) -> None:
         self.fractions = np.arange(fractions[0], fractions[1], step=fractions[2])
         self.metric_to_monitor = metric_to_monitor
         self.kappa = kappa
         self.beta = beta
         self.use_maxprob_variance = use_maxprob_variance
-
+        self.data_variance_weight = data_variance_weight
+        assert self.data_variance_weight >=0 and self.data_variance_weight<=1
+        self.mises_maxprob = MisesProb(kappa=self.kappa, beta=self.beta)
     def __call__(
         self,
         probe_ids: np.ndarray,
@@ -187,15 +190,19 @@ class CombinedMaxProb:
         similarity: np.ndarray,
         probe_score: np.ndarray,
     ) -> Any:
-        mises_maxprob = MisesProb(kappa=self.kappa, beta=self.beta)
+       
 
-        all_classes_log_prob = mises_maxprob.compute_all_class_log_probabilities(
-            similarity[np.newaxis, ...]
+        all_classes_log_prob = self.mises_maxprob.compute_all_class_log_probabilities(
+            similarity
         )
 
-        unc_metric_name = (self.__class__.__name__) + ",beta=" + str(self.beta)
+        unc_metric_name = (self.__class__.__name__) + ",beta=" + str(self.beta) + ",alpha=" + str(self.data_variance_weight)
 
-        unc_score = -np.max(all_classes_log_prob, axis=1)
+        unc_score = -np.mean(np.max(all_classes_log_prob, axis=-1), axis=-1)
+        data_uncertainty = (-probe_template_unc[:,0])
+        data_uncertainty = (data_uncertainty - np.min(data_uncertainty))/(np.max(data_uncertainty) - np.min(data_uncertainty))
+        unc_score = (unc_score - np.min(unc_score)) / (np.max(unc_score) - np.min(unc_score))
+        unc_score = unc_score*(1-self.data_variance_weight) + self.data_variance_weight*(data_uncertainty)
         # unc_metric_name = r"$m(p) = \max_{c\in {1,\dots,K+1}}p(c|z)$"
         unc_metric = get_reject_metrics(
             unc_metric_name,
@@ -236,7 +243,7 @@ class MeanDistanceReject:
             self.metric_to_monitor,
             probe_ids,
             gallery_ids,
-            similarity,
+            np.mean(similarity, axis=1),
             probe_score,
             self.fractions,
         )
