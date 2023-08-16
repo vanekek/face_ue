@@ -1,4 +1,4 @@
-exp_dir: experiments/open_set_uncertainty
+exp_dir: outputs/experiments/open_set_uncertainty_small_kappa_normal_beta
 use_two_galleries: true
 recompute_template_pooling: false
 test_dataset:
@@ -77,12 +77,37 @@ metric_to_monitor:
   - 0.1
   - 1
 open_set_uncertainty_metrics:
-- _target_: evaluation.uncertainty_metrics.BernoulliVarianceReject
+- _target_: evaluation.uncertainty_metrics.CombinedMaxProb
   fractions: ${fractions}
+  kappa: 700
+  beta: 0.01
+  use_maxprob_variance: false
+  data_variance_weight: 0
   metric_to_monitor: ${metric_to_monitor}
 - _target_: evaluation.uncertainty_metrics.CombinedMaxProb
   fractions: ${fractions}
-  kappa: 200
+  kappa: 600
+  beta: 0.01
+  use_maxprob_variance: false
+  data_variance_weight: 0
+  metric_to_monitor: ${metric_to_monitor}
+- _target_: evaluation.uncertainty_metrics.CombinedMaxProb
+  fractions: ${fractions}
+  kappa: 500
+  beta: 0.01
+  use_maxprob_variance: false
+  data_variance_weight: 0
+  metric_to_monitor: ${metric_to_monitor}
+- _target_: evaluation.uncertainty_metrics.CombinedMaxProb
+  fractions: ${fractions}
+  kappa: 400
+  beta: 0.01
+  use_maxprob_variance: false
+  data_variance_weight: 0
+  metric_to_monitor: ${metric_to_monitor}
+- _target_: evaluation.uncertainty_metrics.CombinedMaxProb
+  fractions: ${fractions}
+  kappa: 300
   beta: 0.01
   use_maxprob_variance: false
   data_variance_weight: 0
@@ -92,7 +117,7 @@ open_set_uncertainty_metrics:
   kappa: 200
   beta: 0.01
   use_maxprob_variance: false
-  data_variance_weight: 0.7
+  data_variance_weight: 0
   metric_to_monitor: ${metric_to_monitor}
 - _target_: evaluation.uncertainty_metrics.CombinedMaxProb
   fractions: ${fractions}

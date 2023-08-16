@@ -257,6 +257,8 @@ class CombinedMaxProb:
             (self.__class__.__name__)
             + ",beta="
             + str(self.beta)
+            + ",kappa="
+            + str(self.kappa)
             + ",alpha="
             + str(self.data_variance_weight)
         )

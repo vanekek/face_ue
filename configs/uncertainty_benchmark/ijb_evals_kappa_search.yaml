@@ -3,7 +3,7 @@ hydra:
     dir: ${exp_dir}
 
 #exp_dir: experiments/open_set_uncertainty_small_beta
-exp_dir: outputs/experiments/open_set_uncertainty
+exp_dir: outputs/experiments/open_set_uncertainty_small_kappa_normal_beta
 use_two_galleries: True
 recompute_template_pooling: False
 
@@ -48,9 +48,9 @@ metric_to_monitor:
   display_fars: [0.0001, 0.001, 0.01, 0.1, 1]
 
 open_set_uncertainty_metrics:
-  - _target_: evaluation.uncertainty_metrics.BernoulliVarianceReject
-    fractions: ${fractions}
-    metric_to_monitor: ${metric_to_monitor}
+  # - _target_: evaluation.uncertainty_metrics.BernoulliVarianceReject
+  #   fractions: ${fractions}
+  #   metric_to_monitor: ${metric_to_monitor}
 
   # - _target_: evaluation.uncertainty_metrics.CombinedMaxProb
   #   fractions: ${fractions}
@@ -69,6 +69,29 @@ open_set_uncertainty_metrics:
   #   data_variance_weight: 0
   #   metric_to_monitor: ${metric_to_monitor}
 
+  - _target_: evaluation.uncertainty_metrics.CombinedMaxProb
+    fractions: ${fractions}
+    kappa: 700
+    beta: 0.01
+    use_maxprob_variance: False
+    data_variance_weight: 0
+    metric_to_monitor: ${metric_to_monitor}
+
+  - _target_: evaluation.uncertainty_metrics.CombinedMaxProb
+    fractions: ${fractions}
+    kappa: 600
+    beta: 0.01
+    use_maxprob_variance: False
+    data_variance_weight: 0
+    metric_to_monitor: ${metric_to_monitor}
+
+  - _target_: evaluation.uncertainty_metrics.CombinedMaxProb
+    fractions: ${fractions}
+    kappa: 500
+    beta: 0.01
+    use_maxprob_variance: False
+    data_variance_weight: 0
+    metric_to_monitor: ${metric_to_monitor}
 
   - _target_: evaluation.uncertainty_metrics.CombinedMaxProb
     fractions: ${fractions}
@@ -80,11 +103,29 @@ open_set_uncertainty_metrics:
 
   - _target_: evaluation.uncertainty_metrics.CombinedMaxProb
     fractions: ${fractions}
-    kappa: 400
+    kappa: 300
     beta: 0.01
     use_maxprob_variance: False
-    data_variance_weight: 0.5
+    data_variance_weight: 0
     metric_to_monitor: ${metric_to_monitor}
+
+  - _target_: evaluation.uncertainty_metrics.CombinedMaxProb
+    fractions: ${fractions}
+    kappa: 200
+    beta: 0.01
+    use_maxprob_variance: False
+    data_variance_weight: 0
+    metric_to_monitor: ${metric_to_monitor}
+
+  # - _target_: evaluation.uncertainty_metrics.CombinedMaxProb
+  #   fractions: ${fractions}
+  #   kappa: 200
+  #   beta: 0.000001
+  #   use_maxprob_variance: False
+  #   data_variance_weight: 0
+  #   metric_to_monitor: ${metric_to_monitor}
+    
+
       
   - _target_: evaluation.uncertainty_metrics.CombinedMaxProb
     fractions: ${fractions}
