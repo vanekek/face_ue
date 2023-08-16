@@ -260,7 +260,7 @@ class CombinedMaxProb:
             + ",alpha="
             + str(self.data_variance_weight)
         )
-
+        #unc_metric_name = r"$m_{comb}(p) = m(p)_{"+str(self.beta)+r"}" + f"{1-self.data_variance_weight}" + r"+\kappa" + f"{self.data_variance_weight}"
         unc_score = -np.mean(np.max(all_classes_log_prob, axis=-1), axis=-1)
         data_uncertainty = -probe_template_unc[:, 0]
         data_uncertainty = (data_uncertainty - np.min(data_uncertainty)) / (
