@@ -152,7 +152,7 @@ open_set_identification_methods:
     template_pooling_strategy:
       _target_: evaluation.template_pooling_strategies.PoolingSCF
     use_detector_score: True
-    pretty_name: CosineSim
+    pretty_name: def
   
   # - evaluation_function: 
   #     _target_: evaluation.eval_functions.open_set_identification.CosineSim
