@@ -63,7 +63,6 @@ class Face_Fecognition_test:
 
         self.pool_templates(cache_dir="/app/cache/template_cache")
 
-
     def pool_templates(self, cache_dir: str):
         cache_dir = Path(cache_dir)
         cache_dir.mkdir(parents=True, exist_ok=True)
@@ -299,7 +298,7 @@ class Face_Fecognition_test:
                         probe_score=probe_score,
                     )
                 )
-            #warnings.warn("Aggregation of unc metrics is unchecked")
+            # warnings.warn("Aggregation of unc metrics is unchecked")
             for key in g2_metrics.keys():
                 if "metric:" in key:
                     metrics[key] = (metrics[key] + g2_metrics[key]) / 2

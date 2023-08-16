@@ -99,7 +99,6 @@ def create_rejection_plots(
                 metric_names.append(key)
         break
 
-
     # create unified plot of different rejection metrics for each rank
     rank_metric_to_unc_metrics = {}
     for metric_name in metric_names:
@@ -120,7 +119,7 @@ def create_rejection_plots(
                     pretty_names[model_name] + ";  " + pretty_unc_metric_name
                 )
                 scores.append((metrics["fractions"], metrics[metric_name]))
-        
+
         fig = plot_rejection_scores(
             scores=scores,
             names=model_names,
@@ -137,7 +136,9 @@ def create_open_set_ident_uncertainty_metric_table(
 
 def get_method_name(method, sampler, template_pooling, evaluation_function):
     method_name_parts = []
-    method_name_parts.append(f"sampler-{sampler.__class__.__name__}-num-samples-{sampler.num_samples}")
+    method_name_parts.append(
+        f"sampler-{sampler.__class__.__name__}-num-samples-{sampler.num_samples}"
+    )
     method_name_parts.append(f"pooling-with-{template_pooling.__class__.__name__}")
     method_name_parts.append(f"use-det-score-{method.use_detector_score}")
     method_name_parts.append(f"eval-with-{evaluation_function.__class__.__name__}")
@@ -258,7 +259,9 @@ def main(cfg):
         if method_type == "open_set_identification":  # 1:N test
             # introduce method name that fully defines method features
 
-            method_name = get_method_name(method, sampler, template_pooling, evaluation_function)
+            method_name = get_method_name(
+                method, sampler, template_pooling, evaluation_function
+            )
             print(method_name)
             # run recognition and uncertainty metric computation
             (
@@ -383,8 +386,6 @@ def main(cfg):
             closed_set_identification_result_dir,
             closed_set_ident_pretty_names,
         )
-
-
 
 
 if __name__ == "__main__":

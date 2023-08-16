@@ -8,9 +8,6 @@ from scipy import interpolate
 EvalMetricsT = Tuple[int, int, int, List[float], List[float], List[Tuple[float, float]]]
 
 
-
-
-
 class CMC:
     def __init__(self, top_n_ranks: List[int], display_ranks: List[int]) -> None:
         self.top_n_ranks = top_n_ranks
@@ -88,6 +85,8 @@ class TarFar:
 class DIRatFixedFAR:
     def __init__(self, top_n_ranks: List[int], far) -> None:
         pass
+
+
 class DetectionAndIdentificationRate:
     def __init__(
         self, top_n_ranks: List[int], far_range: List[int], display_fars: List[float]
@@ -128,7 +127,6 @@ class DetectionAndIdentificationRate:
         gallery_ids_argsort = np.argsort(gallery_ids)
         gallery_ids = gallery_ids[gallery_ids_argsort]
 
-        
         # sort labels
         similarity = similarity[:, gallery_ids_argsort]
 
@@ -166,11 +164,9 @@ class DetectionAndIdentificationRate:
             recall_values = np.array(recall_values)
             recall_name = f"metric:recalls_{rank}_rank"
             recalls[recall_name] = recall_values
-
         metrics = {}
         metrics.update({"fars": self.fars})
         metrics.update(recalls)
-
         # compute metrics
         new_metrics = {}
         for key, value in metrics.items():
@@ -185,6 +181,11 @@ class DetectionAndIdentificationRate:
                 # interpolate tar@far curve
                 f = interpolate.interp1d(metrics["fars"], metrics[key])
                 for far in self.display_fars:
-                    new_metrics[f"metric:recall-at-far_{far}_{rank}_rank"] = f([far])[0]
+                    recall = f([far])[0]
+                    new_metrics[f"metric:recall-at-far_{far}_{rank}_rank"] = recall
+                    num_errors = (
+                        seen_probe_ids.shape[0] - recall * seen_probe_ids.shape[0]
+                    )
+                    new_metrics[f"misc:error-num-at-far_{far}_{rank}_rank"] = num_errors
         metrics.update(new_metrics)
         return metrics

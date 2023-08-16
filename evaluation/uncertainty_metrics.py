@@ -21,7 +21,7 @@ def get_reject_metrics(
     fractions,
 ):
     unc_indexes = np.argsort(unc_score)
-    unc_metrics ={"fractions": fractions}
+    unc_metrics = {"fractions": fractions}
     for fraction in fractions:
         # drop worst fraction
         good_probes_idx = unc_indexes[: int((1 - fraction) * probe_ids.shape[0])]
@@ -46,12 +46,13 @@ def get_reject_metrics(
             elif "metric:recall-at-far" in key:
                 far = key.split("_")[-3]
                 rank = key.split("_")[-2]
-                recall_at_far_metric_name = f"plot_reject_DIR-at-FAR-{far}_{rank}_rank_{metric_name}"
+                recall_at_far_metric_name = (
+                    f"plot_reject_DIR-at-FAR-{far}_{rank}_rank_{metric_name}"
+                )
                 if recall_at_far_metric_name in unc_metrics:
                     unc_metrics[recall_at_far_metric_name].append(metric[key])
                 else:
                     unc_metrics[recall_at_far_metric_name] = [metric[key]]
-    
 
     for key in unc_metrics:
         if "plot_reject" in key:
@@ -60,20 +61,49 @@ def get_reject_metrics(
     return unc_metrics
 
 
-class OptimalReject:
-    def __init__(self, metric_to_monitor: any, fractions: List[int]) -> None:
-        self.fractions = np.arange(fractions[0], fractions[1], step=fractions[2])
-        self.metric_to_monitor = metric_to_monitor
+# class OptimalRecallReject:
+#     def __init__(self, fractions: List[int], metric_to_monitor: Any) -> None:
+#         self.fractions = np.arange(fractions[0], fractions[1], step=fractions[2])
+#         self.metric_to_monitor = metric_to_monitor
 
-    def __call__(
-        self,
-        probe_ids: np.ndarray,
-        probe_template_unc: np.ndarray,
-        gallery_ids: np.ndarray,
-        similarity: np.ndarray,
-        probe_score: np.ndarray,
-    ) -> Any:
-        pass
+#     def __call__(
+#         self,
+#         probe_ids: np.ndarray,
+#         probe_template_unc: np.ndarray,
+#         gallery_ids: np.ndarray,
+#         similarity: np.ndarray,
+#         probe_score: np.ndarray,
+#     ) -> Any:
+#         unc_metrics ={"fractions": self.fractions}
+#         metric = self.metric_to_monitor(
+#             probe_ids=probe_ids,
+#             gallery_ids=gallery_ids,
+#             similarity=np.mean(similarity, axis=1),
+#             probe_score=probe_score,
+#         )
+#         gallery_ids_argsort = np.argsort(gallery_ids)
+#         gallery_ids = gallery_ids[gallery_ids_argsort]
+
+
+#         # sort labels
+#         similarity = similarity[:, gallery_ids_argsort]
+
+#         is_seen = np.isin(probe_ids, gallery_ids)
+
+#         seen_sim: np.ndarray = similarity[is_seen]
+#         most_similar_classes = np.argsort(seen_sim, axis=1)[:, ::-1]
+#         seen_probe_ids = probe_ids[is_seen]
+
+#         for key, value in metric.items():
+#             if "misc:error-num-at-far" in key:
+#                 rank = key.split("_")[-2]
+#                 far = key.split("_")[-3]
+#                 optimal_recall_at_far_metric_name = f"plot_reject_DIR-at-FAR-{far}_{rank}_rank_OptimalRecall"
+
+#                 unc_metrics[optimal_recall_at_far_metric_name] = [metric[key]]
+
+
+#         return unc_metrics
 
 
 class DataUncertaintyReject:
@@ -133,7 +163,7 @@ class BernoulliVarianceReject:
             self.metric_to_monitor,
             probe_ids,
             gallery_ids,
-            similarity,
+            np.mean(similarity, axis=1),
             probe_score,
             self.fractions,
         )
@@ -189,8 +219,9 @@ class CombinedMaxProb:
         self.beta = beta
         self.use_maxprob_variance = use_maxprob_variance
         self.data_variance_weight = data_variance_weight
-        assert self.data_variance_weight >=0 and self.data_variance_weight<=1
+        assert self.data_variance_weight >= 0 and self.data_variance_weight <= 1
         self.mises_maxprob = MisesProb(kappa=self.kappa, beta=self.beta)
+
     def __call__(
         self,
         probe_ids: np.ndarray,
@@ -199,19 +230,32 @@ class CombinedMaxProb:
         similarity: np.ndarray,
         probe_score: np.ndarray,
     ) -> Any:
-       
-
         all_classes_log_prob = self.mises_maxprob.compute_all_class_log_probabilities(
             similarity
         )
 
-        unc_metric_name = (self.__class__.__name__) + ",beta=" + str(self.beta) + ",alpha=" + str(self.data_variance_weight)
+        unc_metric_name = (
+            (self.__class__.__name__)
+            + ",beta="
+            + str(self.beta)
+            + ",alpha="
+            + str(self.data_variance_weight)
+        )
 
         unc_score = -np.mean(np.max(all_classes_log_prob, axis=-1), axis=-1)
-        data_uncertainty = (-probe_template_unc[:,0])
-        data_uncertainty = (data_uncertainty - np.min(data_uncertainty))/(np.max(data_uncertainty) - np.min(data_uncertainty))
-        unc_score = (unc_score - np.min(unc_score)) / (np.max(unc_score) - np.min(unc_score))
-        unc_score = unc_score*(1-self.data_variance_weight) + self.data_variance_weight*(data_uncertainty)
+        data_uncertainty = -probe_template_unc[:, 0]
+        data_uncertainty = (data_uncertainty - np.min(data_uncertainty)) / (
+            np.max(data_uncertainty) - np.min(data_uncertainty)
+        )
+        unc_score = (unc_score - np.min(unc_score)) / (
+            np.max(unc_score) - np.min(unc_score)
+        )
+
+        unc_score = unc_score * (
+            1 - self.data_variance_weight
+        ) + self.data_variance_weight * (data_uncertainty)
+        # unc_score = 1 - (1-data_uncertainty)*(1-unc_score)
+
         # unc_metric_name = r"$m(p) = \max_{c\in {1,\dots,K+1}}p(c|z)$"
         unc_metric = get_reject_metrics(
             unc_metric_name,

@@ -2,8 +2,8 @@ hydra:
   run:
     dir: ${exp_dir}
 
-exp_dir: experiments/open_set_uncertainty
-
+#exp_dir: experiments/open_set_uncertainty
+exp_dir: outputs/experiments/open_set_uncertainty
 use_two_galleries: True
 recompute_template_pooling: False
 
@@ -14,8 +14,8 @@ recompute_template_pooling: False
 
 test_dataset:
   _target_: evaluation.test_datasets.FaceRecogntioniDataset
-  dataset_name: IJBB
-  dataset_path: /app/datasets/arcface_ijb/IJBB
+  dataset_name: IJBC
+  dataset_path: /app/datasets/arcface_ijb/IJBC
 
 open_set_identification_metrics:
   - _target_: evaluation.metrics.DetectionAndIdentificationRate
@@ -44,22 +44,22 @@ fractions: [0, 0.55, 0.05]
 metric_to_monitor:
   _target_: evaluation.metrics.DetectionAndIdentificationRate
   top_n_ranks: [1, 20] #[1, 10, 20]
-  far_range: [-5, 0, 100] 
-  display_fars: [0.00001, 0.0001, 0.001, 0.01, 0.1, 1]
+  far_range: [-4, 0, 100] 
+  display_fars: [0.0001, 0.001, 0.01, 0.1, 1]
 
 open_set_uncertainty_metrics:
-  # - _target_: evaluation.uncertainty_metrics.BernoulliVarianceReject
+  - _target_: evaluation.uncertainty_metrics.BernoulliVarianceReject
+    fractions: ${fractions}
+    metric_to_monitor: ${metric_to_monitor}
+
+  # - _target_: evaluation.uncertainty_metrics.OptimalRecallReject
   #   fractions: ${fractions}
-  #   metric_to_monitor:
-  #     _target_: evaluation.metrics.DetectionAndIdentificationRate
-  #     top_n_ranks: [1, 20] #[1, 10, 20]
-  #     far_range: [-4, 0, 100] 
-  #     display_fars: [0.0001, 0.001, 0.01, 0.1, 1]
+  #   metric_to_monitor: ${metric_to_monitor}
 
   - _target_: evaluation.uncertainty_metrics.CombinedMaxProb
     fractions: ${fractions}
     kappa: 200
-    beta: 0.05
+    beta: 0.5
     use_maxprob_variance: False
     data_variance_weight: 0
     metric_to_monitor: ${metric_to_monitor}
@@ -67,7 +67,7 @@ open_set_uncertainty_metrics:
   - _target_: evaluation.uncertainty_metrics.CombinedMaxProb
     fractions: ${fractions}
     kappa: 200
-    beta: 0.05
+    beta: 0.5
     use_maxprob_variance: False
     data_variance_weight: 0.7
     metric_to_monitor: ${metric_to_monitor}
@@ -75,7 +75,7 @@ open_set_uncertainty_metrics:
   - _target_: evaluation.uncertainty_metrics.CombinedMaxProb
     fractions: ${fractions}
     kappa: 200
-    beta: 0.05
+    beta: 0.5
     use_maxprob_variance: False
     data_variance_weight: 1
     metric_to_monitor: ${metric_to_monitor}
