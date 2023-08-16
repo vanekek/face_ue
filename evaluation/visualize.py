@@ -158,7 +158,7 @@ def plot_dir_far_scores(scores, names, y_label: str):
     plt.xlim([0.0001, 1])
     plt.xscale("log")
     plt.ylabel(y_label)
-    plt.ylim([0, 1])
+    #plt.ylim([0, 1])
 
     plt.grid(linestyle="--", linewidth=1)
     plt.legend(fontsize="x-small")

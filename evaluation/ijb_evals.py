@@ -54,23 +54,29 @@ def create_open_set_ident_plots(
     metric_names = []
     for _, metric in recognition_result_dict.items():
         for key in metric.keys():
-            if "recalls" in key:
+            if "metric:recalls" in key or "error_count:false-rejection-count_" in key:
                 metric_names.append(key)
         break
+    value_name_to_pretty_name = {
+        'recalls': 'Detection & Identification Rate',
+        'false-rejection-count': 'False Rejection Count'
+    }
     for metric_name in metric_names:
-        rank = metric_name.split("_")[1]
+        rank = metric_name.split("_")[-2]
+        rank_dir = out_dir / f"rank_{rank}"
+        rank_dir.mkdir(exist_ok=True)
         model_names = []
         scores = []
         for model_name, metrics in recognition_result_dict.items():
             model_names.append(pretty_names[model_name])
             scores.append((metrics["fars"], metrics[metric_name]))
-
+        display_value_name = metric_name.split('_')[-3].split(':')[1]
         fig = plot_dir_far_scores(
             scores=scores,
             names=model_names,
-            y_label=f"Rank {rank} Detection & Identification Rate",
+            y_label=f"Rank {rank} {value_name_to_pretty_name[display_value_name]}",
         )
-        fig.savefig(out_dir / f"rank_{rank}_di_far_plot.png", dpi=300)
+        fig.savefig(rank_dir / f"{display_value_name}.png", dpi=300)
 
 
 def create_closed_set_ident_plots(
@@ -112,6 +118,8 @@ def create_rejection_plots(
     for (rank, metric), rank_metric_names in rank_metric_to_unc_metrics.items():
         model_names = []
         scores = []
+        rank_dir = out_dir / f"rank_{rank}"
+        rank_dir.mkdir(exist_ok=True)
         for metric_name in rank_metric_names:
             pretty_unc_metric_name = metric_name.split("_")[-1]
             for model_name, metrics in open_set_uncertainty_result_metrics.items():
@@ -125,7 +133,7 @@ def create_rejection_plots(
             names=model_names,
             y_label=f"Ранг {rank} {metric}",
         )
-        fig.savefig(out_dir / f"rank_{rank}_{metric}_rejection.png", dpi=300)
+        fig.savefig(rank_dir / f"{metric}_rejection.png", dpi=300)
 
 
 def create_open_set_ident_uncertainty_metric_table(

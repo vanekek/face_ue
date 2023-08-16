@@ -48,11 +48,7 @@ metric_to_monitor:
   display_fars: [0.0001, 0.001, 0.01, 0.1, 1]
 
 open_set_uncertainty_metrics:
-  - _target_: evaluation.uncertainty_metrics.BernoulliVarianceReject
-    fractions: ${fractions}
-    metric_to_monitor: ${metric_to_monitor}
-
-  # - _target_: evaluation.uncertainty_metrics.OptimalRecallReject
+  # - _target_: evaluation.uncertainty_metrics.BernoulliVarianceReject
   #   fractions: ${fractions}
   #   metric_to_monitor: ${metric_to_monitor}
 
@@ -64,13 +60,13 @@ open_set_uncertainty_metrics:
     data_variance_weight: 0
     metric_to_monitor: ${metric_to_monitor}
     
-  - _target_: evaluation.uncertainty_metrics.CombinedMaxProb
-    fractions: ${fractions}
-    kappa: 200
-    beta: 0.5
-    use_maxprob_variance: False
-    data_variance_weight: 0.7
-    metric_to_monitor: ${metric_to_monitor}
+  # - _target_: evaluation.uncertainty_metrics.CombinedMaxProb
+  #   fractions: ${fractions}
+  #   kappa: 200
+  #   beta: 0.5
+  #   use_maxprob_variance: False
+  #   data_variance_weight: 0.7
+  #   metric_to_monitor: ${metric_to_monitor}
       
   - _target_: evaluation.uncertainty_metrics.CombinedMaxProb
     fractions: ${fractions}

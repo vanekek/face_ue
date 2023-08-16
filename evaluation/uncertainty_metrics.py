@@ -53,7 +53,26 @@ def get_reject_metrics(
                     unc_metrics[recall_at_far_metric_name].append(metric[key])
                 else:
                     unc_metrics[recall_at_far_metric_name] = [metric[key]]
-
+            elif "error_count::false-rejection-count-at-far" in key:
+                far = key.split("_")[-3]
+                rank = key.split("_")[-2]
+                false_rejection_metric_name = (
+                    f"plot_reject_false-rejection-{far}_{rank}_rank_{metric_name}"
+                )
+                if false_rejection_metric_name in unc_metrics:
+                    unc_metrics[false_rejection_metric_name].append(metric[key])
+                else:
+                    unc_metrics[false_rejection_metric_name] = [metric[key]]
+            elif "error_count:false-ident-count" in key:
+                rank = key.split("_")[-2]
+                false_ident_metric_name = (
+                    f"plot_reject_false-ident_{rank}_rank_{metric_name}"
+                )
+                if false_ident_metric_name in unc_metrics:
+                    unc_metrics[false_ident_metric_name].append(metric[key])
+                else:
+                    unc_metrics[false_ident_metric_name] = [metric[key]]
+                
     for key in unc_metrics:
         if "plot_reject" in key:
             unc_metrics[key] = np.array(unc_metrics[key])
