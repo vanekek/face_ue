@@ -230,6 +230,7 @@ class CombinedMaxProb:
         kappa: float,
         beta: float,
         use_maxprob_variance: bool,
+        aggregation: str,
         data_variance_weight: float,
     ) -> None:
         self.fractions = np.arange(fractions[0], fractions[1], step=fractions[2])
@@ -237,6 +238,7 @@ class CombinedMaxProb:
         self.kappa = kappa
         self.beta = beta
         self.use_maxprob_variance = use_maxprob_variance
+        self.aggregation = aggregation
         self.data_variance_weight = data_variance_weight
         assert self.data_variance_weight >= 0 and self.data_variance_weight <= 1
         self.mises_maxprob = MisesProb(kappa=self.kappa, beta=self.beta)
@@ -254,16 +256,24 @@ class CombinedMaxProb:
         )
 
         unc_metric_name = (
-            (self.__class__.__name__)
+            "Comb" #(self.__class__.__name__)
+            + ",aggr="
+            + self.aggregation
             + ",beta="
             + str(self.beta)
-            + ",kappa="
+            + ",k="
             + str(self.kappa)
-            + ",alpha="
+            + ",a="
             + str(self.data_variance_weight)
         )
         #unc_metric_name = r"$m_{comb}(p) = m(p)_{"+str(self.beta)+r"}" + f"{1-self.data_variance_weight}" + r"+\kappa" + f"{self.data_variance_weight}"
-        unc_score = -np.mean(np.max(all_classes_log_prob, axis=-1), axis=-1)
+        if self.aggregation == 'maxprob':
+            unc_score = -np.mean(np.max(all_classes_log_prob, axis=-1), axis=-1)
+        elif self.aggregation == 'entropy':
+            all_classes_prob = np.exp(all_classes_log_prob)
+            unc_score = -np.mean(np.sum(all_classes_prob * all_classes_log_prob, axis=-1), axis=-1)
+        else:
+            raise ValueError
         data_uncertainty = -probe_template_unc[:, 0]
         data_uncertainty = (data_uncertainty - np.min(data_uncertainty)) / (
             np.max(data_uncertainty) - np.min(data_uncertainty)

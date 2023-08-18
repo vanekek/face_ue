@@ -3,7 +3,7 @@ hydra:
     dir: ${exp_dir}
 
 #exp_dir: experiments/open_set_uncertainty_small_beta
-exp_dir: outputs/experiments/open_set_uncertainty
+exp_dir: outputs/experiments/open_set_uncertainty_aggregated_unc
 use_two_galleries: True
 recompute_template_pooling: False
 
@@ -48,9 +48,9 @@ metric_to_monitor:
   display_fars: [0.0001, 0.001, 0.01, 0.1, 1]
 
 open_set_uncertainty_metrics:
-  - _target_: evaluation.uncertainty_metrics.BernoulliVarianceReject
-    fractions: ${fractions}
-    metric_to_monitor: ${metric_to_monitor}
+  # - _target_: evaluation.uncertainty_metrics.BernoulliVarianceReject
+  #   fractions: ${fractions}
+  #   metric_to_monitor: ${metric_to_monitor}
 
   # - _target_: evaluation.uncertainty_metrics.CombinedMaxProb
   #   fractions: ${fractions}
@@ -69,12 +69,12 @@ open_set_uncertainty_metrics:
   #   data_variance_weight: 0
   #   metric_to_monitor: ${metric_to_monitor}
 
-
   - _target_: evaluation.uncertainty_metrics.CombinedMaxProb
     fractions: ${fractions}
     kappa: 400
     beta: 0.01
     use_maxprob_variance: False
+    aggregation: maxprob
     data_variance_weight: 0
     metric_to_monitor: ${metric_to_monitor}
 
@@ -83,13 +83,50 @@ open_set_uncertainty_metrics:
     kappa: 400
     beta: 0.01
     use_maxprob_variance: False
-    data_variance_weight: 0.5
+    aggregation: entropy
+    data_variance_weight: 0
     metric_to_monitor: ${metric_to_monitor}
+
+  # - _target_: evaluation.uncertainty_metrics.CombinedMaxProb
+  #   fractions: ${fractions}
+  #   kappa: 400
+  #   beta: 0.01
+  #   use_maxprob_variance: False
+  #   data_variance_weight: 0.5
+  #   metric_to_monitor: ${metric_to_monitor}
       
+  - _target_: evaluation.uncertainty_metrics.CombinedMaxProb
+    fractions: ${fractions}
+    kappa: 400
+    beta: 0.01
+    use_maxprob_variance: False
+    aggregation: maxprob
+    data_variance_weight: 0.7
+    metric_to_monitor: ${metric_to_monitor}
+
+  - _target_: evaluation.uncertainty_metrics.CombinedMaxProb
+    fractions: ${fractions}
+    kappa: 400
+    beta: 0.01
+    use_maxprob_variance: False
+    aggregation: entropy
+    data_variance_weight: 0.7
+    metric_to_monitor: ${metric_to_monitor}
+
+  # - _target_: evaluation.uncertainty_metrics.CombinedMaxProb
+  #   fractions: ${fractions}
+  #   kappa: 400
+  #   beta: 0.01
+  #   use_maxprob_variance: False
+  #   aggregation: enthropy
+  #   data_variance_weight: 0.7
+  #   metric_to_monitor: ${metric_to_monitor}
+
   - _target_: evaluation.uncertainty_metrics.CombinedMaxProb
     fractions: ${fractions}
     kappa: 200
     beta: 0.01
+    aggregation: entropy
     use_maxprob_variance: False
     data_variance_weight: 1
     metric_to_monitor: ${metric_to_monitor}
@@ -141,6 +178,19 @@ open_set_identification_methods:
   #   use_detector_score: True
   #   pretty_name: $s(p) =  \max_{c\in\{1,\dots,K\}}\mu^T_{c}z$, 10 samples
 
+  # - sampler:
+  #     _target_: evaluation.samplers.VonMisesFisher
+  #     num_samples: 0 # set 0 to use mean of distr as one sample
+  #   evaluation_function: 
+  #     _target_: evaluation.eval_functions.open_set_identification.CosineSim
+  #     confidence_function: 
+  #       _target_: evaluation.confidence_functions.MaxSimilarity_confidence
+  #   embeddings_path: ${test_dataset.dataset_path}/embeddings/scf_embs_${test_dataset.dataset_name}.npz
+  #   template_pooling_strategy:
+  #     _target_: evaluation.template_pooling_strategies.PoolingDefault
+  #   use_detector_score: True
+  #   pretty_name: NoSCF
+
   - sampler:
       _target_: evaluation.samplers.VonMisesFisher
       num_samples: 0 # set 0 to use mean of distr as one sample
@@ -152,7 +202,7 @@ open_set_identification_methods:
     template_pooling_strategy:
       _target_: evaluation.template_pooling_strategies.PoolingSCF
     use_detector_score: True
-    pretty_name: def
+    pretty_name: SCF
   
   # - evaluation_function: 
   #     _target_: evaluation.eval_functions.open_set_identification.CosineSim
