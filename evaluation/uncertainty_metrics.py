@@ -254,24 +254,39 @@ class CombinedMaxProb:
         all_classes_log_prob = self.mises_maxprob.compute_all_class_log_probabilities(
             similarity
         )
-
-        unc_metric_name = (
-            "Comb" #(self.__class__.__name__)
-            + ",aggr="
-            + self.aggregation
-            + ",beta="
-            + str(self.beta)
-            + ",k="
-            + str(self.kappa)
-            + ",a="
-            + str(self.data_variance_weight)
-        )
+        if self.data_variance_weight == 1:
+            unc_metric_name = "SCF unc"
+        elif self.data_variance_weight == 0:
+            unc_metric_name = (
+                "Prob"
+                + ",aggr="
+                + self.aggregation
+                + ",beta="
+                + str(self.beta)
+                + ",k="
+                + str(self.kappa)
+                + ",a="
+                )
+        else:
+            unc_metric_name = (
+                "Comb" #(self.__class__.__name__)
+                + ",aggr="
+                + self.aggregation
+                + ",beta="
+                + str(self.beta)
+                + ",k="
+                + str(self.kappa)
+                + ",a="
+                + str(self.data_variance_weight)
+            )
         #unc_metric_name = r"$m_{comb}(p) = m(p)_{"+str(self.beta)+r"}" + f"{1-self.data_variance_weight}" + r"+\kappa" + f"{self.data_variance_weight}"
         if self.aggregation == 'maxprob':
             unc_score = -np.mean(np.max(all_classes_log_prob, axis=-1), axis=-1)
-        elif self.aggregation == 'entropy':
+        elif self.aggregation == 'entr':
             all_classes_prob = np.exp(all_classes_log_prob)
             unc_score = -np.mean(np.sum(all_classes_prob * all_classes_log_prob, axis=-1), axis=-1)
+        elif self.aggregation == 'entropy-sum':
+            unc_score = -np.mean(np.sum(all_classes_log_prob, axis=-1), axis=-1)
         else:
             raise ValueError
         data_uncertainty = -probe_template_unc[:, 0]
