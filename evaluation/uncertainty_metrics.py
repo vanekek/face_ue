@@ -313,7 +313,7 @@ class CombinedMaxProb:
             probe_score,
             self.fractions,
         )
-        return unc_metric
+        return unc_metric, unc_score
 
 
 class MeanDistanceReject:

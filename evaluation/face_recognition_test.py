@@ -257,7 +257,7 @@ class Face_Fecognition_test:
                     gallery_ids=g1_unique_ids,
                     similarity=similarity,
                     probe_score=probe_score,
-                )
+                )[0]
             )
 
         if self.use_two_galleries and self.test_dataset.g2_templates.shape != ():
