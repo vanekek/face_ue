@@ -72,7 +72,7 @@ def get_reject_metrics(
                     unc_metrics[false_ident_metric_name].append(metric[key])
                 else:
                     unc_metrics[false_ident_metric_name] = [metric[key]]
-                
+
     for key in unc_metrics:
         if "plot_reject" in key:
             unc_metrics[key] = np.array(unc_metrics[key])
@@ -186,7 +186,7 @@ class BernoulliVarianceReject:
             probe_score,
             self.fractions,
         )
-        return unc_metric
+        return unc_metric, unc_score
 
 
 class MaxProb:
@@ -266,10 +266,10 @@ class CombinedMaxProb:
                 + ",k="
                 + str(self.kappa)
                 + ",a="
-                )
+            )
         else:
             unc_metric_name = (
-                "Comb" #(self.__class__.__name__)
+                "Comb"  # (self.__class__.__name__)
                 + ",aggr="
                 + self.aggregation
                 + ",beta="
@@ -279,13 +279,15 @@ class CombinedMaxProb:
                 + ",a="
                 + str(self.data_variance_weight)
             )
-        #unc_metric_name = r"$m_{comb}(p) = m(p)_{"+str(self.beta)+r"}" + f"{1-self.data_variance_weight}" + r"+\kappa" + f"{self.data_variance_weight}"
-        if self.aggregation == 'maxprob':
+        # unc_metric_name = r"$m_{comb}(p) = m(p)_{"+str(self.beta)+r"}" + f"{1-self.data_variance_weight}" + r"+\kappa" + f"{self.data_variance_weight}"
+        if self.aggregation == "maxprob":
             unc_score = -np.mean(np.max(all_classes_log_prob, axis=-1), axis=-1)
-        elif self.aggregation == 'entr':
+        elif self.aggregation == "entr":
             all_classes_prob = np.exp(all_classes_log_prob)
-            unc_score = -np.mean(np.sum(all_classes_prob * all_classes_log_prob, axis=-1), axis=-1)
-        elif self.aggregation == 'entropy-sum':
+            unc_score = -np.mean(
+                np.sum(all_classes_prob * all_classes_log_prob, axis=-1), axis=-1
+            )
+        elif self.aggregation == "entropy-sum":
             unc_score = -np.mean(np.sum(all_classes_log_prob, axis=-1), axis=-1)
         else:
             raise ValueError

@@ -164,12 +164,16 @@ class DetectionAndIdentificationRate:
                     / seen_probe_ids.shape[0]
                 )
                 false_rejection_values.append(np.sum(pos_score < thresh))
-                
+
                 recall_values.append(recall)
             recall_values = np.array(recall_values)
             false_rejection_values = np.array(false_rejection_values)
-            false_rejection_count[f"error_count:false-rejection-count_{rank}_rank"] = false_rejection_values
-            false_identification_count[f"error_count:false-ident-count_{rank}_rank"] = seen_probe_ids.shape[0] - np.sum(correct_pos)
+            false_rejection_count[
+                f"error_count:false-rejection-count_{rank}_rank"
+            ] = false_rejection_values
+            false_identification_count[
+                f"error_count:false-ident-count_{rank}_rank"
+            ] = seen_probe_ids.shape[0] - np.sum(correct_pos)
             recall_name = f"metric:recalls_{rank}_rank"
             recalls[recall_name] = recall_values
         metrics = {}
@@ -194,11 +198,13 @@ class DetectionAndIdentificationRate:
                     recall = f([far])[0]
                     new_metrics[f"metric:recall-at-far_{far}_{rank}_rank"] = recall
             elif "error_count:false-rejection-count" in key:
-                #interpolate tar@far curve
+                # interpolate tar@far curve
                 rank = key.split("_")[-2]
                 f = interpolate.interp1d(metrics["fars"], metrics[key])
                 for far in self.display_fars:
                     rejection_count = f([far])[0]
-                    new_metrics[f"error_count::false-rejection-count-at-far_{far}_{rank}_rank"] = rejection_count       
+                    new_metrics[
+                        f"error_count::false-rejection-count-at-far_{far}_{rank}_rank"
+                    ] = rejection_count
         metrics.update(new_metrics)
         return metrics

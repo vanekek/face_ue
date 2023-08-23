@@ -296,7 +296,7 @@ class Face_Fecognition_test:
                         gallery_ids=g2_unique_ids,
                         similarity=similarity,
                         probe_score=probe_score,
-                    )
+                    )[0]
                 )
             # warnings.warn("Aggregation of unc metrics is unchecked")
             for key in g2_metrics.keys():

@@ -58,8 +58,8 @@ def create_open_set_ident_plots(
                 metric_names.append(key)
         break
     value_name_to_pretty_name = {
-        'recalls': 'Detection & Identification Rate',
-        'false-rejection-count': 'False Rejection Count'
+        "recalls": "Detection & Identification Rate",
+        "false-rejection-count": "False Rejection Count",
     }
     for metric_name in metric_names:
         rank = metric_name.split("_")[-2]
@@ -70,7 +70,7 @@ def create_open_set_ident_plots(
         for model_name, metrics in recognition_result_dict.items():
             model_names.append(pretty_names[model_name])
             scores.append((metrics["fars"], metrics[metric_name]))
-        display_value_name = metric_name.split('_')[-3].split(':')[1]
+        display_value_name = metric_name.split("_")[-3].split(":")[1]
         fig = plot_dir_far_scores(
             scores=scores,
             names=model_names,

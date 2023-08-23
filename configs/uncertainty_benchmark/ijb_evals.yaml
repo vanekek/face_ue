@@ -83,7 +83,7 @@ open_set_uncertainty_metrics:
   - _target_: evaluation.uncertainty_metrics.CombinedMaxProb
     fractions: ${fractions}
     kappa: 400
-    beta: 0.01
+    beta: 0.5
     use_maxprob_variance: False
     aggregation: entr
     data_variance_weight: 0
@@ -92,7 +92,7 @@ open_set_uncertainty_metrics:
   # - _target_: evaluation.uncertainty_metrics.CombinedMaxProb
   #   fractions: ${fractions}
   #   kappa: 400
-  #   beta: 0.01
+  #   beta: 0.5
   #   use_maxprob_variance: False
   #   aggregation: maxprob
   #   data_variance_weight: 0.7
@@ -101,7 +101,7 @@ open_set_uncertainty_metrics:
   - _target_: evaluation.uncertainty_metrics.CombinedMaxProb
     fractions: ${fractions}
     kappa: 400
-    beta: 0.01
+    beta: 0.5
     use_maxprob_variance: False
     aggregation: entr
     data_variance_weight: 0.7
@@ -110,7 +110,7 @@ open_set_uncertainty_metrics:
   - _target_: evaluation.uncertainty_metrics.CombinedMaxProb
     fractions: ${fractions}
     kappa: 200
-    beta: 0.01
+    beta: 0.5
     aggregation: entr
     use_maxprob_variance: False
     data_variance_weight: 1
