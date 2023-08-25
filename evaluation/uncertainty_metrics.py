@@ -80,50 +80,6 @@ def get_reject_metrics(
     return unc_metrics
 
 
-# class OptimalRecallReject:
-#     def __init__(self, fractions: List[int], metric_to_monitor: Any) -> None:
-#         self.fractions = np.arange(fractions[0], fractions[1], step=fractions[2])
-#         self.metric_to_monitor = metric_to_monitor
-
-#     def __call__(
-#         self,
-#         probe_ids: np.ndarray,
-#         probe_template_unc: np.ndarray,
-#         gallery_ids: np.ndarray,
-#         similarity: np.ndarray,
-#         probe_score: np.ndarray,
-#     ) -> Any:
-#         unc_metrics ={"fractions": self.fractions}
-#         metric = self.metric_to_monitor(
-#             probe_ids=probe_ids,
-#             gallery_ids=gallery_ids,
-#             similarity=np.mean(similarity, axis=1),
-#             probe_score=probe_score,
-#         )
-#         gallery_ids_argsort = np.argsort(gallery_ids)
-#         gallery_ids = gallery_ids[gallery_ids_argsort]
-
-
-#         # sort labels
-#         similarity = similarity[:, gallery_ids_argsort]
-
-#         is_seen = np.isin(probe_ids, gallery_ids)
-
-#         seen_sim: np.ndarray = similarity[is_seen]
-#         most_similar_classes = np.argsort(seen_sim, axis=1)[:, ::-1]
-#         seen_probe_ids = probe_ids[is_seen]
-
-#         for key, value in metric.items():
-#             if "misc:error-num-at-far" in key:
-#                 rank = key.split("_")[-2]
-#                 far = key.split("_")[-3]
-#                 optimal_recall_at_far_metric_name = f"plot_reject_DIR-at-FAR-{far}_{rank}_rank_OptimalRecall"
-
-#                 unc_metrics[optimal_recall_at_far_metric_name] = [metric[key]]
-
-
-#         return unc_metrics
-
 
 class DataUncertaintyReject:
     def __init__(

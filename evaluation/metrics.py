@@ -82,9 +82,6 @@ class TarFar:
         return metrics
 
 
-class DIRatFixedFAR:
-    def __init__(self, top_n_ranks: List[int], far) -> None:
-        pass
 
 
 class DetectionAndIdentificationRate:

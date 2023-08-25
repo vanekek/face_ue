@@ -138,7 +138,7 @@ def plot_cmc_scores(scores, names=None):
     return fig
 
 
-def plot_dir_far_scores(scores, names, y_label: str):
+def plot_dir_far_scores(scores, names, y_label: str, marker=''):
     import matplotlib.pyplot as plt
 
     fig = plt.figure()
@@ -152,7 +152,7 @@ def plot_dir_far_scores(scores, names, y_label: str):
 
         auc_value = auc(fars, tpirs)
         label = "[%s (AUC = %0.4f%%)]" % (name, auc_value * 100)
-        plt.plot(fars, tpirs, lw=1, label=label)
+        plt.plot(fars, tpirs, lw=1, label=label, marker=marker, markersize=2)
 
     plt.xlabel("False Alarm Rate")
     plt.xlim([0.0001, 1])
