@@ -20,7 +20,7 @@ def plot_rejection_scores(scores, y_label, names):
         label = name + f", AUC={np.round(auc(fractions, metric_value)*100, 3)}%"
         plt.plot(fractions, metric_value, lw=1, label=label)
 
-    plt.xlabel("Доля отбошенного набора")
+    plt.xlabel("Throwaway rate")
     # plt.xlim([0.0001, 1])
     # plt.xscale("log")
     plt.ylabel(y_label)
