@@ -82,8 +82,6 @@ class TarFar:
         return metrics
 
 
-
-
 class DetectionAndIdentificationRate:
     def __init__(
         self, top_n_ranks: List[int], far_range: List[int], display_fars: List[float]

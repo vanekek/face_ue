@@ -80,7 +80,6 @@ def get_reject_metrics(
     return unc_metrics
 
 
-
 class DataUncertaintyReject:
     def __init__(
         self, metric_to_monitor: any, fractions: List[int], is_confidence: bool

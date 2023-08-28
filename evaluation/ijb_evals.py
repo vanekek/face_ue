@@ -352,11 +352,14 @@ def main(cfg):
         # save identif plot values
         for method_name in open_set_recognition_result_metrics:
             metrics = open_set_recognition_result_metrics[method_name]
-            fars = np.array(metrics['fars'])
-            recalls_1_rank = metrics['metric:recalls_1_rank']
-            np.savez(open_set_identification_result_dir / f'{open_set_ident_pretty_names[method_name]}_recalls_1_rank.npz',
-                      fars=fars,
-                      recalls = recalls_1_rank)
+            fars = np.array(metrics["fars"])
+            recalls_1_rank = metrics["metric:recalls_1_rank"]
+            np.savez(
+                open_set_identification_result_dir
+                / f"{open_set_ident_pretty_names[method_name]}_recalls_1_rank.npz",
+                fars=fars,
+                recalls=recalls_1_rank,
+            )
         # identif plot
         create_open_set_ident_plots(
             open_set_recognition_result_metrics,

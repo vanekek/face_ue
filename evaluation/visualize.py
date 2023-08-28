@@ -138,7 +138,7 @@ def plot_cmc_scores(scores, names=None):
     return fig
 
 
-def plot_dir_far_scores(scores, names, y_label: str, marker=''):
+def plot_dir_far_scores(scores, names, y_label: str, marker=""):
     import matplotlib.pyplot as plt
 
     fig = plt.figure()
