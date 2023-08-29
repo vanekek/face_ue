@@ -35,6 +35,9 @@ class MisesProb(AbstractConfidence):
         self.log_c = (
             (self.n - 1) * np.log(kappa) - self.n * np.log(2 * np.pi) - self.log_iv
         )
+        self.log_uniform_dencity = (
+            loggamma(self.n, dtype=np.float64) - np.log(2) - self.n * np.log(np.pi)
+        )
 
     def __call__(self, similarity_matrix: np.ndarray) -> Any:
         """
@@ -79,13 +82,11 @@ class MisesProb(AbstractConfidence):
         # compute log z prob
         log_z_prob = self.compute_log_z_prob(similarities)
         # print(f'Log z prob: {log_z_prob}')
-        log_uniform_dencity = (
-            loggamma(self.n, dtype=np.float64) - np.log(2) - self.n * np.log(np.pi)
-        )
+        
         # print(f'Log uniform dencity: {log_uniform_dencity}')
         log_beta = np.log(self.beta)
         # print(f'Log beta : {log_beta}')
-        log_prob = log_uniform_dencity + log_beta - log_z_prob
+        log_prob = self.log_uniform_dencity + log_beta - log_z_prob
         # print(f'Log uniform prob: {log_prob}')
         return log_prob
 
