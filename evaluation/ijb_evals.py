@@ -14,14 +14,17 @@ from evaluation.visualize import (
     plot_rejection_scores,
 )
 
+
 def instantiate_list(query_list):
     return [instantiate(value) for value in query_list]
+
 
 def get_args_string(d):
     args = []
     for key, value in d.items():
         args.append(f"{key}:{value}")
     return "-".join(args)
+
 
 def create_method_name(method, sampler, template_pooling, evaluation_function):
     method_name_parts = []
@@ -69,13 +72,7 @@ def main(cfg):
     )
     verification_metrics = instantiate_list(cfg.verification_metrics)
 
-    test_dataset = instantiate(cfg.test_dataset)
-
-    verif_scores, verif_names = [], []
-    open_set_ident_scores, open_set_ident_names = [], []
-    closed_set_ident_scores, closed_set_ident_names = [], []
-
-    open_set_ident_rejection_scores, open_set_ident_rejection_names = [], []
+    test_datasets = instantiate_list(cfg.test_dataset)
 
     # create result dirs:
     dataset_name = cfg.test_dataset.dataset_name
@@ -188,7 +185,9 @@ def main(cfg):
             open_set_ident_pretty_names.update({method_name: method.pretty_name})
 
         elif method_type == "closed_set_identification":
-            method_name = create_method_name(method, template_pooling, evaluation_function)
+            method_name = create_method_name(
+                method, template_pooling, evaluation_function
+            )
             print(method_name)
 
             closed_set_identification_metric_values = (

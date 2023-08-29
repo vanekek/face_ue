@@ -82,7 +82,7 @@ class MisesProb(AbstractConfidence):
         # compute log z prob
         log_z_prob = self.compute_log_z_prob(similarities)
         # print(f'Log z prob: {log_z_prob}')
-        
+
         # print(f'Log uniform dencity: {log_uniform_dencity}')
         log_beta = np.log(self.beta)
         # print(f'Log beta : {log_beta}')
