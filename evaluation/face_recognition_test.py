@@ -211,8 +211,6 @@ class Face_Fecognition_test:
         ) = self.get_template_subsets(
             self.test_dataset.g1_templates, self.test_dataset.g1_ids
         )
-        # print("g1_templates_feature:", g1_templates_feature.shape)  # (1772, 512)
-
         (
             probe_templates_feature,
             probe_template_unc,

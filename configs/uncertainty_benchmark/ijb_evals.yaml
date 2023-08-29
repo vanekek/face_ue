@@ -12,10 +12,10 @@ recompute_template_pooling: False
 #   dataset_name: survFace
 #   dataset_path: /app/datasets/QMUL-SurvFace/Face_Identification_Test_Set
 
-test_datasets:
-  - _target_: evaluation.test_datasets.FaceRecogntioniDataset
-    dataset_name: IJBC
-    dataset_path: /app/datasets/arcface_ijb/IJBC
+test_dataset:
+  _target_: evaluation.test_datasets.FaceRecogntioniDataset
+  dataset_name: IJBC
+  dataset_path: /app/datasets/arcface_ijb/IJBC
 
 
 
@@ -43,11 +43,11 @@ fractions: [0, 0.55, 0.05]
 #   far_range: [-4, 0, 100] 
 #   display_fars: [0.0001, 0.001, 0.01, 0.1, 1]
 
-# metric_to_monitor:
-#   _target_: evaluation.metrics.DetectionAndIdentificationRate
-#   top_n_ranks: [1, 20] #[1, 10, 20]
-#   far_range: [-4, 0, 100] 
-#   display_fars: [0.0001, 0.001, 0.01, 0.1, 1]
+metric_to_monitor:
+  _target_: evaluation.metrics.DetectionAndIdentificationRate
+  top_n_ranks: [1, 20] #[1, 10, 20]
+  far_range: [-4, 0, 100] 
+  display_fars: [0.0001, 0.001, 0.01, 0.1, 1]
 
 # open_set_uncertainty_metrics:
 #   - _target_: evaluation.uncertainty_metrics.BernoulliVarianceReject
@@ -82,18 +82,18 @@ fractions: [0, 0.55, 0.05]
 #     metric_to_monitor: ${metric_to_monitor}
 
 open_set_identification_methods:
-  - sampler:
-      _target_: evaluation.samplers.VonMisesFisher
-      num_samples: 0 # set 0 to use mean of distr as one sample
-    evaluation_function: 
-      _target_: evaluation.eval_functions.open_set_identification.CosineSim
-      confidence_function: 
-        _target_: evaluation.confidence_functions.MaxSimilarity_confidence
-    embeddings_path: ${test_dataset.dataset_path}/embeddings/scf_embs_${test_dataset.dataset_name}.npz
-    template_pooling_strategy:
-      _target_: evaluation.template_pooling_strategies.PoolingSCF
-    use_detector_score: True
-    pretty_name: "VonMisesProb"
+  # - sampler:
+  #     _target_: evaluation.samplers.VonMisesFisher
+  #     num_samples: 0 # set 0 to use mean of distr as one sample
+  #   evaluation_function: 
+  #     _target_: evaluation.eval_functions.open_set_identification.CosineSim
+  #     confidence_function: 
+  #       _target_: evaluation.confidence_functions.MaxSimilarity_confidence
+  #   embeddings_path: ${test_dataset.dataset_path}/embeddings/scf_embs_${test_dataset.dataset_name}.npz
+  #   template_pooling_strategy:
+  #     _target_: evaluation.template_pooling_strategies.PoolingSCF
+  #   use_detector_score: True
+  #   pretty_name: "VonMisesProb"
 
   - sampler:
       _target_: evaluation.samplers.VonMisesFisher
