@@ -159,7 +159,7 @@ open_set_uncertainty_metrics:
 
 open_set_identification_methods:
   # - evaluation_function: 
-  #     _target_: evaluation.eval_functions.open_set_identification.SCF
+  #     _target_: evaluation.distance_functions.open_set_identification.SCF
   #     k_shift: 0
   #     cosine_pred: False
   #     confidence_function: 
@@ -173,7 +173,7 @@ open_set_identification_methods:
   #     _target_: evaluation.samplers.VonMisesFisher
   #     num_samples: 10 # set 0 to use mean of distr as one sample
   #   evaluation_function: 
-  #     _target_: evaluation.eval_functions.open_set_identification.CosineSim
+  #     _target_: evaluation.distance_functions.open_set_identification.CosineSim
   #     confidence_function: 
   #       _target_: evaluation.confidence_functions.MaxSimilarity_confidence
   #   embeddings_path: ${test_dataset.dataset_path}/embeddings/scf_embs_${test_dataset.dataset_name}.npz
@@ -186,7 +186,7 @@ open_set_identification_methods:
       _target_: evaluation.samplers.VonMisesFisher
       num_samples: 0 # set 0 to use mean of distr as one sample
     evaluation_function: 
-      _target_: evaluation.eval_functions.open_set_identification.CosineSim
+      _target_: evaluation.distance_functions.open_set_identification.CosineSim
       confidence_function: 
         _target_: evaluation.confidence_functions.MaxSimilarity_confidence
     embeddings_path: ${test_dataset.dataset_path}/embeddings/scf_embs_${test_dataset.dataset_name}.npz
@@ -196,7 +196,7 @@ open_set_identification_methods:
     pretty_name: CosineSim
   
   # - evaluation_function: 
-  #     _target_: evaluation.eval_functions.open_set_identification.CosineSim
+  #     _target_: evaluation.distance_functions.open_set_identification.CosineSim
   #     confidence_function: 
   #       _target_: evaluation.confidence_functions.NAC_confidence
   #       k: 120
@@ -214,7 +214,7 @@ open_set_identification_methods:
   #     _target_: evaluation.samplers.VonMisesFisher
   #     num_samples: 0 # set 0 to use mean of distr as one sample
   #   evaluation_function:
-  #     _target_: evaluation.eval_functions.open_set_identification.CosineSim
+  #     _target_: evaluation.distance_functions.open_set_identification.CosineSim
   #     confidence_function: 
   #       _target_: evaluation.confidence_functions.MisesProb
   #       kappa: 200

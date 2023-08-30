@@ -82,7 +82,7 @@ open_set_uncertainty_metrics:
     - 1
 open_set_identification_methods:
 - evaluation_function:
-    _target_: evaluation.eval_functions.open_set_identification.CosineSim
+    _target_: evaluation.distance_functions.open_set_identification.CosineSim
     confidence_function:
       _target_: evaluation.confidence_functions.MaxSimilarity_confidence
   embeddings_path: ${test_dataset.dataset_path}/embeddings/scf_embs_${test_dataset.dataset_name}.npz
@@ -91,7 +91,7 @@ open_set_identification_methods:
   use_detector_score: true
   pretty_name: Косинусный MaxProb
 - evaluation_function:
-    _target_: evaluation.eval_functions.open_set_identification.SCF
+    _target_: evaluation.distance_functions.open_set_identification.SCF
     confidence_function:
       _target_: evaluation.confidence_functions.MaxSimilarity_confidence
     k_shift: 0
@@ -102,7 +102,7 @@ open_set_identification_methods:
   use_detector_score: true
   pretty_name: SCF MaxProb
 - evaluation_function:
-    _target_: evaluation.eval_functions.open_set_identification.SCF
+    _target_: evaluation.distance_functions.open_set_identification.SCF
     confidence_function:
       _target_: evaluation.confidence_functions.NAC_confidence
       k: 120

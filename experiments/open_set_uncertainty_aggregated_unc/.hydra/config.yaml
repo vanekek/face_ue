@@ -122,7 +122,7 @@ open_set_identification_methods:
     _target_: evaluation.samplers.VonMisesFisher
     num_samples: 0
   evaluation_function:
-    _target_: evaluation.eval_functions.open_set_identification.CosineSim
+    _target_: evaluation.distance_functions.open_set_identification.CosineSim
     confidence_function:
       _target_: evaluation.confidence_functions.MaxSimilarity_confidence
   embeddings_path: ${test_dataset.dataset_path}/embeddings/scf_embs_${test_dataset.dataset_name}.npz

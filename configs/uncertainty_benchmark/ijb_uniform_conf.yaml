@@ -46,7 +46,7 @@ verification_metrics:
 
 open_set_identification_methods:
   - evaluation_function: 
-      _target_: evaluation.eval_functions.open_set_identification.CosineSim
+      _target_: evaluation.distance_functions.open_set_identification.CosineSim
       confidence_function: 
         _target_: evaluation.confidence_functions.MaxSimilarity_confidence
     embeddings_path: ${test_dataset.dataset_path}/embeddings/scf_embs_${test_dataset.dataset_name}.npz
@@ -56,7 +56,7 @@ open_set_identification_methods:
     pretty_name: "Косинусный MaxProb"
   
   - evaluation_function: 
-      _target_: evaluation.eval_functions.open_set_identification.CosineSim
+      _target_: evaluation.distance_functions.open_set_identification.CosineSim
       confidence_function: 
         _target_: evaluation.confidence_functions.MisesProb
         kappa: 100
@@ -68,7 +68,7 @@ open_set_identification_methods:
     pretty_name: "Uniform prob conf kappa=100"
 
   - evaluation_function: 
-      _target_: evaluation.eval_functions.open_set_identification.CosineSim
+      _target_: evaluation.distance_functions.open_set_identification.CosineSim
       confidence_function: 
         _target_: evaluation.confidence_functions.MisesProb
         kappa: 150
@@ -80,7 +80,7 @@ open_set_identification_methods:
     pretty_name: "Uniform prob conf kappa=150"
 
   - evaluation_function: 
-      _target_: evaluation.eval_functions.open_set_identification.CosineSim
+      _target_: evaluation.distance_functions.open_set_identification.CosineSim
       confidence_function: 
         _target_: evaluation.confidence_functions.MisesProb
         kappa: 175
@@ -92,7 +92,7 @@ open_set_identification_methods:
     pretty_name: "Uniform prob conf kappa=175"
 
   - evaluation_function: 
-      _target_: evaluation.eval_functions.open_set_identification.CosineSim
+      _target_: evaluation.distance_functions.open_set_identification.CosineSim
       confidence_function: 
         _target_: evaluation.confidence_functions.MisesProb
         kappa: 200
@@ -104,7 +104,7 @@ open_set_identification_methods:
     pretty_name: "Uniform prob conf kappa=200"
 
   - evaluation_function: 
-      _target_: evaluation.eval_functions.open_set_identification.CosineSim
+      _target_: evaluation.distance_functions.open_set_identification.CosineSim
       confidence_function: 
         _target_: evaluation.confidence_functions.MisesProb
         kappa: 275
@@ -116,7 +116,7 @@ open_set_identification_methods:
     pretty_name: "Uniform prob conf kappa=275"
 
   - evaluation_function: 
-      _target_: evaluation.eval_functions.open_set_identification.CosineSim
+      _target_: evaluation.distance_functions.open_set_identification.CosineSim
       confidence_function: 
         _target_: evaluation.confidence_functions.MisesProb
         kappa: 300
@@ -128,7 +128,7 @@ open_set_identification_methods:
     pretty_name: "Uniform prob conf kappa=300"
 
   - evaluation_function: 
-      _target_: evaluation.eval_functions.open_set_identification.CosineSim
+      _target_: evaluation.distance_functions.open_set_identification.CosineSim
       confidence_function: 
         _target_: evaluation.confidence_functions.MisesProb
         kappa: 350
@@ -139,7 +139,7 @@ open_set_identification_methods:
     use_detector_score: True
     pretty_name: "Uniform prob conf kappa=350"
   - evaluation_function: 
-      _target_: evaluation.eval_functions.open_set_identification.CosineSim
+      _target_: evaluation.distance_functions.open_set_identification.CosineSim
       confidence_function: 
         _target_: evaluation.confidence_functions.MisesProb
         kappa: 375

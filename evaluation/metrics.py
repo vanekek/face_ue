@@ -8,10 +8,30 @@ from scipy import interpolate
 EvalMetricsT = Tuple[int, int, int, List[float], List[float], List[Tuple[float, float]]]
 
 
-class DirAndFar:
+class FrrFarIdent:
     @staticmethod
-    def __call__(predicted_id: np.ndarray, is_seen: np.ndarray, K: int) -> dict:
-        pass
+    def __call__(
+        predicted_id: np.ndarray,
+        was_rejected: np.ndarray,
+        g_unique_ids: np.ndarray,
+        probe_unique_ids: np.ndarray,
+    ) -> dict:
+        is_seen = np.isin(probe_unique_ids, g_unique_ids)
+        false_accept_num = np.sum(was_rejected[~is_seen] == False)
+        false_reject_num = np.sum(was_rejected[is_seen])
+
+        similar_gallery_class = g_unique_ids[predicted_id[is_seen]]
+        false_ident_num = np.sum(probe_unique_ids[is_seen] != similar_gallery_class)
+
+        result_metrics = {
+            "osr_metric:false_accept_num": false_accept_num,
+            "osr_metric:false_reject_num": false_reject_num,
+            "osr_metric:false_ident_num": false_ident_num,
+            "osr_metric:error_sum": false_accept_num
+            + false_reject_num
+            + false_ident_num,
+        }
+        return result_metrics
 
 
 class CMC:

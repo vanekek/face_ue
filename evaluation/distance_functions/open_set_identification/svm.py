@@ -13,8 +13,8 @@ import warnings
 from evaluation.metrics import EvalMetricsT
 
 # , compute_detection_and_identification_rate
-from evaluation.eval_functions.open_set_identification.abc import Abstract1NEval
-from evaluation.eval_functions.distaince_functions import ScfSim
+from evaluation.distance_functions.open_set_identification.abc import Abstract1NEval
+from evaluation.distance_functions.distaince_functions import ScfSim
 
 
 class SVM(Abstract1NEval):

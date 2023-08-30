@@ -77,7 +77,7 @@ open_set_uncertainty_metrics:
     - 1
 closed_set_identification_methods:
 - evaluation_function:
-    _target_: evaluation.eval_functions.open_set_identification.CosineSim
+    _target_: evaluation.distance_functions.open_set_identification.CosineSim
     confidence_function:
       _target_: evaluation.confidence_functions.MaxSimilarity_confidence
   embeddings_path: ${test_dataset.dataset_path}/embeddings/scf_embs_${test_dataset.dataset_name}.npz
@@ -86,7 +86,7 @@ closed_set_identification_methods:
   use_detector_score: false
   pretty_name: CosineSim_MeanPool
 - evaluation_function:
-    _target_: evaluation.eval_functions.open_set_identification.CosineSim
+    _target_: evaluation.distance_functions.open_set_identification.CosineSim
     confidence_function:
       _target_: evaluation.confidence_functions.MaxSimilarity_confidence
   embeddings_path: ${test_dataset.dataset_path}/embeddings/scf_embs_${test_dataset.dataset_name}.npz
@@ -95,7 +95,7 @@ closed_set_identification_methods:
   use_detector_score: true
   pretty_name: CosineSim_DetScore_MeanPool
 - evaluation_function:
-    _target_: evaluation.eval_functions.open_set_identification.CosineSim
+    _target_: evaluation.distance_functions.open_set_identification.CosineSim
     confidence_function:
       _target_: evaluation.confidence_functions.MaxSimilarity_confidence
   embeddings_path: ${test_dataset.dataset_path}/embeddings/scf_embs_${test_dataset.dataset_name}.npz
@@ -104,7 +104,7 @@ closed_set_identification_methods:
   use_detector_score: false
   pretty_name: CosineSim_SCF-Pool
 - evaluation_function:
-    _target_: evaluation.eval_functions.open_set_identification.CosineSim
+    _target_: evaluation.distance_functions.open_set_identification.CosineSim
     confidence_function:
       _target_: evaluation.confidence_functions.MaxSimilarity_confidence
   embeddings_path: ${test_dataset.dataset_path}/embeddings/scf_embs_${test_dataset.dataset_name}.npz
@@ -113,7 +113,7 @@ closed_set_identification_methods:
   use_detector_score: true
   pretty_name: CosineSim_DetScore_SCF-Pool
 - evaluation_function:
-    _target_: evaluation.eval_functions.open_set_identification.CosineSim
+    _target_: evaluation.distance_functions.open_set_identification.CosineSim
     confidence_function:
       _target_: evaluation.confidence_functions.MaxSimilarity_confidence
   embeddings_path: ${test_dataset.dataset_path}/embeddings/pfe_embs_${test_dataset.dataset_name}.npz
@@ -122,7 +122,7 @@ closed_set_identification_methods:
   use_detector_score: false
   pretty_name: CosineSim_PFEHarmonicMean-Pool
 - evaluation_function:
-    _target_: evaluation.eval_functions.open_set_identification.CosineSim
+    _target_: evaluation.distance_functions.open_set_identification.CosineSim
     confidence_function:
       _target_: evaluation.confidence_functions.MaxSimilarity_confidence
   embeddings_path: ${test_dataset.dataset_path}/embeddings/pfe_embs_${test_dataset.dataset_name}.npz

@@ -10,6 +10,43 @@ import scipy
 EvalMetricsT = Tuple[int, int, int, List[float], List[float], List[Tuple[float, float]]]
 
 
+class DisposeBasedOnUnc:
+    def __init__(self, fractions: List[int], metric_to_monitor) -> None:
+        self.fractions = np.linspace(fractions[0], fractions[1], fractions[2])
+        self.metric_to_monitor = metric_to_monitor
+
+    def __call__(
+        self,
+        predicted_id: np.ndarray,
+        was_rejected: np.ndarray,
+        g_unique_ids: np.ndarray,
+        probe_unique_ids: np.ndarray,
+        predicted_unc: np.ndarray,
+    ) -> dict:
+        unc_indexes = np.argsort(predicted_unc)
+        unc_metrics = {"fractions": self.fractions}
+        for fraction in self.fractions:
+            # drop worst fraction
+            good_probes_idx = unc_indexes[
+                : int((1 - fraction) * probe_unique_ids.shape[0])
+            ]
+            metric = self.metric_to_monitor(
+                predicted_id=predicted_id[good_probes_idx],
+                was_rejected=was_rejected[good_probes_idx],
+                g_unique_ids=g_unique_ids,
+                probe_unique_ids=probe_unique_ids[good_probes_idx],
+            )
+            for key, value in metric.items():
+                if "osr_metric" not in key:
+                    continue
+                metric_name = f'osr_unc_metric:{key.split(":")[-1]}'
+                if metric_name in unc_metrics:
+                    unc_metrics[metric_name].append(metric[key])
+                else:
+                    unc_metrics[metric_name] = [metric[key]]
+        return unc_metrics
+
+
 def get_reject_metrics(
     metric_name,
     unc_score,

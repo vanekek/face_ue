@@ -3,11 +3,11 @@ from pathlib import Path
 import numpy as np
 
 # from ..metrics import compute_detection_and_identification_rate
-from evaluation.eval_functions.open_set_identification.abc import Abstract1NEval
+from evaluation.distance_functions.open_set_identification.abc import Abstract1NEval
 from evaluation.confidence_functions import AbstractConfidence
 
 from tqdm import tqdm
-from evaluation.eval_functions.distaince_functions import compute_pfe
+from evaluation.distance_functions.distaince_functions import compute_pfe
 
 
 class PFE(Abstract1NEval):

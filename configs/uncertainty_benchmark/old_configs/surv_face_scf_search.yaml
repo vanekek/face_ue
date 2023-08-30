@@ -22,7 +22,7 @@ test_dataset:
 open_set_identification_methods:
 
   # - evaluation_1N_function: 
-  #     _target_: evaluation.eval_functions.CosineSim
+  #     _target_: evaluation.distance_functions.CosineSim
   #     confidence_function: 
   #       _target_: evaluation.confidence_functions.MaxSimilarity_confidence
   #       foo: bar
@@ -33,7 +33,7 @@ open_set_identification_methods:
   #   save_result: "${exp_dir}/${test_dataset.dataset_name}_CosineSim.npz"
 
   - evaluation_1N_function: 
-      _target_: evaluation.eval_functions.CosineSim
+      _target_: evaluation.distance_functions.CosineSim
       confidence_function: 
         _target_: evaluation.confidence_functions.MaxSimilarity_confidence
         foo: bar
@@ -44,7 +44,7 @@ open_set_identification_methods:
     save_result: "${exp_dir}/${test_dataset.dataset_name}_CosineSim_and_scf_score.npz"
 
   - evaluation_1N_function: 
-      _target_: evaluation.eval_functions.SCF
+      _target_: evaluation.distance_functions.SCF
       confidence_function: 
         _target_: evaluation.confidence_functions.MaxSimilarity_confidence
         foo: bar
@@ -57,7 +57,7 @@ open_set_identification_methods:
     save_result: "${exp_dir}/${test_dataset.dataset_name}_SCF_and_scf_shift_0_score.npz"
 
   - evaluation_1N_function: 
-      _target_: evaluation.eval_functions.SCF
+      _target_: evaluation.distance_functions.SCF
       confidence_function: 
         _target_: evaluation.confidence_functions.MaxSimilarity_confidence
         foo: bar
@@ -70,7 +70,7 @@ open_set_identification_methods:
     save_result: "${exp_dir}/${test_dataset.dataset_name}_SCF_and_scf_shift_200_score.npz"
 
   - evaluation_1N_function: 
-      _target_: evaluation.eval_functions.SCF
+      _target_: evaluation.distance_functions.SCF
       confidence_function: 
         _target_: evaluation.confidence_functions.MaxSimilarity_confidence
         foo: bar
@@ -83,7 +83,7 @@ open_set_identification_methods:
     save_result: "${exp_dir}/${test_dataset.dataset_name}_SCF_and_scf_shift_300_score.npz"
 
   - evaluation_1N_function: 
-      _target_: evaluation.eval_functions.SCF
+      _target_: evaluation.distance_functions.SCF
       confidence_function: 
         _target_: evaluation.confidence_functions.MaxSimilarity_confidence
         foo: bar
@@ -96,7 +96,7 @@ open_set_identification_methods:
     save_result: "${exp_dir}/${test_dataset.dataset_name}_SCF_and_scf_shift_600_score.npz"
 
   - evaluation_1N_function: 
-      _target_: evaluation.eval_functions.SCF
+      _target_: evaluation.distance_functions.SCF
       confidence_function: 
         _target_: evaluation.confidence_functions.MaxSimilarity_confidence
         foo: bar

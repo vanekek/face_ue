@@ -7,6 +7,12 @@ import numpy as np
 from itertools import product
 from evaluation.face_recognition_test import Face_Fecognition_test
 
+from evaluation.visualize import (
+    plot_dir_far_scores,
+    plot_cmc_scores,
+    plot_rejection_scores,
+)
+
 
 def instantiate_list(query_list):
     return [instantiate(value) for value in query_list]
@@ -19,25 +25,17 @@ def get_args_string(d):
     return "-".join(args)
 
 
-def create_method_name(method, sampler, template_pooling, evaluation_function):
+def create_method_name(
+    method, sampler, template_pooling, distance_function, recognition_method
+):
     method_name_parts = []
     method_name_parts.append(
         f"sampler-{sampler.__class__.__name__}-num-samples-{sampler.num_samples}"
     )
     method_name_parts.append(f"pooling-with-{template_pooling.__class__.__name__}")
     method_name_parts.append(f"use-det-score-{method.use_detector_score}")
-    method_name_parts.append(f"eval-with-{evaluation_function.__class__.__name__}")
-    confidence_function = evaluation_function.__dict__["confidence_function"]
-    evaluation_function_args = dict(evaluation_function.__dict__)
-    evaluation_function_args.pop("confidence_function")
-    eval_args = get_args_string(evaluation_function_args)
-    if len(eval_args) != 0:
-        method_name_parts.append(f"eval-args-{eval_args}")
-    method_name_parts.append(f"conf-func-{confidence_function.__class__.__name__}")
-    conf_args = get_args_string(confidence_function.__dict__)
-    if len(conf_args) != 0:
-        method_name_parts.append(f"conf-args-{conf_args}")
-
+    method_name_parts.append(f"distance-{distance_function.__class__.__name__}")
+    method_name_parts.append(f"osr-method-{recognition_method.__class__.__name__}")
     method_name = "_".join(method_name_parts)
     return method_name
 
@@ -83,7 +81,7 @@ def main(cfg):
     }
 
     # instantiate datasets
-    test_datasets = instantiate_list(cfg.test_dataset)
+    test_datasets = instantiate_list(cfg.test_datasets)
     dataset_names = [test_dataset.dataset_name for test_dataset in test_datasets]
     # create result dictionary
     metric_values = {
@@ -107,12 +105,18 @@ def main(cfg):
         recognition_method = instantiate(method.recognition_method)
 
         # create unique method name
-        method_name = create_method_name(
-            method, sampler, template_pooling, distance_function
+        method_name = (
+            create_method_name(
+                method, sampler, template_pooling, distance_function, recognition_method
+            )
+            + f"_{method.pretty_name}"
         )
         print(method_name)
         pretty_names[task_type][method_name] = method.pretty_name
-
+        embeddings_path = (
+            Path(test_dataset.dataset_path)
+            / f"embeddings/{method.embeddings}_embs_{dataset_name}.npz"
+        )
         # create tester
         tt = Face_Fecognition_test(
             task_type=task_type,
@@ -121,7 +125,7 @@ def main(cfg):
             sampler=sampler,
             distance_function=distance_function,
             test_dataset=test_dataset,
-            embeddings_path=method.embeddings_path,
+            embeddings_path=embeddings_path,
             template_pooling_strategy=template_pooling,
             use_detector_score=method.use_detector_score,
             use_two_galleries=cfg.use_two_galleries,
@@ -141,76 +145,108 @@ def main(cfg):
             method_name
         ] = uncertainty_metric_values
 
-    # open set identif metric table
+    # create plots and tabels
 
-    if "open_set_identification_methods" in cfg:
-        open_set_identification_result_dir = (
-            Path(cfg.exp_dir) / dataset_name / "open_set_identification"
-        )
-        open_set_identification_result_dir.mkdir(exist_ok=True, parents=True)
-        df = create_open_set_ident_recognition_metric_table(
-            open_set_recognition_result_metrics, open_set_ident_pretty_names
-        )
-        df.to_csv(
-            open_set_identification_result_dir / "open_set_identification.csv",
-            index=False,
-        )
-        # save identif plot values
-        for method_name in open_set_recognition_result_metrics:
-            metrics = open_set_recognition_result_metrics[method_name]
-            fars = np.array(metrics["fars"])
-            recalls_1_rank = metrics["metric:recalls_1_rank"]
-            np.savez(
-                open_set_identification_result_dir
-                / f"{open_set_ident_pretty_names[method_name]}_recalls_1_rank.npz",
-                fars=fars,
-                recalls=recalls_1_rank,
+    for task_type, dataset_name in metric_values:
+        # create output dir
+        out_dir = Path(cfg.exp_dir) / str(dataset_name) / str(task_type)
+        out_dir.mkdir(exist_ok=True, parents=True)
+
+        # create rejection plots
+        metric_names = []
+        for _, metric in metric_values[(task_type, dataset_name)][
+            "uncertainty"
+        ].items():
+            for key in metric:
+                if "osr_unc_metric":
+                    metric_names.append(key)
+        for metric_name in metric_names:
+            model_names = []
+            scores = []
+            for method_name, metrics in metric_values[(task_type, dataset_name)][
+                "uncertainty"
+            ].items():
+                model_names.append(pretty_names[task_type][method_name])
+                scores.append((metrics["fractions"], metrics[metric_name]))
+            fig = plot_rejection_scores(
+                scores=scores,
+                names=model_names,
+                y_label=f"Ранг 1 {metric_name.split(':')[-1]}",
             )
-        # identif plot
-        create_open_set_ident_plots(
-            open_set_recognition_result_metrics,
-            open_set_identification_result_dir,
-            open_set_ident_pretty_names,
-        )
+            fig.savefig(
+                out_dir / f"{metric_name.split(':')[-1]}_rejection.png", dpi=300
+            )
 
-        # unc metric table
-        df_unc = create_open_set_ident_recognition_metric_table(
-            open_set_uncertainty_result_metrics, open_set_ident_pretty_names
-        )
-        df_unc.to_csv(
-            open_set_identification_result_dir / "open_set_unc.csv",
-            index=False,
-        )
-        # unc plot
-        create_rejection_plots(
-            open_set_uncertainty_result_metrics,
-            open_set_identification_result_dir,
-            open_set_ident_pretty_names,
-        )
+    # # open set identif metric table
 
-    if "verification_methods" in cfg:
-        # verification table
+    # if "open_set_identification_methods" in cfg:
+    #     open_set_identification_result_dir = (
+    #         Path(cfg.exp_dir) / dataset_name / "open_set_identification"
+    #     )
+    #     open_set_identification_result_dir.mkdir(exist_ok=True, parents=True)
+    #     df = create_open_set_ident_recognition_metric_table(
+    #         open_set_recognition_result_metrics, open_set_ident_pretty_names
+    #     )
+    #     df.to_csv(
+    #         open_set_identification_result_dir / "open_set_identification.csv",
+    #         index=False,
+    #     )
+    #     # save identif plot values
+    #     for method_name in open_set_recognition_result_metrics:
+    #         metrics = open_set_recognition_result_metrics[method_name]
+    #         fars = np.array(metrics["fars"])
+    #         recalls_1_rank = metrics["metric:recalls_1_rank"]
+    #         np.savez(
+    #             open_set_identification_result_dir
+    #             / f"{open_set_ident_pretty_names[method_name]}_recalls_1_rank.npz",
+    #             fars=fars,
+    #             recalls=recalls_1_rank,
+    #         )
+    #     # identif plot
+    #     create_open_set_ident_plots(
+    #         open_set_recognition_result_metrics,
+    #         open_set_identification_result_dir,
+    #         open_set_ident_pretty_names,
+    #     )
 
-        df_verif = create_open_set_ident_recognition_metric_table(
-            verification_recognition_result_metrics, verication_pretty_names
-        )
-        df_verif.to_csv(verification_result_dir / "verification.csv", index=False)
-        # # verif plot
-    if "closed_set_identification_methods" in cfg:
-        # closed set ident table
-        df_closed = create_open_set_ident_recognition_metric_table(
-            closed_set_recognition_result_metrics, closed_set_ident_pretty_names
-        )
-        df_closed.to_csv(
-            closed_set_identification_result_dir / "closed_set_identification.csv",
-            index=False,
-        )
-        # closed plot
-        create_closed_set_ident_plots(
-            closed_set_recognition_result_metrics,
-            closed_set_identification_result_dir,
-            closed_set_ident_pretty_names,
-        )
+    #     # unc metric table
+    #     df_unc = create_open_set_ident_recognition_metric_table(
+    #         open_set_uncertainty_result_metrics, open_set_ident_pretty_names
+    #     )
+    #     df_unc.to_csv(
+    #         open_set_identification_result_dir / "open_set_unc.csv",
+    #         index=False,
+    #     )
+    #     # unc plot
+    #     create_rejection_plots(
+    #         open_set_uncertainty_result_metrics,
+    #         open_set_identification_result_dir,
+    #         open_set_ident_pretty_names,
+    #     )
+
+    # if "verification_methods" in cfg:
+    #     # verification table
+
+    #     df_verif = create_open_set_ident_recognition_metric_table(
+    #         verification_recognition_result_metrics, verication_pretty_names
+    #     )
+    #     df_verif.to_csv(verification_result_dir / "verification.csv", index=False)
+    #     # # verif plot
+    # if "closed_set_identification_methods" in cfg:
+    #     # closed set ident table
+    #     df_closed = create_open_set_ident_recognition_metric_table(
+    #         closed_set_recognition_result_metrics, closed_set_ident_pretty_names
+    #     )
+    #     df_closed.to_csv(
+    #         closed_set_identification_result_dir / "closed_set_identification.csv",
+    #         index=False,
+    #     )
+    #     # closed plot
+    #     create_closed_set_ident_plots(
+    #         closed_set_recognition_result_metrics,
+    #         closed_set_identification_result_dir,
+    #         closed_set_ident_pretty_names,
+    #     )
 
 
 if __name__ == "__main__":

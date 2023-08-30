@@ -77,18 +77,18 @@ open_set_uncertainty_metrics:
     - 1
 verification_methods:
 - evaluation_function:
-    _target_: evaluation.eval_functions.verification.distance_based_evaluation.VerifEval
+    _target_: evaluation.distance_functions.verification.distance_based_evaluation.VerifEval
     distance_function:
-      _target_: evaluation.eval_functions.distaince_functions.CosineSimPairwise
+      _target_: evaluation.distance_functions.distaince_functions.CosineSimPairwise
   embeddings_path: ${test_dataset.dataset_path}/embeddings/scf_embs_${test_dataset.dataset_name}.npz
   template_pooling_strategy:
     _target_: evaluation.template_pooling_strategies.PoolingSCF
   use_detector_score: true
   pretty_name: CosineSim
 - evaluation_function:
-    _target_: evaluation.eval_functions.verification.distance_based_evaluation.VerifEval
+    _target_: evaluation.distance_functions.verification.distance_based_evaluation.VerifEval
     distance_function:
-      _target_: evaluation.eval_functions.distaince_functions.ScfSimPairwise
+      _target_: evaluation.distance_functions.distaince_functions.ScfSimPairwise
       k_shift: 0
   embeddings_path: ${test_dataset.dataset_path}/embeddings/scf_embs_${test_dataset.dataset_name}.npz
   template_pooling_strategy:
@@ -96,9 +96,9 @@ verification_methods:
   use_detector_score: true
   pretty_name: SCF_dist
 - evaluation_function:
-    _target_: evaluation.eval_functions.verification.distance_based_evaluation.VerifEval
+    _target_: evaluation.distance_functions.verification.distance_based_evaluation.VerifEval
     distance_function:
-      _target_: evaluation.eval_functions.distaince_functions.PfeSimPairwise
+      _target_: evaluation.distance_functions.distaince_functions.PfeSimPairwise
       variance_scale: 1
   embeddings_path: ${test_dataset.dataset_path}/embeddings/pfe_embs_${test_dataset.dataset_name}.npz
   template_pooling_strategy:

@@ -44,7 +44,7 @@ open_set_uncertainty_metrics:
 
 open_set_identification_methods:
   - evaluation_function: 
-      _target_: evaluation.eval_functions.open_set_identification.CosineSim
+      _target_: evaluation.distance_functions.open_set_identification.CosineSim
       confidence_function: 
         _target_: evaluation.confidence_functions.MaxSimilarity_confidence
     embeddings_path: ${test_dataset.dataset_path}/embeddings/scf_embs_${test_dataset.dataset_name}.npz
@@ -54,7 +54,7 @@ open_set_identification_methods:
     pretty_name: CosineSim
   
   - evaluation_function: 
-      _target_: evaluation.eval_functions.open_set_identification.SCF
+      _target_: evaluation.distance_functions.open_set_identification.SCF
       confidence_function: 
         _target_: evaluation.confidence_functions.MaxSimilarity_confidence
       k_shift: 0
@@ -66,7 +66,7 @@ open_set_identification_methods:
     pretty_name: SCF_dist
   
   - evaluation_function: 
-      _target_: evaluation.eval_functions.open_set_identification.SCF
+      _target_: evaluation.distance_functions.open_set_identification.SCF
       confidence_function: 
         _target_: evaluation.confidence_functions.NAC_confidence
         k: 120
@@ -81,7 +81,7 @@ open_set_identification_methods:
     pretty_name: SCF_NAC-k=120
 
   - evaluation_function: 
-      _target_: evaluation.eval_functions.open_set_identification.PFE
+      _target_: evaluation.distance_functions.open_set_identification.PFE
       confidence_function: 
         _target_: evaluation.confidence_functions.MaxSimilarity_confidence
       variance_scale: 1
@@ -93,7 +93,7 @@ open_set_identification_methods:
     pretty_name: PFE_dist
 
   - evaluation_function: 
-      _target_: evaluation.eval_functions.open_set_identification.PFE
+      _target_: evaluation.distance_functions.open_set_identification.PFE
       confidence_function: 
         _target_: evaluation.confidence_functions.NAC_confidence
         k: 120
@@ -111,7 +111,7 @@ open_set_identification_methods:
 
 # closed_set_identification_methods:
 #   - evaluation_function: 
-#       _target_: evaluation.eval_functions.open_set_identification.CosineSim
+#       _target_: evaluation.distance_functions.open_set_identification.CosineSim
 #       confidence_function: 
 #         _target_: evaluation.confidence_functions.MaxSimilarity_confidence
 #     embeddings_path: ${test_dataset.dataset_path}/embeddings/scf_embs_${test_dataset.dataset_name}.npz
@@ -121,7 +121,7 @@ open_set_identification_methods:
 #     pretty_name: CosineSim
 
 #   - evaluation_function: 
-#       _target_: evaluation.eval_functions.open_set_identification.SCF
+#       _target_: evaluation.distance_functions.open_set_identification.SCF
 #       confidence_function: 
 #         _target_: evaluation.confidence_functions.MaxSimilarity_confidence
 #       k_shift: 0
@@ -133,7 +133,7 @@ open_set_identification_methods:
 #     pretty_name: SCF_dist
   
 #   - evaluation_function: 
-#       _target_: evaluation.eval_functions.open_set_identification.PFE
+#       _target_: evaluation.distance_functions.open_set_identification.PFE
 #       confidence_function: 
 #         _target_: evaluation.confidence_functions.MaxSimilarity_confidence
 #       variance_scale: 1
@@ -148,9 +148,9 @@ open_set_identification_methods:
 # verification_methods:
 
 #   - evaluation_function:
-#       _target_: evaluation.eval_functions.verification.distance_based_evaluation.VerifEval
+#       _target_: evaluation.distance_functions.verification.distance_based_evaluation.VerifEval
 #       distance_function:
-#         _target_: evaluation.eval_functions.distaince_functions.CosineSimPairwise
+#         _target_: evaluation.distance_functions.distaince_functions.CosineSimPairwise
 #     embeddings_path: ${test_dataset.dataset_path}/embeddings/scf_embs_${test_dataset.dataset_name}.npz
 #     template_pooling_strategy:
 #       _target_: evaluation.template_pooling_strategies.PoolingSCF
@@ -158,9 +158,9 @@ open_set_identification_methods:
 #     pretty_name: CosineSim
 
 #   - evaluation_function:
-#       _target_: evaluation.eval_functions.verification.distance_based_evaluation.VerifEval
+#       _target_: evaluation.distance_functions.verification.distance_based_evaluation.VerifEval
 #       distance_function:
-#         _target_: evaluation.eval_functions.distaince_functions.ScfSimPairwise
+#         _target_: evaluation.distance_functions.distaince_functions.ScfSimPairwise
 #         k_shift: 0
 #     embeddings_path: ${test_dataset.dataset_path}/embeddings/scf_embs_${test_dataset.dataset_name}.npz
 #     template_pooling_strategy:
@@ -169,9 +169,9 @@ open_set_identification_methods:
 #     pretty_name: SCF_dist
 
 #   - evaluation_function:
-#       _target_: evaluation.eval_functions.verification.distance_based_evaluation.VerifEval
+#       _target_: evaluation.distance_functions.verification.distance_based_evaluation.VerifEval
 #       distance_function:
-#         _target_: evaluation.eval_functions.distaince_functions.PfeSimPairwise
+#         _target_: evaluation.distance_functions.distaince_functions.PfeSimPairwise
 #         variance_scale: 1
 #     embeddings_path: ${test_dataset.dataset_path}/embeddings/pfe_embs_${test_dataset.dataset_name}.npz
 #     template_pooling_strategy:
@@ -188,7 +188,7 @@ open_set_identification_methods:
 
  
   # - evaluation_function: 
-  #     _target_: evaluation.eval_functions.open_set_identification.CosineSim
+  #     _target_: evaluation.distance_functions.open_set_identification.CosineSim
   #     confidence_function: 
   #       _target_: evaluation.confidence_functions.NAC_confidence
   #       k: 15

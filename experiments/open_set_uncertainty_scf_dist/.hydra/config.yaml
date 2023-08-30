@@ -137,7 +137,7 @@ open_set_uncertainty_metrics:
     - 1
 open_set_identification_methods:
 - evaluation_function:
-    _target_: evaluation.eval_functions.open_set_identification.SCF
+    _target_: evaluation.distance_functions.open_set_identification.SCF
     k_shift: 0
     cosine_pred: false
     confidence_function:

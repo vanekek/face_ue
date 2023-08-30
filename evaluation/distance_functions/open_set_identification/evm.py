@@ -1,4 +1,4 @@
-from evaluation.eval_functions.open_set_identification.abc import Abstract1NEval
+from evaluation.distance_functions.open_set_identification.abc import Abstract1NEval
 
 
 class EVM(Abstract1NEval):

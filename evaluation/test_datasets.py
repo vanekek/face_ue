@@ -4,6 +4,7 @@ from .data_tools import extract_meta_data, extract_gallery_prob_data
 class FaceRecogntioniDataset:
     def __init__(self, dataset_name: str, dataset_path: str) -> None:
         self.dataset_name = dataset_name
+        self.dataset_path = dataset_path
         (
             self.templates,
             self.medias,

@@ -25,8 +25,10 @@ class vMFSumUnc(OpenSetMethod):
         self.all_classes_log_prob = np.mean(self.all_classes_log_prob, axis=1)
 
     def predict(self):
-        predict_id = np.argmax(self.all_classes_log_prob, axis=-1)
-        return predict_id
+        predict_id = np.argmax(self.all_classes_log_prob[:, :-1], axis=-1)
+        return predict_id, np.argmax(self.all_classes_log_prob, axis=-1) == (
+            self.all_classes_log_prob.shape[-1] - 1
+        )
 
     def predict_uncertainty(self, data_uncertainty: np.ndarray):
         if self.uncertainty_type == "maxprob":

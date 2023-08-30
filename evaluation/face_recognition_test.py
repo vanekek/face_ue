@@ -155,27 +155,26 @@ class Face_Fecognition_test:
 
             # setup osr method and predict
             self.recognition_method.setup(similarity)
-            predicted_id = self.recognition_method.predict()
+            predicted_id, was_rejected = self.recognition_method.predict()
             predicted_unc = self.recognition_method.predict_uncertainty(
                 probe_template_unc
             )
 
             # compute recognition metrics
-            is_seen = np.isin(probe_unique_ids, g_unique_ids)
-            gallery_ids_argsort = np.argsort(g_unique_ids)
             # sort labels
-
-            g_unique_ids_sorted = g_unique_ids[gallery_ids_argsort]
-            g_unique_ids_sorted = np.concatenate(
-                [g_unique_ids_sorted, [-1]]
-            )  # last id is for out of gallery class
+            # gallery_ids_argsort = np.argsort(g_unique_ids)
+            # g_unique_ids_sorted = g_unique_ids[gallery_ids_argsort]
+            # g_unique_ids_sorted = np.concatenate(
+            #     [g_unique_ids, [-1]]
+            # )  # last id is for out of gallery class
 
             for metric in self.recognition_metrics[self.task_type]:
                 metrics[gallery_name].update(
                     metric(
                         predicted_id=predicted_id,
-                        is_seen=g_unique_ids_sorted,
-                        K=similarity.shape[-1],
+                        was_rejected=was_rejected,
+                        g_unique_ids=g_unique_ids,
+                        probe_unique_ids=probe_unique_ids,
                     )
                 )
 
@@ -184,12 +183,12 @@ class Face_Fecognition_test:
             for unc_metric in self.uncertainty_metrics[self.task_type]:
                 unc_metrics[gallery_name].update(
                     unc_metric(
-                        probe_ids=probe_unique_ids,
-                        probe_template_unc=probe_template_unc,
-                        gallery_ids=g_unique_ids,
-                        similarity=similarity,
-                        probe_score=probe_score,
-                    )[0]
+                        predicted_id=predicted_id,
+                        was_rejected=was_rejected,
+                        g_unique_ids=g_unique_ids,
+                        probe_unique_ids=probe_unique_ids,
+                        predicted_unc=predicted_unc,
+                    )
                 )
 
         # aggregate metrics over two galleries
@@ -197,7 +196,7 @@ class Face_Fecognition_test:
             result_metrics = {}
             result_unc_metrics = {}
             for key in metrics[used_galleries[1]].keys():
-                if "metric:" in key:
+                if "osr_metric:" in key:
                     result_metrics[key] = (
                         metrics[used_galleries[0]][key]
                         + metrics[used_galleries[1]][key]
