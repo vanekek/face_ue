@@ -13,7 +13,7 @@ class Face_Fecognition_test:
     def __init__(
         self,
         sampler,
-        evaluation_function: Abstract1NEval,
+        distance_function: Abstract1NEval,
         test_dataset: FaceRecogntioniDataset,
         embeddings_path: str,
         template_pooling_strategy: AbstractTemplatePooling,
@@ -45,7 +45,7 @@ class Face_Fecognition_test:
                 self.embs.dtype
             )
         self.sampler = sampler
-        self.evaluation_function = evaluation_function
+        self.distance_function = distance_function
         self.template_pooling_strategy = template_pooling_strategy
 
         self.use_detector_score = use_detector_score
@@ -116,7 +116,7 @@ class Face_Fecognition_test:
     def run_model_test_verification(
         self,
     ):
-        scores = self.evaluation_function(
+        scores = self.distance_function(
             self.template_pooled_emb,
             self.template_pooled_unc,
             self.template_ids,
@@ -151,7 +151,7 @@ class Face_Fecognition_test:
         )
         is_seen_g1 = np.isin(probe_unique_ids, g1_unique_ids)
 
-        similarity, probe_score = self.evaluation_function(
+        similarity, probe_score = self.distance_function(
             probe_templates_feature[is_seen_g1],
             probe_template_unc[is_seen_g1],
             g1_templates_feature,
@@ -181,7 +181,7 @@ class Face_Fecognition_test:
             print(">>>> Gallery 2")
             is_seen_g2 = np.isin(probe_unique_ids, g2_unique_ids)
 
-            similarity, probe_score = self.evaluation_function(
+            similarity, probe_score = self.distance_function(
                 probe_templates_feature[is_seen_g2],
                 probe_template_unc[is_seen_g2],
                 g2_templates_feature,
@@ -226,22 +226,24 @@ class Face_Fecognition_test:
             probe_template_unc,
         )
 
-        similarity, probe_score = self.evaluation_function(
+        similarity = self.distance_function(
             probe_templates_feature,
             probe_template_unc,
             g1_templates_feature,
             g1_template_unc,
         )
+        # setup osr method and predict
+
+        self.method.setup(similarity)
+        predicted_id = self.method.predict()
+        predicted_unc = self.method.predict_uncertainty(probe_template_unc)
 
         # recognition metrics
         metrics = {}
         for metric in self.open_set_identification_metrics:
             metrics.update(
                 metric(
-                    probe_ids=probe_unique_ids,
-                    gallery_ids=g1_unique_ids,
-                    similarity=np.mean(similarity, axis=1),
-                    probe_score=probe_score,
+                    predicted_id = predicted_id
                 )
             )
 
@@ -268,7 +270,7 @@ class Face_Fecognition_test:
             )
             # print("g2_templates_feature:", g2_templates_feature.shape)  # (1759, 512)
             # print(">>>> Gallery 2")
-            similarity, probe_score = self.evaluation_function(
+            similarity, probe_score = self.distance_function(
                 probe_templates_feature,
                 probe_template_unc,
                 g2_templates_feature,

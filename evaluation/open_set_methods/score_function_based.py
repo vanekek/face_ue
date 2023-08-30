@@ -2,17 +2,17 @@ import numpy as np
 from .base_method import OpenSetMethod
 
 class SimilarityBasedPrediction(OpenSetMethod):
-    def __init__(self, tau: float, confidence_function) -> None:
+    def __init__(self, tau: float, acceptance_score) -> None:
         super().__init__()
         self.tau = tau
-        self.confidence_function = confidence_function
+        self.acceptance_score = acceptance_score
 
     def setup(self, similarity_matrix: np.ndarray):
         self.similarity_matrix = np.mean(similarity_matrix, axis=1)
 
     def predict(self):
         predict_id = np.argmax(self.similarity_matrix, axis=-1)
-        probe_score = self.confidence_function(self.similarity_matrix)
+        probe_score = self.acceptance_score(self.similarity_matrix)
         predict_id[probe_score < self.tau] = self.similarity_matrix.shape[
             -1
         ]  # reject class

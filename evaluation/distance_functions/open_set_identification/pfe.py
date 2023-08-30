@@ -13,7 +13,6 @@ from evaluation.eval_functions.distaince_functions import compute_pfe
 class PFE(Abstract1NEval):
     def __init__(
         self,
-        confidence_function: AbstractConfidence,
         variance_scale: float,
         cosine_pred: bool,
     ) -> None:
@@ -23,7 +22,6 @@ class PFE(Abstract1NEval):
         https://ieeexplore.ieee.org/document/9008376
         Eq. (3)
         """
-        self.confidence_function = confidence_function
         self.variance_scale = variance_scale
         self.cosine_pred = cosine_pred
         # self.compute_pfe_sim = PfeSim()
@@ -78,7 +76,4 @@ class PFE(Abstract1NEval):
             similarity = pfe_similarity
         else:
             similarity = np.dot(probe_feats, gallery_feats.T)  # (19593, 1772)
-
-        # compute confidences
-        probe_score = self.confidence_function(pfe_similarity)
-        return similarity, probe_score
+        return similarity

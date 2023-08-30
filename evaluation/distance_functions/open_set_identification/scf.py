@@ -11,7 +11,6 @@ from evaluation.eval_functions.distaince_functions import ScfSim
 class SCF(Abstract1NEval):
     def __init__(
         self,
-        confidence_function: AbstractConfidence,
         k_shift: float,
         cosine_pred: bool,
     ) -> None:
@@ -21,7 +20,6 @@ class SCF(Abstract1NEval):
         https://ieeexplore.ieee.org/document/9577756
         Eq. (13)
         """
-        self.confidence_function = confidence_function
         self.k_shift = k_shift
         self.cosine_pred = cosine_pred
 
@@ -49,7 +47,4 @@ class SCF(Abstract1NEval):
         else:
             similarity = scf_similarity
 
-        # compute confidences
-        probe_score = self.confidence_function(similarity)
-
-        return similarity, probe_score
+        return similarity

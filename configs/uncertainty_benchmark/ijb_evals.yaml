@@ -50,7 +50,7 @@ metric_to_monitor:
   far_range: [-4, 0, 100] 
   display_fars: [0.0001, 0.001, 0.01, 0.1, 1]
 
-# open_set_uncertainty_metrics:
+# open_set_identification_uncertainty_metrics:
 #   - _target_: evaluation.uncertainty_metrics.BernoulliVarianceReject
 #     fractions: ${fractions}
 #     metric_to_monitor: ${metric_to_monitor}
@@ -83,29 +83,34 @@ metric_to_monitor:
 #     metric_to_monitor: ${metric_to_monitor}
 
 open_set_identification_methods:
-  # - sampler:
-  #     _target_: evaluation.samplers.VonMisesFisher
-  #     num_samples: 0 # set 0 to use mean of distr as one sample
-  #   evaluation_function: 
-  #     _target_: evaluation.eval_functions.open_set_identification.CosineSim
-  #     confidence_function: 
-  #       _target_: evaluation.confidence_functions.MaxSimilarity_confidence
-  #   embeddings_path: ${test_dataset.dataset_path}/embeddings/scf_embs_${test_dataset.dataset_name}.npz
-  #   template_pooling_strategy:
-  #     _target_: evaluation.template_pooling_strategies.PoolingSCF
-  #   use_detector_score: True
-  #   pretty_name: "VonMisesProb"
-
-  - sampler:
-      _target_: evaluation.samplers.VonMisesFisher
-      num_samples: 0 # set 0 to use mean of distr as one sample
-    evaluation_function: 
-      _target_: evaluation.eval_functions.open_set_identification.CosineSim
-      confidence_function: 
-        _target_: evaluation.confidence_functions.MaxSimilarity_confidence
-    embeddings_path: ${test_dataset.dataset_path}/embeddings/scf_embs_${test_dataset.dataset_name}.npz
+  - embeddings_path: ${test_dataset.dataset_path}/embeddings/scf_embs_${test_dataset.dataset_name}.npz
     template_pooling_strategy:
       _target_: evaluation.template_pooling_strategies.PoolingSCF
     use_detector_score: True
-    pretty_name: "Cosine"
+    sampler:
+      _target_: evaluation.samplers.VonMisesFisher
+      num_samples: 0 # set 0 to use mean of distr as one sample
+    distance_function: 
+      _target_: evaluation.distance_functions.open_set_identification.CosineSim
+    recognition_method:
+      _target_: evaluation.open_set_methods.vMF.vMFSumUnc
+      kappa: 540.0
+      beta: 0.9772372209558107
+    pretty_name: "VonMisesProb"
+
+  - embeddings_path: ${test_dataset.dataset_path}/embeddings/scf_embs_${test_dataset.dataset_name}.npz
+    template_pooling_strategy:
+      _target_: evaluation.template_pooling_strategies.PoolingSCF
+    use_detector_score: True
+    sampler:
+      _target_: evaluation.samplers.VonMisesFisher
+      num_samples: 0 # set 0 to use mean of distr as one sample
+    distance_function: 
+      _target_: evaluation.distance_functions.open_set_identification.CosineSim
+    recognition_method:
+      _target_: evaluation.open_set_methods.score_function_based.SimilarityBasedPrediction
+      tau: 0.4112618128679961
+      acceptance_score: 
+        _target_: evaluation.confidence_functions.MaxSimilarity_confidence
+    pretty_name: "SCF conf"
   
