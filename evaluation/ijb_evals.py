@@ -8,15 +8,16 @@ from itertools import product
 from evaluation.face_recognition_test import Face_Fecognition_test
 
 
-
 def instantiate_list(query_list):
     return [instantiate(value) for value in query_list]
+
 
 def get_args_string(d):
     args = []
     for key, value in d.items():
         args.append(f"{key}:{value}")
     return "-".join(args)
+
 
 def create_method_name(method, sampler, template_pooling, evaluation_function):
     method_name_parts = []
@@ -40,6 +41,7 @@ def create_method_name(method, sampler, template_pooling, evaluation_function):
     method_name = "_".join(method_name_parts)
     return method_name
 
+
 def init_methods(cfg):
     methods = []
     method_types = []
@@ -58,6 +60,7 @@ def init_methods(cfg):
         method_types += ["verification"] * len(cfg.verification_methods)
     return methods, method_types
 
+
 @hydra.main(
     config_path=str(
         Path(__file__).resolve().parents[1] / "configs/uncertainty_benchmark"
@@ -69,26 +72,32 @@ def main(cfg):
     # define methods
     methods, method_task_type = init_methods(cfg)
     tasks_names = list(set(method_task_type))
-    
+
     # instantiate metrics
-    recognition_metrics = {task: instantiate_list(
-        getattr(cfg, f'{task}_metrics')
-    ) for task in tasks_names}
-    uncertainty_metrics = {task: instantiate_list(
-        getattr(cfg, f'{task}_uncertainty_metrics')
-    ) for task in tasks_names}
-    
+    recognition_metrics = {
+        task: instantiate_list(getattr(cfg, f"{task}_metrics")) for task in tasks_names
+    }
+    uncertainty_metrics = {
+        task: instantiate_list(getattr(cfg, f"{task}_uncertainty_metrics"))
+        for task in tasks_names
+    }
+
     # instantiate datasets
     test_datasets = instantiate_list(cfg.test_dataset)
     dataset_names = [test_dataset.dataset_name for test_dataset in test_datasets]
     # create result dictionary
-    metric_values = {(task, dataset_name): {'recognition': {} ,'uncertainty': {}} for task, dataset_name in zip(tasks_names, dataset_names)}
-    
+    metric_values = {
+        (task, dataset_name): {"recognition": {}, "uncertainty": {}}
+        for task, dataset_name in zip(tasks_names, dataset_names)
+    }
+
     # create pretty name map
     pretty_names = {task: {} for task in tasks_names}
 
     # run face recognition methods
-    for (method, task_type), test_dataset in product(zip(methods, method_task_type), test_datasets):
+    for (method, task_type), test_dataset in product(
+        zip(methods, method_task_type), test_datasets
+    ):
         dataset_name = test_dataset.dataset_name
 
         # instantiate method
@@ -99,15 +108,16 @@ def main(cfg):
 
         # create unique method name
         method_name = create_method_name(
-                method, sampler, template_pooling, distance_function
+            method, sampler, template_pooling, distance_function
         )
         print(method_name)
         pretty_names[task_type][method_name] = method.pretty_name
 
-        # create tester        
+        # create tester
         tt = Face_Fecognition_test(
             task_type=task_type,
             method_name=method_name,
+            recognition_method=recognition_method,
             sampler=sampler,
             distance_function=distance_function,
             test_dataset=test_dataset,
@@ -116,19 +126,27 @@ def main(cfg):
             use_detector_score=method.use_detector_score,
             use_two_galleries=cfg.use_two_galleries,
             recompute_template_pooling=cfg.recompute_template_pooling,
-            recognition_metrics = recognition_metrics,
-            uncertainty_metrics = uncertainty_metrics,
+            recognition_metrics=recognition_metrics,
+            uncertainty_metrics=uncertainty_metrics,
         )
 
-        recognition_metric_values, uncertainty_metric_values = tt.predict_and_compute_metrics()
-        metric_values[task_type]['recognition'][method_name] = recognition_metric_values
-        metric_values[task_type]['uncertainty'][method_name] = uncertainty_metric_values
+        (
+            recognition_metric_values,
+            uncertainty_metric_values,
+        ) = tt.predict_and_compute_metrics()
+        metric_values[(task_type, dataset_name)]["recognition"][
+            method_name
+        ] = recognition_metric_values
+        metric_values[(task_type, dataset_name)]["uncertainty"][
+            method_name
+        ] = uncertainty_metric_values
 
-        
     # open set identif metric table
 
     if "open_set_identification_methods" in cfg:
-        open_set_identification_result_dir = (Path(cfg.exp_dir) / dataset_name / "open_set_identification")
+        open_set_identification_result_dir = (
+            Path(cfg.exp_dir) / dataset_name / "open_set_identification"
+        )
         open_set_identification_result_dir.mkdir(exist_ok=True, parents=True)
         df = create_open_set_ident_recognition_metric_table(
             open_set_recognition_result_metrics, open_set_ident_pretty_names

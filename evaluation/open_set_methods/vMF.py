@@ -46,9 +46,9 @@ class vMFSumUnc(OpenSetMethod):
             data_uncertainty = -data_uncertainty[:, 0]
         else:
             raise NotImplemented
-        data_uncertainty_norm = (
-            data_uncertainty - np.min(data_uncertainty)
-        ) / (np.max(data_uncertainty) - np.min(data_uncertainty))
+        data_uncertainty_norm = (data_uncertainty - np.min(data_uncertainty)) / (
+            np.max(data_uncertainty) - np.min(data_uncertainty)
+        )
 
         comb_unc = unc_norm * (1 - self.alpha) + data_uncertainty_norm * self.alpha
         return comb_unc

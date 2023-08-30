@@ -5,50 +5,50 @@ import warnings
 from .embeddings import process_embeddings
 from .image2template import image2template_feature
 from .template_pooling_strategies import AbstractTemplatePooling
-from .eval_functions.open_set_identification.abc import Abstract1NEval
+from .distance_functions.open_set_identification.abc import Abstract1NEval
 from .test_datasets import FaceRecogntioniDataset
 
 
 class Face_Fecognition_test:
     def __init__(
         self,
+        task_type: str,
+        method_name: str,
+        recognition_method,
         sampler,
         distance_function: Abstract1NEval,
         test_dataset: FaceRecogntioniDataset,
         embeddings_path: str,
         template_pooling_strategy: AbstractTemplatePooling,
-        use_detector_score,
-        use_two_galleries,
-        recompute_template_pooling,
-        open_set_identification_metrics,
-        closed_set_identification_metrics,
-        verification_metrics,
-        open_set_uncertainty_metrics,
+        use_detector_score: bool,
+        use_two_galleries: bool,
+        recompute_template_pooling: bool,
+        recognition_metrics: dict,
+        uncertainty_metrics: dict,
     ):
+        self.task_type = task_type
+        self.method_name = method_name
+        self.recognition_method = recognition_method
         self.use_two_galleries = use_two_galleries
         self.test_dataset = test_dataset
         self.recompute_template_pooling = recompute_template_pooling
-        self.open_set_identification_metrics = open_set_identification_metrics
-        self.closed_set_identification_metrics = closed_set_identification_metrics
-        self.verification_metrics = verification_metrics
-        self.open_set_uncertainty_metrics = open_set_uncertainty_metrics
+        self.recognition_metrics = recognition_metrics
+        self.uncertainty_metrics = uncertainty_metrics
+        self.sampler = sampler
+        self.distance_function = distance_function
+        self.template_pooling_strategy = template_pooling_strategy
+        self.use_detector_score = use_detector_score
 
-        # print(">>>> Reload embeddings from:", embeddings_path)
+        # load nn embeddings
         aa = np.load(embeddings_path)
         self.embeddings_path = embeddings_path
         self.embs = aa["embs"]
         self.embs_f = []
         self.unc = aa["unc"]
-
         if self.test_dataset.face_scores is not None:
             self.test_dataset.face_scores = self.test_dataset.face_scores.astype(
                 self.embs.dtype
             )
-        self.sampler = sampler
-        self.distance_function = distance_function
-        self.template_pooling_strategy = template_pooling_strategy
-
-        self.use_detector_score = use_detector_score
 
         # process embeddings
         self.image_input_feats = process_embeddings(
@@ -113,6 +113,111 @@ class Face_Fecognition_test:
             template_unc[count_template] = self.template_pooled_unc[ind_t]
         return templates_feature, template_unc, unique_subjectids
 
+    def predict_and_compute_metrics(self):
+        return getattr(self, f"run_model_test_{self.task_type}")()
+
+    def run_model_test_open_set_identification(self):
+        used_galleries = ["g1"]
+        if self.use_two_galleries and self.test_dataset.g2_templates.shape != ():
+            used_galleries += ["g2"]
+
+        galleries_data = [
+            self.get_template_subsets(
+                getattr(self.test_dataset, f"{g}_templates"),
+                getattr(self.test_dataset, f"{g}_ids"),
+            )
+            for g in used_galleries
+        ]
+        (
+            probe_templates_feature,
+            probe_template_unc,
+            probe_unique_ids,
+        ) = self.get_template_subsets(
+            self.test_dataset.probe_templates, self.test_dataset.probe_ids
+        )
+
+        # sample probe feature vectors
+        probe_templates_feature = self.sampler(
+            probe_templates_feature,
+            probe_template_unc,
+        )
+        metrics = {gallery: {} for gallery in used_galleries}
+        unc_metrics = {gallery: {} for gallery in used_galleries}
+        for gallery_name, (g_templates_feature, g_template_unc, g_unique_ids) in zip(
+            used_galleries, galleries_data
+        ):
+            similarity = self.distance_function(
+                probe_templates_feature,
+                probe_template_unc,
+                g_templates_feature,
+                g_template_unc,
+            )
+
+            # setup osr method and predict
+            self.recognition_method.setup(similarity)
+            predicted_id = self.recognition_method.predict()
+            predicted_unc = self.recognition_method.predict_uncertainty(
+                probe_template_unc
+            )
+
+            # compute recognition metrics
+            is_seen = np.isin(probe_unique_ids, g_unique_ids)
+            gallery_ids_argsort = np.argsort(g_unique_ids)
+            # sort labels
+
+            g_unique_ids_sorted = g_unique_ids[gallery_ids_argsort]
+            g_unique_ids_sorted = np.concatenate(
+                [g_unique_ids_sorted, [-1]]
+            )  # last id is for out of gallery class
+
+            for metric in self.recognition_metrics[self.task_type]:
+                metrics[gallery_name].update(
+                    metric(
+                        predicted_id=predicted_id,
+                        is_seen=g_unique_ids_sorted,
+                        K=similarity.shape[-1],
+                    )
+                )
+
+            # compute uncertainty metrics
+
+            for unc_metric in self.uncertainty_metrics[self.task_type]:
+                unc_metrics[gallery_name].update(
+                    unc_metric(
+                        probe_ids=probe_unique_ids,
+                        probe_template_unc=probe_template_unc,
+                        gallery_ids=g_unique_ids,
+                        similarity=similarity,
+                        probe_score=probe_score,
+                    )[0]
+                )
+
+        # aggregate metrics over two galleries
+        if len(used_galleries) == 2:
+            result_metrics = {}
+            result_unc_metrics = {}
+            for key in metrics[used_galleries[1]].keys():
+                if "metric:" in key:
+                    result_metrics[key] = (
+                        metrics[used_galleries[0]][key]
+                        + metrics[used_galleries[1]][key]
+                    ) / 2
+                else:
+                    result_metrics[key] = metrics[used_galleries[0]][key]
+            for key in unc_metrics[used_galleries[1]].keys():
+                if "final_auc" in key or "plot_reject" in key:
+                    result_unc_metrics[key] = (
+                        unc_metrics[used_galleries[0]][key]
+                        + unc_metrics[used_galleries[1]][key]
+                    ) / 2
+                else:
+                    result_unc_metrics[key] = unc_metrics[used_galleries[1]][key]
+        else:
+            result_metrics = metrics[used_galleries[0]]
+            result_unc_metrics = unc_metrics[used_galleries[0]]
+
+        return result_metrics, result_unc_metrics
+
     def run_model_test_verification(
         self,
     ):
@@ -134,7 +239,7 @@ class Face_Fecognition_test:
             )
         return metrics
 
-    def run_model_test_closedset_identification(self):
+    def run_model_test_closed_set_identification(self):
         (
             g1_templates_feature,
             g1_template_unc,
@@ -202,111 +307,3 @@ class Face_Fecognition_test:
                     metrics[key] = (metrics[key] + g2_metrics[key]) / 2
 
         return metrics
-
-    def run_model_test_openset_identification(self):
-        (
-            g1_templates_feature,
-            g1_template_unc,
-            g1_unique_ids,
-        ) = self.get_template_subsets(
-            self.test_dataset.g1_templates, self.test_dataset.g1_ids
-        )
-        (
-            probe_templates_feature,
-            probe_template_unc,
-            probe_unique_ids,
-        ) = self.get_template_subsets(
-            self.test_dataset.probe_templates, self.test_dataset.probe_ids
-        )
-
-        # sample probe feature vectors
-
-        probe_templates_feature = self.sampler(
-            probe_templates_feature,
-            probe_template_unc,
-        )
-
-        similarity = self.distance_function(
-            probe_templates_feature,
-            probe_template_unc,
-            g1_templates_feature,
-            g1_template_unc,
-        )
-        # setup osr method and predict
-
-        self.method.setup(similarity)
-        predicted_id = self.method.predict()
-        predicted_unc = self.method.predict_uncertainty(probe_template_unc)
-
-        # recognition metrics
-        metrics = {}
-        for metric in self.open_set_identification_metrics:
-            metrics.update(
-                metric(
-                    predicted_id = predicted_id
-                )
-            )
-
-        # uncertainty metrics
-        unc_metrics = {}
-        for unc_metric in self.open_set_uncertainty_metrics:
-            unc_metrics.update(
-                unc_metric(
-                    probe_ids=probe_unique_ids,
-                    probe_template_unc=probe_template_unc,
-                    gallery_ids=g1_unique_ids,
-                    similarity=similarity,
-                    probe_score=probe_score,
-                )[0]
-            )
-
-        if self.use_two_galleries and self.test_dataset.g2_templates.shape != ():
-            (
-                g2_templates_feature,
-                g2_template_unc,
-                g2_unique_ids,
-            ) = self.get_template_subsets(
-                self.test_dataset.g2_templates, self.test_dataset.g2_ids
-            )
-            # print("g2_templates_feature:", g2_templates_feature.shape)  # (1759, 512)
-            # print(">>>> Gallery 2")
-            similarity, probe_score = self.distance_function(
-                probe_templates_feature,
-                probe_template_unc,
-                g2_templates_feature,
-                g2_template_unc,
-            )
-            g2_metrics = {}
-            for metric in self.open_set_identification_metrics:
-                g2_metrics.update(
-                    metric(
-                        probe_ids=probe_unique_ids,
-                        gallery_ids=g2_unique_ids,
-                        similarity=np.mean(similarity, axis=1),
-                        probe_score=probe_score,
-                    )
-                )
-            # uncertainty metrics
-            g2_unc_metrics = {}
-            for unc_metric in self.open_set_uncertainty_metrics:
-                g2_unc_metrics.update(
-                    unc_metric(
-                        probe_ids=probe_unique_ids,
-                        probe_template_unc=probe_template_unc,
-                        gallery_ids=g2_unique_ids,
-                        similarity=similarity,
-                        probe_score=probe_score,
-                    )[0]
-                )
-            # warnings.warn("Aggregation of unc metrics is unchecked")
-            for key in g2_metrics.keys():
-                if "metric:" in key:
-                    metrics[key] = (metrics[key] + g2_metrics[key]) / 2
-            for key in g2_unc_metrics.keys():
-                if "final_auc" in key or "plot_reject" in key:
-                    unc_metrics[key] = (unc_metrics[key] + g2_unc_metrics[key]) / 2
-
-        else:
-            is_seen = np.isin(probe_unique_ids, g1_unique_ids)
-
-        return metrics, unc_metrics

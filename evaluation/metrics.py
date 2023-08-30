@@ -8,6 +8,12 @@ from scipy import interpolate
 EvalMetricsT = Tuple[int, int, int, List[float], List[float], List[Tuple[float, float]]]
 
 
+class DirAndFar:
+    @staticmethod
+    def __call__(predicted_id: np.ndarray, is_seen: np.ndarray, K: int) -> dict:
+        pass
+
+
 class CMC:
     def __init__(self, top_n_ranks: List[int], display_ranks: List[int]) -> None:
         self.top_n_ranks = top_n_ranks

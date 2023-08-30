@@ -1,6 +1,7 @@
 import numpy as np
 from .base_method import OpenSetMethod
 
+
 class SimilarityBasedPrediction(OpenSetMethod):
     def __init__(self, tau: float, acceptance_score) -> None:
         super().__init__()
