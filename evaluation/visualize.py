@@ -17,7 +17,9 @@ def plot_rejection_scores(scores, y_label, names):
         name = name if name is not None else str(id)
 
         # auc_value = auc(rank, cmc)
-        label = name + f", AUC={np.round(auc(fractions, metric_value)*100, 3)}%"
+        label = (
+            name + f", avg {y_label}={np.round(fractions[-1]*np.mean(metric_value), 4)}"
+        )
         plt.plot(fractions, metric_value, lw=1, label=label)
 
     plt.xlabel("Throwaway rate")

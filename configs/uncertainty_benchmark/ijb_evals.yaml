@@ -3,8 +3,8 @@ hydra:
     dir: ${exp_dir}
 
 #exp_dir: experiments/open_set_uncertainty_small_beta
-exp_dir: outputs/experiments/new_pipeline
-use_two_galleries: False
+exp_dir: outputs/experiments/new_pipeline_400
+use_two_galleries: True
 recompute_template_pooling: False
 
 # test_dataset:
@@ -15,63 +15,36 @@ test_datasets:
     dataset_name: IJBC
     dataset_path: /app/datasets/arcface_ijb/IJBC
 
-  # - _target_: evaluation.test_datasets.FaceRecogntioniDataset
-  #   dataset_name: IJBB
-  #   dataset_path: /app/datasets/arcface_ijb/IJBB
-  # - _target_: evaluation.test_datasets.FaceRecogntioniDataset
-  #   dataset_name: survFace
-  #   dataset_path: /app/datasets/QMUL-SurvFace/Face_Identification_Test_Set
+  - _target_: evaluation.test_datasets.FaceRecogntioniDataset
+    dataset_name: IJBB
+    dataset_path: /app/datasets/arcface_ijb/IJBB
+  - _target_: evaluation.test_datasets.FaceRecogntioniDataset
+    dataset_name: survFace
+    dataset_path: /app/datasets/QMUL-SurvFace/Face_Identification_Test_Set
 
 
 
 open_set_identification_metrics:
   - _target_: evaluation.metrics.FrrFarIdent
+  - _target_: evaluation.metrics.DirFar
 
+fractions: [0, 0.1, 10]
 
-fractions: [0, 0.2, 10]
-
-metric_to_monitor:
-  _target_: evaluation.metrics.DetectionAndIdentificationRate
-  top_n_ranks: [1, 20] #[1, 10, 20]
-  far_range: [-4, 0, 100] 
-  display_fars: [0.0001, 0.001, 0.01, 0.1, 1]
 open_set_identification_uncertainty_metrics:
   - _target_: evaluation.uncertainty_metrics.DisposeBasedOnUnc
     fractions: ${fractions}
     metric_to_monitor:
       _target_: evaluation.metrics.FrrFarIdent
-# open_set_identification_uncertainty_metrics:
-#   - _target_: evaluation.uncertainty_metrics.BernoulliVarianceReject
-#     fractions: ${fractions}
-#     metric_to_monitor: ${metric_to_monitor}
+  
+  - _target_: evaluation.uncertainty_metrics.DisposeBasedOnUnc
+    fractions: ${fractions}
+    metric_to_monitor:
+      _target_: evaluation.metrics.DirFar
 
-#   - _target_: evaluation.uncertainty_metrics.CombinedMaxProb
-#     fractions: ${fractions}
-#     kappa: 400
-#     beta: 0.5
-#     use_maxprob_variance: False
-#     aggregation: entr
-#     data_variance_weight: 0
-#     metric_to_monitor: ${metric_to_monitor}
 
-#   - _target_: evaluation.uncertainty_metrics.CombinedMaxProb
-#     fractions: ${fractions}
-#     kappa: 400
-#     beta: 0.5
-#     use_maxprob_variance: False
-#     aggregation: entr
-#     data_variance_weight: 0.7
-#     metric_to_monitor: ${metric_to_monitor}
 
-#   - _target_: evaluation.uncertainty_metrics.CombinedMaxProb
-#     fractions: ${fractions}
-#     kappa: 200
-#     beta: 0.5
-#     aggregation: entr
-#     use_maxprob_variance: False
-#     data_variance_weight: 1
-#     metric_to_monitor: ${metric_to_monitor}
-
+default_kappa: 400
+default_beta: 0.5
 open_set_identification_methods:
 
   - embeddings: scf
@@ -85,8 +58,8 @@ open_set_identification_methods:
       _target_: evaluation.distance_functions.open_set_identification.CosineSim
     recognition_method:
       _target_: evaluation.open_set_methods.vMF.vMFSumUnc
-      kappa: 540.0
-      beta: 0.9772372209558107
+      kappa: ${default_kappa}
+      beta: ${default_beta}
       uncertainty_type: entr
       alpha: 0
     pretty_name: "vMF"
@@ -102,8 +75,8 @@ open_set_identification_methods:
       _target_: evaluation.distance_functions.open_set_identification.CosineSim
     recognition_method:
       _target_: evaluation.open_set_methods.vMF.vMFSumUnc
-      kappa: 540.0
-      beta: 0.9772372209558107
+      kappa: ${default_kappa}
+      beta: ${default_beta}
       uncertainty_type: entr
       alpha: 0.7
     pretty_name: "vMF+SFC"
@@ -119,7 +92,8 @@ open_set_identification_methods:
       _target_: evaluation.distance_functions.open_set_identification.CosineSim
     recognition_method:
       _target_: evaluation.open_set_methods.score_function_based.SimilarityBasedPrediction
-      tau: 0.4112618128679961
+      kappa: ${default_kappa}
+      beta: ${default_beta}
       acceptance_score: 
         _target_: evaluation.confidence_functions.MaxSimilarity_confidence
       uncertainty_function:
@@ -138,7 +112,8 @@ open_set_identification_methods:
       _target_: evaluation.distance_functions.open_set_identification.CosineSim
     recognition_method:
       _target_: evaluation.open_set_methods.score_function_based.SimilarityBasedPrediction
-      tau: 0.4112618128679961
+      kappa: ${default_kappa}
+      beta: ${default_beta}
       acceptance_score: 
         _target_: evaluation.confidence_functions.MaxSimilarity_confidence
       uncertainty_function:
@@ -158,7 +133,8 @@ open_set_identification_methods:
       _target_: evaluation.distance_functions.open_set_identification.CosineSim
     recognition_method:
       _target_: evaluation.open_set_methods.score_function_based.SimilarityBasedPrediction
-      tau: 0.4112618128679961
+      kappa: ${default_kappa}
+      beta: ${default_beta}
       acceptance_score: 
         _target_: evaluation.confidence_functions.MaxSimilarity_confidence
       uncertainty_function:

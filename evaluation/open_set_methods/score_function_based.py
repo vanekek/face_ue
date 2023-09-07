@@ -1,13 +1,20 @@
 import numpy as np
 from .base_method import OpenSetMethod
+from evaluation.confidence_functions import MisesProb
 
 
 class SimilarityBasedPrediction(OpenSetMethod):
     def __init__(
-        self, tau: float, acceptance_score, uncertainty_function, alpha: float
+        self,
+        kappa: float,
+        beta: float,
+        acceptance_score,
+        uncertainty_function,
+        alpha: float,
     ) -> None:
         super().__init__()
-        self.tau = tau
+        self.kappa = kappa
+        self.beta = beta
         self.acceptance_score = acceptance_score
         self.uncertainty_function = uncertainty_function
         self.alpha = alpha
@@ -15,6 +22,18 @@ class SimilarityBasedPrediction(OpenSetMethod):
     def setup(self, similarity_matrix: np.ndarray):
         self.similarity_matrix = np.mean(similarity_matrix, axis=1)
         self.probe_score = self.acceptance_score(self.similarity_matrix)
+        K = self.similarity_matrix.shape[-1]
+        mises_maxprob = MisesProb(kappa=self.kappa, beta=self.beta)
+        self.tau = (
+            1
+            / self.kappa
+            * (
+                np.log(self.beta / (1 - self.beta))
+                + np.log(K)
+                + mises_maxprob.log_uniform_dencity
+                - mises_maxprob.log_c
+            )
+        )
 
     def predict(self):
         predict_id = np.argmax(self.similarity_matrix, axis=-1)

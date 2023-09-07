@@ -160,14 +160,6 @@ class Face_Fecognition_test:
                 probe_template_unc
             )
 
-            # compute recognition metrics
-            # sort labels
-            # gallery_ids_argsort = np.argsort(g_unique_ids)
-            # g_unique_ids_sorted = g_unique_ids[gallery_ids_argsort]
-            # g_unique_ids_sorted = np.concatenate(
-            #     [g_unique_ids, [-1]]
-            # )  # last id is for out of gallery class
-
             for metric in self.recognition_metrics[self.task_type]:
                 metrics[gallery_name].update(
                     metric(

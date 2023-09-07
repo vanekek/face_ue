@@ -6,7 +6,8 @@ from hydra.utils import instantiate
 import numpy as np
 from itertools import product
 from evaluation.face_recognition_test import Face_Fecognition_test
-
+import pandas as pd
+import matplotlib.pyplot as plt
 from evaluation.visualize import (
     plot_dir_far_scores,
     plot_cmc_scores,
@@ -86,7 +87,7 @@ def main(cfg):
     # create result dictionary
     metric_values = {
         (task, dataset_name): {"recognition": {}, "uncertainty": {}}
-        for task, dataset_name in zip(tasks_names, dataset_names)
+        for task, dataset_name in product(tasks_names, dataset_names)
     }
 
     # create pretty name map
@@ -145,8 +146,8 @@ def main(cfg):
             method_name
         ] = uncertainty_metric_values
 
-    # create plots and tabels
-
+    # create plots and tables
+    print(cfg.exp_dir)
     for task_type, dataset_name in metric_values:
         # create output dir
         out_dir = Path(cfg.exp_dir) / str(dataset_name) / str(task_type)
@@ -154,20 +155,31 @@ def main(cfg):
 
         # create rejection plots
         metric_names = []
-        for _, metric in metric_values[(task_type, dataset_name)][
+        model_names = []
+        for model_name, metric in metric_values[(task_type, dataset_name)][
             "uncertainty"
         ].items():
             for key in metric:
                 if "osr_unc_metric":
                     metric_names.append(key)
+                    model_names.append(model_name)
         for metric_name in metric_names:
             model_names = []
             scores = []
+            fractions = next(
+                iter(metric_values[(task_type, dataset_name)]["uncertainty"].items())
+            )[1]["fractions"]
+
+            column_names = ["models", *[str(np.round(frac, 4)) for frac in fractions]]
+            data_rows = []
             for method_name, metrics in metric_values[(task_type, dataset_name)][
                 "uncertainty"
             ].items():
                 model_names.append(pretty_names[task_type][method_name])
                 scores.append((metrics["fractions"], metrics[metric_name]))
+                data_rows.append(
+                    [pretty_names[task_type][method_name], *metrics[metric_name]]
+                )
             fig = plot_rejection_scores(
                 scores=scores,
                 names=model_names,
@@ -176,77 +188,15 @@ def main(cfg):
             fig.savefig(
                 out_dir / f"{metric_name.split(':')[-1]}_rejection.png", dpi=300
             )
+            plt.close(fig)
 
-    # # open set identif metric table
-
-    # if "open_set_identification_methods" in cfg:
-    #     open_set_identification_result_dir = (
-    #         Path(cfg.exp_dir) / dataset_name / "open_set_identification"
-    #     )
-    #     open_set_identification_result_dir.mkdir(exist_ok=True, parents=True)
-    #     df = create_open_set_ident_recognition_metric_table(
-    #         open_set_recognition_result_metrics, open_set_ident_pretty_names
-    #     )
-    #     df.to_csv(
-    #         open_set_identification_result_dir / "open_set_identification.csv",
-    #         index=False,
-    #     )
-    #     # save identif plot values
-    #     for method_name in open_set_recognition_result_metrics:
-    #         metrics = open_set_recognition_result_metrics[method_name]
-    #         fars = np.array(metrics["fars"])
-    #         recalls_1_rank = metrics["metric:recalls_1_rank"]
-    #         np.savez(
-    #             open_set_identification_result_dir
-    #             / f"{open_set_ident_pretty_names[method_name]}_recalls_1_rank.npz",
-    #             fars=fars,
-    #             recalls=recalls_1_rank,
-    #         )
-    #     # identif plot
-    #     create_open_set_ident_plots(
-    #         open_set_recognition_result_metrics,
-    #         open_set_identification_result_dir,
-    #         open_set_ident_pretty_names,
-    #     )
-
-    #     # unc metric table
-    #     df_unc = create_open_set_ident_recognition_metric_table(
-    #         open_set_uncertainty_result_metrics, open_set_ident_pretty_names
-    #     )
-    #     df_unc.to_csv(
-    #         open_set_identification_result_dir / "open_set_unc.csv",
-    #         index=False,
-    #     )
-    #     # unc plot
-    #     create_rejection_plots(
-    #         open_set_uncertainty_result_metrics,
-    #         open_set_identification_result_dir,
-    #         open_set_ident_pretty_names,
-    #     )
-
-    # if "verification_methods" in cfg:
-    #     # verification table
-
-    #     df_verif = create_open_set_ident_recognition_metric_table(
-    #         verification_recognition_result_metrics, verication_pretty_names
-    #     )
-    #     df_verif.to_csv(verification_result_dir / "verification.csv", index=False)
-    #     # # verif plot
-    # if "closed_set_identification_methods" in cfg:
-    #     # closed set ident table
-    #     df_closed = create_open_set_ident_recognition_metric_table(
-    #         closed_set_recognition_result_metrics, closed_set_ident_pretty_names
-    #     )
-    #     df_closed.to_csv(
-    #         closed_set_identification_result_dir / "closed_set_identification.csv",
-    #         index=False,
-    #     )
-    #     # closed plot
-    #     create_closed_set_ident_plots(
-    #         closed_set_recognition_result_metrics,
-    #         closed_set_identification_result_dir,
-    #         closed_set_ident_pretty_names,
-    #     )
+            # save table
+            out_table_dir = out_dir / "tabels"
+            out_table_dir.mkdir(exist_ok=True, parents=True)
+            rejection_df = pd.DataFrame(data_rows, columns=column_names)
+            rejection_df.to_csv(
+                out_table_dir / f'{metric_name.split(":")[-1]}_rejection.csv'
+            )
 
 
 if __name__ == "__main__":

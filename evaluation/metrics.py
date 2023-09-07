@@ -34,6 +34,30 @@ class FrrFarIdent:
         return result_metrics
 
 
+class DirFar:
+    @staticmethod
+    def __call__(
+        predicted_id: np.ndarray,
+        was_rejected: np.ndarray,
+        g_unique_ids: np.ndarray,
+        probe_unique_ids: np.ndarray,
+    ) -> dict:
+        is_seen = np.isin(probe_unique_ids, g_unique_ids)
+        similar_gallery_class = g_unique_ids[predicted_id[is_seen]]
+        dir = np.mean(
+            np.logical_and(
+                probe_unique_ids[is_seen] == similar_gallery_class,
+                was_rejected[is_seen] == False,
+            )
+        )
+        far = np.mean(was_rejected[~is_seen] == False)
+        result_metrics = {
+            "osr_metric:dir": dir,
+            "osr_metric:far": far,
+        }
+        return result_metrics
+
+
 class CMC:
     def __init__(self, top_n_ranks: List[int], display_ranks: List[int]) -> None:
         self.top_n_ranks = top_n_ranks
