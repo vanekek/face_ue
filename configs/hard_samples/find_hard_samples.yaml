@@ -13,9 +13,9 @@ test_datasets:
     dataset_name: IJBC
     dataset_path: /app/datasets/arcface_ijb/IJBC
 
-  # - _target_: evaluation.test_datasets.FaceRecogntioniDataset
-  #   dataset_name: IJBB
-  #   dataset_path: /app/datasets/arcface_ijb/IJBB
+  - _target_: evaluation.test_datasets.FaceRecogntioniDataset
+    dataset_name: IJBB
+    dataset_path: /app/datasets/arcface_ijb/IJBB
   # - _target_: evaluation.test_datasets.FaceRecogntioniDataset
   #   dataset_name: survFace
   #   dataset_path: /app/datasets/QMUL-SurvFace/Face_Identification_Test_Set
