@@ -22,33 +22,50 @@ def copy_template_images(
 
 
 def plot_unc_hist(
-    work_dir, unc_name, unc_score, is_seen, false_ident, false_accept, false_reject
+    work_dir,
+    unc_name,
+    unc_score,
+    is_seen,
+    false_ident,
+    false_accept,
+    false_reject,
 ):
     sns.set_theme()
     plt.figure(figsize=(12, 8))
-    sns.distplot(
-        unc_score[is_seen][false_ident],
-        kde=True,
-        norm_hist=True,
-        hist=True,
-        label="false ident",
+    log_scale = True if unc_name == "vMF_unc" else False
+    right_unc = np.concatenate(
+        [
+            unc_score[~is_seen][false_accept == False],
+            unc_score[is_seen][
+                np.logical_and(false_ident == False, false_reject == False)
+            ],
+        ]
     )
-    sns.distplot(
-        unc_score[~is_seen][false_accept],
-        kde=True,
-        norm_hist=True,
-        hist=True,
-        label="false accept",
+    unc = np.concatenate(
+        [
+            unc_score[is_seen][false_ident],
+            unc_score[~is_seen][false_accept],
+            unc_score[is_seen][false_reject],
+            right_unc,
+        ]
     )
-    sns.distplot(
-        unc_score[is_seen][false_reject],
-        kde=True,
-        norm_hist=True,
-        hist=True,
-        label="false reject",
+    unc += 1e-29
+    error_kind = (
+        ["false ident"] * len(unc_score[is_seen][false_ident])
+        + ["false accept"] * len(unc_score[~is_seen][false_accept])
+        + ["false reject"] * len(unc_score[is_seen][false_reject])
+        + ["right pred"] * len(right_unc)
+    )
+    data = pd.DataFrame({"unc": list(unc), "Error Kind": error_kind})
+    sns.displot(
+        data,
+        kind="kde",
+        x="unc",
+        hue="Error Kind",
+        log_scale=log_scale,
+        common_norm=False,
     )
     plt.xlabel(f"{unc_name} score")
-    plt.legend()
     plt.savefig(work_dir / f"{unc_name}_score_distr.png", dpi=300)
 
 
@@ -177,16 +194,8 @@ def main(cfg):
             similarity = similarity[:, 0, :]
 
             hist_plot_path = out_image_dir / "score_hist"
-            hist_plot_path.mkdir(exist_ok=True)
-            plot_unc_hist(
-                hist_plot_path,
-                "scf_unc",
-                scf_unc_score,
-                is_seen,
-                false_ident,
-                false_accept,
-                false_reject,
-            )
+            hist_plot_path.mkdir(exist_ok=True, parents=True)
+
             plot_unc_hist(
                 hist_plot_path,
                 "vMF_unc",
@@ -196,7 +205,17 @@ def main(cfg):
                 false_accept,
                 false_reject,
             )
+            plot_unc_hist(
+                hist_plot_path,
+                "scf_unc",
+                scf_unc_score,
+                is_seen,
+                false_ident,
+                false_accept,
+                false_reject,
+            )
 
+            num_similar = 6
             for i in range(len(vMF_unc_score)):
                 probe_unique_id = probe_unique_ids[i]
 
@@ -204,21 +223,21 @@ def main(cfg):
                 scf_unc = scf_unc_score[i]
                 probe_template_id = probe_unique_templates[i]
                 if (
-                    probe_template_id in false_ident_ids
-                    and probe_template_id in false_reject_ids
+                    probe_unique_id in false_ident_ids
+                    and probe_unique_id in false_reject_ids
                 ):
                     case_name = "false_ident-false_reject"
-                elif probe_template_id in false_accept_ids:
+                elif probe_unique_id in false_accept_ids:
                     case_name = "false_accept"
-                elif probe_template_id in false_reject_ids:
+                elif probe_unique_id in false_reject_ids:
                     case_name = "false_reject"
-                elif probe_template_id in false_ident_ids:
+                elif probe_unique_id in false_ident_ids:
                     case_name = "false_ident"
                 else:
                     continue
                 most_similar_gallery_ids = np.argsort(similarity[i, :])[::-1]
                 most_similar_templates = g_unique_templates[
-                    most_similar_gallery_ids[:4]
+                    most_similar_gallery_ids[:num_similar]
                 ]
                 probe_template_path = (
                     out_image_dir
