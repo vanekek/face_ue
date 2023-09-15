@@ -50,13 +50,10 @@ open_set_identification_methods:
     distance_function: 
       _target_: evaluation.distance_functions.open_set_identification.CosineSim
     recognition_method:
-      _target_: evaluation.open_set_methods.score_function_based.SimilarityBasedPrediction
+      _target_: evaluation.open_set_methods.vMF.vMFSumUnc
       kappa: ${default_kappa}
       beta: ${default_beta}
-      acceptance_score: 
-        _target_: evaluation.confidence_functions.MaxSimilarity_confidence
-      uncertainty_function:
-        _target_: evaluation.open_set_methods.uncertainty_functions.BernoulliVariance
+      uncertainty_type: entr
       alpha: 1
     pretty_name: "SCF"
 

@@ -41,19 +41,31 @@ def plot_unc_hist(
             ],
         ]
     )
+    false_accept_unc = unc_score[~is_seen][false_accept]
+    false_ident_unc = unc_score[is_seen][
+        np.logical_and(false_ident, false_reject == False)
+    ]
+    false_reject_unc = unc_score[is_seen][
+        np.logical_and(false_ident == False, false_reject)
+    ]
+    false_ident_reject_unc = unc_score[is_seen][
+        np.logical_and(false_ident, false_reject)
+    ]
     unc = np.concatenate(
         [
-            unc_score[is_seen][false_ident],
-            unc_score[~is_seen][false_accept],
-            unc_score[is_seen][false_reject],
+            false_accept_unc,
+            false_ident_unc,
+            false_reject_unc,
+            false_ident_reject_unc,
             right_unc,
         ]
     )
     unc += 1e-29
     error_kind = (
-        ["false ident"] * len(unc_score[is_seen][false_ident])
-        + ["false accept"] * len(unc_score[~is_seen][false_accept])
-        + ["false reject"] * len(unc_score[is_seen][false_reject])
+        ["false accept"] * len(false_accept_unc)
+        + ["false ident"] * len(false_ident_unc)
+        + ["false reject"] * len(false_reject_unc)
+        + ["false reject/ident"] * len(false_ident_reject_unc)
         + ["right pred"] * len(right_unc)
     )
     data = pd.DataFrame({"unc": list(unc), "Error Kind": error_kind})
@@ -186,11 +198,11 @@ def main(cfg):
 
             similar_gallery_class = g_unique_ids[predicted_id[is_seen]]
             false_ident = probe_unique_ids[is_seen] != similar_gallery_class
-            false_ident_ids = probe_unique_ids[is_seen][false_ident]
+            false_ident_ids = probe_unique_templates[is_seen][false_ident]
             false_accept = was_rejected[~is_seen] == False
-            false_accept_ids = probe_unique_ids[~is_seen][false_accept]
+            false_accept_ids = probe_unique_templates[~is_seen][false_accept]
             false_reject = was_rejected[is_seen]
-            false_reject_ids = probe_unique_ids[is_seen][false_reject]
+            false_reject_ids = probe_unique_templates[is_seen][false_reject]
             similarity = similarity[:, 0, :]
 
             hist_plot_path = out_image_dir / "score_hist"
@@ -218,20 +230,19 @@ def main(cfg):
             num_similar = 6
             for i in range(len(vMF_unc_score)):
                 probe_unique_id = probe_unique_ids[i]
-
                 vMF_unc = vMF_unc_score[i]
                 scf_unc = scf_unc_score[i]
                 probe_template_id = probe_unique_templates[i]
                 if (
-                    probe_unique_id in false_ident_ids
-                    and probe_unique_id in false_reject_ids
+                    probe_template_id in false_ident_ids
+                    and probe_template_id in false_reject_ids
                 ):
                     case_name = "false_ident-false_reject"
-                elif probe_unique_id in false_accept_ids:
+                elif probe_template_id in false_accept_ids:
                     case_name = "false_accept"
-                elif probe_unique_id in false_reject_ids:
+                elif probe_template_id in false_reject_ids:
                     case_name = "false_reject"
-                elif probe_unique_id in false_ident_ids:
+                elif probe_template_id in false_ident_ids:
                     case_name = "false_ident"
                 else:
                     continue
@@ -242,13 +253,14 @@ def main(cfg):
                 probe_template_path = (
                     out_image_dir
                     / case_name
-                    / f"scf-unc-{scf_unc}_vMF-unc-{vMF_unc}-probe_id-{str(probe_unique_id)}"
+                    / f"scf-unc-{scf_unc}_vMF-unc-{vMF_unc}-probe_id-{str(probe_unique_id)}_teplate-id-{str(probe_template_id)}"
                 )
                 if probe_template_path.is_dir():
                     continue
                 copy_template_images(
                     data_path,
-                    probe_template_path / f"probe_images-{str(probe_unique_id)}",
+                    probe_template_path
+                    / f"probe_images_id-{str(probe_unique_id)}_template-{str(probe_template_id)}",
                     probe_template_id,
                     image_paths,
                     template_ids,
