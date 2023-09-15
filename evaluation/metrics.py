@@ -17,19 +17,24 @@ class FrrFarIdent:
         probe_unique_ids: np.ndarray,
     ) -> dict:
         is_seen = np.isin(probe_unique_ids, g_unique_ids)
-        false_accept_num = np.sum(was_rejected[~is_seen] == False)
-        false_reject_num = np.sum(was_rejected[is_seen])
+        false_accept = was_rejected[~is_seen] == False
+        false_reject = was_rejected[is_seen]
 
         similar_gallery_class = g_unique_ids[predicted_id[is_seen]]
-        false_ident_num = np.sum(probe_unique_ids[is_seen] != similar_gallery_class)
+        false_ident = probe_unique_ids[is_seen] != similar_gallery_class
 
+        false_reject_slice = np.logical_and(false_ident == False, false_reject)
+        false_ident_slice = np.logical_and(false_ident, false_reject == False)
+        false_ident_reject = np.logical_and(false_ident, false_reject)
         result_metrics = {
-            "osr_metric:false_accept_num": false_accept_num,
-            "osr_metric:false_reject_num": false_reject_num,
-            "osr_metric:false_ident_num": false_ident_num,
-            "osr_metric:error_sum": false_accept_num
-            + false_reject_num
-            + false_ident_num,
+            "osr_metric:false_accept_num": np.sum(false_accept),
+            "osr_metric:false_reject_num": np.sum(false_reject_slice),
+            "osr_metric:false_ident_num": np.sum(false_ident_slice),
+            "osr_metric:false_ident-reject_num": np.sum(false_ident_reject),
+            "osr_metric:error_sum": np.sum(false_accept)
+            + np.sum(false_reject_slice)
+            + np.sum(false_ident_slice)
+            + np.sum(false_ident_reject),
         }
         return result_metrics
 
