@@ -61,9 +61,9 @@ def create_table_body(result_latex_code, cfg):
     best_values = compute_best_values(all_metric_values)
     for row_index, (_, row) in enumerate(all_metric_values.iterrows()):
         for column_index, column_name in enumerate(cfg.used_columns):
-            if column_name == "pretty_name":
+            if column_name == "models":
                 result_latex_code += cfg.pretty_name.model[row[column_name]] + " & "
-            elif column_name != "model_name":
+            elif column_name != "models":
                 # metric value
                 metric_value = row[column_name]
                 if metric_value == best_values[column_name][0]:

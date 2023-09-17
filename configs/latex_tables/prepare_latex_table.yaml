@@ -7,7 +7,7 @@ exp_dir: outputs/latex_tables/${now:%Y-%m-%d_%H-%M-%S}
 defaults:
   - _self_
   - pretty_names@pretty_name.task: task_pretty_name
-  - pretty_names@pretty_name.model: model_pretty_name_nac_unc_dist_search
+  - pretty_names@pretty_name.model: model_pretty_name_vMF
   - pretty_names@pretty_name.column: column_pretty_name_unc
 
 # dataset: survFace
@@ -17,10 +17,10 @@ task: unc
 #task: verification
 #task: closed_set_identification
 # CHANGE
-metric_table_path: /app/experiments/unc_metrics/${dataset}/open_set_identification/open_set_${task}.csv
+metric_table_path: /app/outputs/experiments/new_pipeline_400/${dataset}/open_set_identification/tabels/fractions/0.0333_frac_rejection.csv
 
 caption: >
-  Исследование методов оценки неопределённости на наборе данных {dataset_name} при решении задачи {task}.
+  Test caption {dataset_name}  {task}.
   
 fix_table: True
 table_lable: "tab:${task}_${dataset}_unc_metrics"
@@ -33,30 +33,27 @@ used_columns_dict:
   unc:
     IJBB:
       [
-        "pretty_name",
-        "final_auc_1_unc_frac_0.0",
-        "final_auc_1_unc_frac_0.2",
-        "final_auc_1_unc_frac_0.3",
-        "final_auc_1_unc_frac_0.6",
-        "final_auc_1_unc_frac_0.7",
+        "models",
+        "false_ident_num",
+        "dir",
+        "far",
+        "f1",
       ]
     IJBC:
       [
-        "pretty_name",
-        "final_auc_1_unc_frac_0.0",
-        "final_auc_1_unc_frac_0.2",
-        "final_auc_1_unc_frac_0.3",
-        "final_auc_1_unc_frac_0.6",
-        "final_auc_1_unc_frac_0.7",
+        "models",
+        "false_ident_num",
+        "dir",
+        "far",
+        "f1",
       ]
     survFace:
       [
-        "pretty_name",
-        "final_auc_10_unc_frac_0.0",
-        "final_auc_10_unc_frac_0.2",
-        "final_auc_10_unc_frac_0.3",
-        "final_auc_10_unc_frac_0.6",
-        "final_auc_10_unc_frac_0.7",
+        "models",
+        "false_ident_num",
+        "dir",
+        "far",
+        "f1",
       ]
   open_set_identification:
     survFace:
