@@ -10,8 +10,8 @@ defaults:
   - pretty_names@pretty_name.model: model_pretty_name_nac_unc_dist_search
   - pretty_names@pretty_name.column: column_pretty_name_unc
 
-dataset: survFace
-#dataset: IJBC
+# dataset: survFace
+dataset: IJBC
 #task: open_set_identification
 task: unc
 #task: verification

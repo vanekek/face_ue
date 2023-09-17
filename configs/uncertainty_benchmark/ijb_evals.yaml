@@ -4,7 +4,7 @@ hydra:
 
 #exp_dir: experiments/open_set_uncertainty_small_beta
 exp_dir: outputs/experiments/new_pipeline_400
-use_two_galleries: True
+use_two_galleries: False
 recompute_template_pooling: False
 
 # test_dataset:
@@ -15,18 +15,19 @@ test_datasets:
     dataset_name: IJBC
     dataset_path: /app/datasets/arcface_ijb/IJBC
 
-  - _target_: evaluation.test_datasets.FaceRecogntioniDataset
-    dataset_name: IJBB
-    dataset_path: /app/datasets/arcface_ijb/IJBB
-  - _target_: evaluation.test_datasets.FaceRecogntioniDataset
-    dataset_name: survFace
-    dataset_path: /app/datasets/QMUL-SurvFace/Face_Identification_Test_Set
+  # - _target_: evaluation.test_datasets.FaceRecogntioniDataset
+  #   dataset_name: IJBB
+  #   dataset_path: /app/datasets/arcface_ijb/IJBB
+  # - _target_: evaluation.test_datasets.FaceRecogntioniDataset
+  #   dataset_name: survFace
+  #   dataset_path: /app/datasets/QMUL-SurvFace/Face_Identification_Test_Set
 
 
 
 open_set_identification_metrics:
   - _target_: evaluation.metrics.FrrFarIdent
   - _target_: evaluation.metrics.DirFar
+  - _target_: evaluation.metrics.F1
 
 fractions: [0, 0.1, 10]
 
@@ -41,45 +42,50 @@ open_set_identification_uncertainty_metrics:
     metric_to_monitor:
       _target_: evaluation.metrics.DirFar
 
+  - _target_: evaluation.uncertainty_metrics.DisposeBasedOnUnc
+    fractions: ${fractions}
+    metric_to_monitor:
+      _target_: evaluation.metrics.F1
+
 
 
 default_kappa: 400
 default_beta: 0.5
 open_set_identification_methods:
 
-  - embeddings: scf
-    template_pooling_strategy:
-      _target_: evaluation.template_pooling_strategies.PoolingSCF
-    use_detector_score: True
-    sampler:
-      _target_: evaluation.samplers.VonMisesFisher
-      num_samples: 0 # set 0 to use mean of distr as one sample
-    distance_function: 
-      _target_: evaluation.distance_functions.open_set_identification.CosineSim
-    recognition_method:
-      _target_: evaluation.open_set_methods.vMF.vMFSumUnc
-      kappa: ${default_kappa}
-      beta: ${default_beta}
-      uncertainty_type: entr
-      alpha: 0
-    pretty_name: "vMF"
+  # - embeddings: scf
+  #   template_pooling_strategy:
+  #     _target_: evaluation.template_pooling_strategies.PoolingSCF
+  #   use_detector_score: True
+  #   sampler:
+  #     _target_: evaluation.samplers.VonMisesFisher
+  #     num_samples: 0 # set 0 to use mean of distr as one sample
+  #   distance_function: 
+  #     _target_: evaluation.distance_functions.open_set_identification.CosineSim
+  #   recognition_method:
+  #     _target_: evaluation.open_set_methods.vMF.vMFSumUnc
+  #     kappa: ${default_kappa}
+  #     beta: ${default_beta}
+  #     uncertainty_type: entr
+  #     alpha: 0
+  #   pretty_name: "vMF"
 
-  - embeddings: scf
-    template_pooling_strategy:
-      _target_: evaluation.template_pooling_strategies.PoolingSCF
-    use_detector_score: True
-    sampler:
-      _target_: evaluation.samplers.VonMisesFisher
-      num_samples: 0 # set 0 to use mean of distr as one sample
-    distance_function: 
-      _target_: evaluation.distance_functions.open_set_identification.CosineSim
-    recognition_method:
-      _target_: evaluation.open_set_methods.vMF.vMFSumUnc
-      kappa: ${default_kappa}
-      beta: ${default_beta}
-      uncertainty_type: entr
-      alpha: 0.7
-    pretty_name: "vMF+SFC"
+  # - embeddings: scf
+  #   template_pooling_strategy:
+  #     _target_: evaluation.template_pooling_strategies.PoolingSCF
+  #   use_detector_score: True
+  #   sampler:
+  #     _target_: evaluation.samplers.VonMisesFisher
+  #     num_samples: 0 # set 0 to use mean of distr as one sample
+  #   distance_function: 
+  #     _target_: evaluation.distance_functions.open_set_identification.CosineSim
+  #   recognition_method:
+  #     _target_: evaluation.open_set_methods.vMF.vMFSumUnc
+  #     kappa: ${default_kappa}
+  #     beta: ${default_beta}
+  #     uncertainty_type: entr
+  #     alpha: 0.7
+  #   pretty_name: "vMF+SFC"
 
   - embeddings: scf
     template_pooling_strategy:
@@ -122,23 +128,23 @@ open_set_identification_methods:
     pretty_name: "Be"
 
 
-  - embeddings: scf
-    template_pooling_strategy:
-      _target_: evaluation.template_pooling_strategies.PoolingSCF
-    use_detector_score: True
-    sampler:
-      _target_: evaluation.samplers.VonMisesFisher
-      num_samples: 0 # set 0 to use mean of distr as one sample
-    distance_function: 
-      _target_: evaluation.distance_functions.open_set_identification.CosineSim
-    recognition_method:
-      _target_: evaluation.open_set_methods.score_function_based.SimilarityBasedPrediction
-      kappa: ${default_kappa}
-      beta: ${default_beta}
-      acceptance_score: 
-        _target_: evaluation.confidence_functions.MaxSimilarity_confidence
-      uncertainty_function:
-        _target_: evaluation.open_set_methods.uncertainty_functions.BernoulliVariance
-      alpha: 0.7
-    pretty_name: "Be+SCF"
+  # - embeddings: scf
+  #   template_pooling_strategy:
+  #     _target_: evaluation.template_pooling_strategies.PoolingSCF
+  #   use_detector_score: True
+  #   sampler:
+  #     _target_: evaluation.samplers.VonMisesFisher
+  #     num_samples: 0 # set 0 to use mean of distr as one sample
+  #   distance_function: 
+  #     _target_: evaluation.distance_functions.open_set_identification.CosineSim
+  #   recognition_method:
+  #     _target_: evaluation.open_set_methods.score_function_based.SimilarityBasedPrediction
+  #     kappa: ${default_kappa}
+  #     beta: ${default_beta}
+  #     acceptance_score: 
+  #       _target_: evaluation.confidence_functions.MaxSimilarity_confidence
+  #     uncertainty_function:
+  #       _target_: evaluation.open_set_methods.uncertainty_functions.BernoulliVariance
+  #     alpha: 0.7
+  #   pretty_name: "Be+SCF"
   

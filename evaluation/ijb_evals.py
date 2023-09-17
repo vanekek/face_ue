@@ -147,15 +147,17 @@ def main(cfg):
         ] = uncertainty_metric_values
 
     # create plots and tables
-    print(cfg.exp_dir)
+
     for task_type, dataset_name in metric_values:
         # create output dir
         out_dir = Path(cfg.exp_dir) / str(dataset_name) / str(task_type)
-        out_dir.mkdir(exist_ok=True, parents=True)
-
+        out_table_dir = out_dir / "tabels"
+        out_table_fractions_dir = out_table_dir / "fractions"
+        out_table_fractions_dir.mkdir(exist_ok=True, parents=True)
         # create rejection plots
         metric_names = []
         model_names = []
+
         for model_name, metric in metric_values[(task_type, dataset_name)][
             "uncertainty"
         ].items():
@@ -163,14 +165,27 @@ def main(cfg):
                 if "osr_unc_metric":
                     metric_names.append(key)
                     model_names.append(model_name)
+            break
+        fractions = next(
+            iter(metric_values[(task_type, dataset_name)]["uncertainty"].items())
+        )[1]["fractions"]
+        fraction_data_rows = {frac: [] for frac in fractions}
+        fraction_column_names = ["models"] + [
+            metric_name.split(":")[-1] for metric_name in metric_names
+        ]
+        column_names = ["models", *[str(np.round(frac, 4)) for frac in fractions]]
+
+        for method_name, metrics in metric_values[(task_type, dataset_name)][
+            "uncertainty"
+        ].items():
+            for i, frac in enumerate(fractions):
+                frac_data_rows = [pretty_names[task_type][method_name]]
+                for metric_name in metric_names:
+                    frac_data_rows.append(metrics[metric_name][i])
+                fraction_data_rows[frac].append(frac_data_rows)
         for metric_name in metric_names:
             model_names = []
             scores = []
-            fractions = next(
-                iter(metric_values[(task_type, dataset_name)]["uncertainty"].items())
-            )[1]["fractions"]
-
-            column_names = ["models", *[str(np.round(frac, 4)) for frac in fractions]]
             data_rows = []
             for method_name, metrics in metric_values[(task_type, dataset_name)][
                 "uncertainty"
@@ -191,12 +206,18 @@ def main(cfg):
             plt.close(fig)
 
             # save table
-            out_table_dir = out_dir / "tabels"
-            out_table_dir.mkdir(exist_ok=True, parents=True)
+
             rejection_df = pd.DataFrame(data_rows, columns=column_names)
             rejection_df.to_csv(
                 out_table_dir / f'{metric_name.split(":")[-1]}_rejection.csv'
             )
+        for frac, data_rows in fraction_data_rows.items():
+            frac_rejection_df = pd.DataFrame(data_rows, columns=fraction_column_names)
+            frac_rejection_df.to_csv(
+                out_table_fractions_dir
+                / f'{str(np.round(frac, 4)).ljust(6, "0")}_frac_rejection.csv'
+            )
+    print(cfg.exp_dir)
 
 
 if __name__ == "__main__":
