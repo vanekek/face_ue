@@ -1,4 +1,4 @@
-models: "Method"
+"models": "Method"
 "false_accept_num" : ["False Accept", "Count"]
 "false_reject_num": ["False Reject", "Count"]
 "false_ident_num": ["False Ident", "Count"]

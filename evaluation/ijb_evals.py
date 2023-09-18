@@ -2,6 +2,7 @@
 
 from pathlib import Path
 import hydra
+from omegaconf import OmegaConf
 from hydra.utils import instantiate
 import numpy as np
 from itertools import product
@@ -147,7 +148,8 @@ def main(cfg):
         ] = uncertainty_metric_values
 
     # create plots and tables
-
+    # load metric name converter
+    metric_pretty_name = OmegaConf.load(cfg.metric_pretty_name_path)
     for task_type, dataset_name in metric_values:
         # create output dir
         out_dir = Path(cfg.exp_dir) / str(dataset_name) / str(task_type)
@@ -162,7 +164,7 @@ def main(cfg):
             "uncertainty"
         ].items():
             for key in metric:
-                if "osr_unc_metric":
+                if "osr_unc_metric" in key:
                     metric_names.append(key)
                     model_names.append(model_name)
             break
@@ -195,10 +197,14 @@ def main(cfg):
                 data_rows.append(
                     [pretty_names[task_type][method_name], *metrics[metric_name]]
                 )
+            pretty_name = metric_pretty_name[metric_name.split(":")[-1]]
+            if isinstance(pretty_name, str):
+                pretty_name = [pretty_name]
+            pretty_name = " ".join(pretty_name)
             fig = plot_rejection_scores(
                 scores=scores,
                 names=model_names,
-                y_label=f"Ранг 1 {metric_name.split(':')[-1]}",
+                y_label=f"{pretty_name}",
             )
             fig.savefig(
                 out_dir / f"{metric_name.split(':')[-1]}_rejection.png", dpi=300

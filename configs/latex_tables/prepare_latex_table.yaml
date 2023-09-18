@@ -9,6 +9,7 @@ defaults:
   - pretty_names@pretty_name.task: task_pretty_name
   - pretty_names@pretty_name.model: model_pretty_name_vMF
   - pretty_names@pretty_name.column: column_pretty_name_unc
+  - meta_data@metric_order: metric_order
 
 # dataset: survFace
 dataset: IJBC

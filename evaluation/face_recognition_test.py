@@ -196,7 +196,7 @@ class Face_Fecognition_test:
                 else:
                     result_metrics[key] = metrics[used_galleries[0]][key]
             for key in unc_metrics[used_galleries[1]].keys():
-                if "final_auc" in key or "plot_reject" in key:
+                if "osr_unc_metric:" in key:
                     result_unc_metrics[key] = (
                         unc_metrics[used_galleries[0]][key]
                         + unc_metrics[used_galleries[1]][key]

@@ -5,14 +5,19 @@ import hydra
 from omegaconf import OmegaConf
 
 
-def compute_best_values(table):
+def compute_best_values(table, metric_order):
     # assume that high values are the best
     numerics = ["int16", "int32", "int64", "float16", "float32", "float64"]
 
     newdf = table.select_dtypes(include=numerics)
     best_values = {}
     for column_name in newdf.columns:
-        sorted_values = np.sort(table[column_name].values)[::-1]
+        if metric_order[column_name] == "high":
+            sorted_values = np.sort(table[column_name].values)[::-1]
+        elif metric_order[column_name] == "low":
+            sorted_values = np.sort(table[column_name].values)
+        else:
+            raise ValueError
         best_values[column_name] = (sorted_values[0], sorted_values[1])
     return best_values
 
@@ -58,7 +63,9 @@ def create_table_body(result_latex_code, cfg):
     # draw table
 
     # next_ds_index = 1
-    best_values = compute_best_values(all_metric_values)
+    best_values = compute_best_values(
+        all_metric_values[cfg.used_columns], cfg.metric_order
+    )
     for row_index, (_, row) in enumerate(all_metric_values.iterrows()):
         for column_index, column_name in enumerate(cfg.used_columns):
             if column_name == "models":

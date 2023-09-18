@@ -44,6 +44,8 @@ class DisposeBasedOnUnc:
                     unc_metrics[metric_name].append(metric[key])
                 else:
                     unc_metrics[metric_name] = [metric[key]]
+        for metric_name in unc_metrics:
+            unc_metrics[metric_name] = np.array(unc_metrics[metric_name])
         return unc_metrics
 
 
