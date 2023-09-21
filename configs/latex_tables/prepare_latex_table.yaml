@@ -18,10 +18,10 @@ task: unc
 #task: verification
 #task: closed_set_identification
 # CHANGE
-metric_table_path: /app/outputs/experiments/new_pipeline_400/${dataset}/open_set_identification/tabels/fractions/0.0333_frac_rejection.csv
+metric_table_path: outputs/experiments/new_pipeline_logsum/${dataset}/open_set_identification/tabels/fractions/0.1000_frac_rejection.csv
 
 caption: >
-  Test caption {dataset_name}  {task}.
+  Metrics on dataset {dataset_name}  after 0.1 of test dataset is thrown away.
   
 fix_table: True
 table_lable: "tab:${task}_${dataset}_unc_metrics"

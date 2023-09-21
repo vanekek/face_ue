@@ -76,20 +76,18 @@ def create_table_body(result_latex_code, cfg):
                 if metric_value == best_values[column_name][0]:
                     # best value
                     result_latex_code += (
-                        "\\textbf{"
-                        + str(np.round(metric_value * 100, cfg.round_num))
-                        + "} "
+                        "\\textbf{" + str(np.round(metric_value, cfg.round_num)) + "} "
                     )
                 elif metric_value == best_values[column_name][1]:
                     # second best value
                     result_latex_code += (
                         "\\underline{"
-                        + str(np.round(metric_value * 100, cfg.round_num))
+                        + str(np.round(metric_value, cfg.round_num))
                         + "} "
                     )
                 else:
                     result_latex_code += (
-                        f" {str(np.round(metric_value * 100, cfg.round_num))} "
+                        f" {str(np.round(metric_value, cfg.round_num))} "
                     )
                 if column_index < len(cfg.used_columns) - 1:
                     result_latex_code += "& "

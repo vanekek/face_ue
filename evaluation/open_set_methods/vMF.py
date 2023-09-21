@@ -5,7 +5,12 @@ from evaluation.confidence_functions import MisesProb
 
 class vMFSumUnc(OpenSetMethod):
     def __init__(
-        self, kappa: float, beta: float, uncertainty_type: str, alpha: float
+        self,
+        kappa: float,
+        beta: float,
+        uncertainty_type: str,
+        alpha: float,
+        logunc: bool,
     ) -> None:
         super().__init__()
         self.kappa = kappa
@@ -14,6 +19,7 @@ class vMFSumUnc(OpenSetMethod):
         self.alpha = alpha
         self.mises_maxprob = MisesProb(kappa=self.kappa, beta=self.beta)
         self.all_classes_log_prob = None
+        self.logunc = logunc
 
     def setup(self, similarity_matrix: np.ndarray):
         self.similarity_matrix = similarity_matrix
@@ -40,6 +46,8 @@ class vMFSumUnc(OpenSetMethod):
         else:
             raise ValueError
 
+        if self.logunc:
+            unc = np.log(unc - np.min(unc) + 1e-16)
         # normalize and sum with data uncertainty
         unc_norm = (unc - np.min(unc)) / (np.max(unc) - np.min(unc))
 
