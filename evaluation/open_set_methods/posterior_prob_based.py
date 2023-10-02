@@ -22,20 +22,46 @@ class PosteriorProbability(OpenSetMethod):
         self.all_classes_log_prob = None
         self.logunc = logunc
         self.class_model = class_model
+        self.C = 0.5
 
     def setup(self, similarity_matrix: np.ndarray):
         self.similarity_matrix = similarity_matrix
-        self.posterior_prob = PosteriorProb(
-            kappa=self.kappa,
-            beta=self.beta,
-            class_model=self.class_model,
-            K=similarity_matrix.shape[-1],
-        )
-        self.all_classes_log_prob = (
-            self.posterior_prob.compute_all_class_log_probabilities(
-                self.similarity_matrix
+        if self.class_model == 'vMF_Power':
+            self.posterior_prob_vmf = PosteriorProb(
+                kappa=self.kappa,
+                beta=self.beta,
+                class_model='vMF',
+                K=similarity_matrix.shape[-1],
             )
-        )
+            self.posterior_prob_power = PosteriorProb(
+                kappa=self.kappa,
+                beta=self.beta,
+                class_model='power',
+                K=similarity_matrix.shape[-1],
+            )
+            all_classes_log_prob_vmf = (
+                self.posterior_prob_vmf.compute_all_class_log_probabilities(
+                    self.similarity_matrix
+                )
+            )
+            all_classes_log_prob_power = (
+                self.posterior_prob_power.compute_all_class_log_probabilities(
+                    self.similarity_matrix
+                )
+            )
+            self.all_classes_log_prob = self.C*all_classes_log_prob_vmf + (1 - self.C)*all_classes_log_prob_power
+        else:
+            self.posterior_prob = PosteriorProb(
+                kappa=self.kappa,
+                beta=self.beta,
+                class_model=self.class_model,
+                K=similarity_matrix.shape[-1],
+            )
+            self.all_classes_log_prob = (
+                self.posterior_prob.compute_all_class_log_probabilities(
+                    self.similarity_matrix
+                )
+            )
         self.all_classes_log_prob = np.mean(self.all_classes_log_prob, axis=1)
         assert np.all(self.all_classes_log_prob < 1e-10)
 
