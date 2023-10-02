@@ -1,6 +1,7 @@
 import numpy as np
 from .base_method import OpenSetMethod
 from scipy.special import ive, hyp0f1, loggamma
+from scipy.optimize import fsolve
 
 
 class PosteriorProbability(OpenSetMethod):
@@ -18,20 +19,25 @@ class PosteriorProbability(OpenSetMethod):
         self.beta = beta
         self.uncertainty_type = uncertainty_type
         self.alpha = alpha
-        self.mises_maxprob = PosteriorProb(
-            kappa=self.kappa, beta=self.beta, class_model=class_model
-        )
         self.all_classes_log_prob = None
         self.logunc = logunc
+        self.class_model = class_model
 
     def setup(self, similarity_matrix: np.ndarray):
         self.similarity_matrix = similarity_matrix
+        self.posterior_prob = PosteriorProb(
+            kappa=self.kappa,
+            beta=self.beta,
+            class_model=self.class_model,
+            K=similarity_matrix.shape[-1],
+        )
         self.all_classes_log_prob = (
-            self.mises_maxprob.compute_all_class_log_probabilities(
+            self.posterior_prob.compute_all_class_log_probabilities(
                 self.similarity_matrix
             )
         )
         self.all_classes_log_prob = np.mean(self.all_classes_log_prob, axis=1)
+        assert np.all(self.all_classes_log_prob < 1e-10)
 
     def predict(self):
         predict_id = np.argmax(self.all_classes_log_prob[:, :-1], axis=-1)
@@ -68,7 +74,9 @@ class PosteriorProbability(OpenSetMethod):
 
 
 class PosteriorProb:
-    def __init__(self, kappa: float, beta: float, d=512, class_model="vMF") -> None:
+    def __init__(
+        self, kappa: float, beta: float, class_model: str, K: int, d: int = 512
+    ) -> None:
         """
         Performes K+1 class classification, with K being number of gallery classed and
         K+1-th class is ood class.
@@ -84,6 +92,7 @@ class PosteriorProb:
         self.kappa = kappa
         self.beta = beta
         self.n = d / 2
+        self.K = K
         self.class_model = class_model
         self.log_uniform_dencity = (
             loggamma(self.n, dtype=np.float64) - np.log(2) - self.n * np.log(np.pi)
@@ -98,34 +107,56 @@ class PosteriorProb:
                 (self.n - 1) * np.log(kappa) - self.n * np.log(2 * np.pi) - self.log_iv
             )
         elif self.class_model == "power":
-            log_alpha = (
-                loggamma(d / 2)
-                + loggamma(d - 1 + 2 * self.kappa)
-                - self.kappa * np.log(2)
-                - loggamma(d - 1 + self.kappa)
-                - loggamma(d / 2 + self.kappa)
+            log_alpha_vmF = np.log(
+                hyp0f1(self.n, self.kappa**2 / 4, dtype=np.float64)
             )
-            self.alpha = np.exp(log_alpha)
+            self.log_prior = np.log(self.beta / ((1 - self.beta) / self.K))
+            self.shift = np.log(1 + (self.log_prior + log_alpha_vmF) / self.kappa)
+            self.kappa_zero = fsolve(
+                self.compute_f_kappa_zero, 6, (self.shift, self.log_prior, d)
+            )[0]
+
+            log_alpha_power = (
+                loggamma(d / 2)
+                + loggamma(d - 1 + 2 * self.kappa_zero)
+                - self.kappa_zero * np.log(2)
+                - loggamma(d - 1 + self.kappa_zero)
+                - loggamma(d / 2 + self.kappa_zero)
+            )
+            self.alpha = np.exp(log_alpha_power)
             self.log_normalizer = (
-                loggamma(d - 1 + self.kappa)
-                + loggamma(d / 2 + self.kappa)
-                + (self.kappa - 1) * np.log(2)
+                loggamma(d - 1 + self.kappa_zero)
+                + loggamma(d / 2 + self.kappa_zero)
+                + (self.kappa_zero - 1) * np.log(2)
                 - (d / 2) * np.log(np.pi)
-                - loggamma(d - 1 + 2 * self.kappa)
+                - loggamma(d - 1 + 2 * self.kappa_zero)
             )
         else:
             raise ValueError
 
-    def compute_log_z_prob(self, similarities: np.ndarray):
-        K = similarities.shape[-1]
+    @staticmethod
+    def compute_f_kappa_zero(kappa_zero, shift, log_prior, d):
+        log_alpha_zero = (
+            loggamma(d / 2)
+            + loggamma(d - 1 + 2 * kappa_zero)
+            - kappa_zero * np.log(2)
+            - loggamma(d - 1 + kappa_zero)
+            - loggamma(d / 2 + kappa_zero)
+        )
+        return (log_prior + log_alpha_zero) / kappa_zero - shift
 
+    def compute_log_z_prob(self, similarities: np.ndarray):
         if self.class_model == "vMF":
             logit_sum = (
-                np.sum(np.exp(similarities * self.kappa), axis=-1) * (1 - self.beta) / K
+                np.sum(np.exp(similarities * self.kappa), axis=-1)
+                * (1 - self.beta)
+                / self.K
             )
         elif self.class_model == "power":
             logit_sum = (
-                np.sum((1 + similarities) ** self.kappa, axis=-1) * (1 - self.beta) / K
+                np.sum((1 + similarities) ** self.kappa_zero, axis=-1)
+                * (1 - self.beta)
+                / self.K
             )
 
         log_z_prob = self.log_normalizer + np.log(logit_sum + self.alpha * self.beta)
@@ -137,16 +168,14 @@ class PosteriorProb:
         uniform_log_prob = self.log_uniform_dencity + log_beta - log_z_prob
 
         # compute gallery classes log prob
-        K = similarities.shape[-1]
-        log_z_prob = self.compute_log_z_prob(similarities)
         if self.class_model == "vMF":
             pz_c = self.kappa * similarities
         elif self.class_model == "power":
-            pz_c = (1 + similarities) ** self.kappa
+            pz_c = np.log((1 + similarities)) * self.kappa_zero
         gallery_log_probs = (
             self.log_normalizer
             + pz_c
-            + np.log((1 - self.beta) / K)
+            + np.log((1 - self.beta) / self.K)
             - log_z_prob[..., np.newaxis]
         )
         return np.concatenate(

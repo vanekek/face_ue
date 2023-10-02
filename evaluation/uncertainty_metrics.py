@@ -4,7 +4,6 @@ from sklearn.metrics import top_k_accuracy_score
 from tqdm import tqdm
 from sklearn.metrics import roc_curve, auc
 from scipy import interpolate
-from evaluation.confidence_functions import MisesProb
 import scipy
 
 EvalMetricsT = Tuple[int, int, int, List[float], List[float], List[Tuple[float, float]]]
@@ -214,102 +213,6 @@ class MaxProb:
             self.fractions,
         )
         return unc_metric
-
-
-class CombinedMaxProb:
-    def __init__(
-        self,
-        metric_to_monitor: any,
-        fractions: List[int],
-        kappa: float,
-        beta: float,
-        use_maxprob_variance: bool,
-        aggregation: str,
-        data_variance_weight: float,
-    ) -> None:
-        self.fractions = np.arange(fractions[0], fractions[1], step=fractions[2])
-        self.metric_to_monitor = metric_to_monitor
-        self.kappa = kappa
-        self.beta = beta
-        self.use_maxprob_variance = use_maxprob_variance
-        self.aggregation = aggregation
-        self.data_variance_weight = data_variance_weight
-        assert self.data_variance_weight >= 0 and self.data_variance_weight <= 1
-        self.mises_maxprob = MisesProb(kappa=self.kappa, beta=self.beta)
-
-    def __call__(
-        self,
-        probe_ids: np.ndarray,
-        probe_template_unc: np.ndarray,
-        gallery_ids: np.ndarray,
-        similarity: np.ndarray,
-        probe_score: np.ndarray,
-    ) -> Any:
-        all_classes_log_prob = self.mises_maxprob.compute_all_class_log_probabilities(
-            similarity
-        )
-        if self.data_variance_weight == 1:
-            unc_metric_name = "SCF unc"
-        elif self.data_variance_weight == 0:
-            unc_metric_name = (
-                "Prob"
-                + ",aggr="
-                + self.aggregation
-                + ",beta="
-                + str(self.beta)
-                + ",k="
-                + str(self.kappa)
-                + ",a="
-            )
-        else:
-            unc_metric_name = (
-                "Comb"  # (self.__class__.__name__)
-                + ",aggr="
-                + self.aggregation
-                + ",beta="
-                + str(self.beta)
-                + ",k="
-                + str(self.kappa)
-                + ",a="
-                + str(self.data_variance_weight)
-            )
-        # unc_metric_name = r"$m_{comb}(p) = m(p)_{"+str(self.beta)+r"}" + f"{1-self.data_variance_weight}" + r"+\kappa" + f"{self.data_variance_weight}"
-        if self.aggregation == "maxprob":
-            unc_score = -np.mean(np.max(all_classes_log_prob, axis=-1), axis=-1)
-        elif self.aggregation == "entr":
-            all_classes_prob = np.exp(all_classes_log_prob)
-            unc_score = -np.mean(
-                np.sum(all_classes_prob * all_classes_log_prob, axis=-1), axis=-1
-            )
-        elif self.aggregation == "entropy-sum":
-            unc_score = -np.mean(np.sum(all_classes_log_prob, axis=-1), axis=-1)
-        else:
-            raise ValueError
-        data_uncertainty = -probe_template_unc[:, 0]
-        data_uncertainty = (data_uncertainty - np.min(data_uncertainty)) / (
-            np.max(data_uncertainty) - np.min(data_uncertainty)
-        )
-        unc_score = (unc_score - np.min(unc_score)) / (
-            np.max(unc_score) - np.min(unc_score)
-        )
-
-        unc_score = unc_score * (
-            1 - self.data_variance_weight
-        ) + self.data_variance_weight * (data_uncertainty)
-        # unc_score = 1 - (1-data_uncertainty)*(1-unc_score)
-
-        # unc_metric_name = r"$m(p) = \max_{c\in {1,\dots,K+1}}p(c|z)$"
-        unc_metric = get_reject_metrics(
-            unc_metric_name,
-            unc_score,
-            self.metric_to_monitor,
-            probe_ids,
-            gallery_ids,
-            np.mean(similarity, axis=1),
-            probe_score,
-            self.fractions,
-        )
-        return unc_metric, unc_score
 
 
 class MeanDistanceReject:

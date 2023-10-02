@@ -3,8 +3,8 @@ hydra:
     dir: ${exp_dir}
 
 #exp_dir: experiments/open_set_uncertainty_small_beta
-exp_dir: outputs/experiments/new_pipeline_logsum
-use_two_galleries: False
+exp_dir: outputs/experiments/power_dencity
+use_two_galleries: True
 recompute_template_pooling: False
 metric_pretty_name_path: /app/configs/latex_tables/pretty_names/column_pretty_name_unc.yaml
 # test_dataset:
@@ -25,11 +25,11 @@ test_datasets:
 
 
 open_set_identification_metrics:
-  - _target_: evaluation.metrics.FrrFarIdent
+  # - _target_: evaluation.metrics.FrrFarIdent
   - _target_: evaluation.metrics.DirFar
-  - _target_: evaluation.metrics.F1
+  # - _target_: evaluation.metrics.F1
 
-fractions: [0, 0.1, 10]
+fractions: [0, 0.3, 15]
 
 open_set_identification_uncertainty_metrics:
   - _target_: evaluation.uncertainty_metrics.DisposeBasedOnUnc
@@ -63,13 +63,15 @@ open_set_identification_methods:
     distance_function: 
       _target_: evaluation.distance_functions.open_set_identification.CosineSim
     recognition_method:
-      _target_: evaluation.open_set_methods.posterior_prob_based.vMF
+      _target_: evaluation.open_set_methods.posterior_prob_based.PosteriorProbability
+      class_model: vMF
       kappa: ${default_kappa}
       beta: ${default_beta}
-      uncertainty_type: entr
+      uncertainty_type: maxprob
       alpha: 0
-      logunc: False
-    pretty_name: "vMF"
+      logunc: True
+    pretty_name: "vMF_400"
+
 
   - embeddings: scf
     template_pooling_strategy:
@@ -81,13 +83,75 @@ open_set_identification_methods:
     distance_function: 
       _target_: evaluation.distance_functions.open_set_identification.CosineSim
     recognition_method:
-      _target_: evaluation.open_set_methods.posterior_prob_based.vMF
+      _target_: evaluation.open_set_methods.posterior_prob_based.PosteriorProbability
+      class_model: vMF
+      kappa: 600
+      beta: ${default_beta}
+      uncertainty_type: maxprob
+      alpha: 0
+      logunc: True
+    pretty_name: "vMF_600"
+
+
+
+  - embeddings: scf
+    template_pooling_strategy:
+      _target_: evaluation.template_pooling_strategies.PoolingSCF
+    use_detector_score: True
+    sampler:
+      _target_: evaluation.samplers.VonMisesFisher
+      num_samples: 0 # set 0 to use mean of distr as one sample
+    distance_function: 
+      _target_: evaluation.distance_functions.open_set_identification.CosineSim
+    recognition_method:
+      _target_: evaluation.open_set_methods.posterior_prob_based.PosteriorProbability
+      class_model: power
       kappa: ${default_kappa}
       beta: ${default_beta}
-      uncertainty_type: entr
+      uncertainty_type: maxprob
       alpha: 0
-      logunc: False
-    pretty_name: "Power"
+      logunc: True
+    pretty_name: "Power_400"
+
+
+  - embeddings: scf
+    template_pooling_strategy:
+      _target_: evaluation.template_pooling_strategies.PoolingSCF
+    use_detector_score: True
+    sampler:
+      _target_: evaluation.samplers.VonMisesFisher
+      num_samples: 0 # set 0 to use mean of distr as one sample
+    distance_function: 
+      _target_: evaluation.distance_functions.open_set_identification.CosineSim
+    recognition_method:
+      _target_: evaluation.open_set_methods.posterior_prob_based.PosteriorProbability
+      class_model: power
+      kappa: 600
+      beta: ${default_beta}
+      uncertainty_type: maxprob
+      alpha: 0
+      logunc: True
+    pretty_name: "Power_600"
+
+
+  # - embeddings: scf
+  #   template_pooling_strategy:
+  #     _target_: evaluation.template_pooling_strategies.PoolingSCF
+  #   use_detector_score: True
+  #   sampler:
+  #     _target_: evaluation.samplers.VonMisesFisher
+  #     num_samples: 0 # set 0 to use mean of distr as one sample
+  #   distance_function: 
+  #     _target_: evaluation.distance_functions.open_set_identification.CosineSim
+  #   recognition_method:
+  #     _target_: evaluation.open_set_methods.posterior_prob_based.PosteriorProbability
+  #     class_model: power
+  #     kappa: 600
+  #     beta: ${default_beta}
+  #     uncertainty_type: entr
+  #     alpha: 0
+  #     logunc: False
+  #   pretty_name: "Power_600"
 
 
   # - embeddings: scf
