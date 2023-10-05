@@ -3,7 +3,7 @@ hydra:
     dir: ${exp_dir}
 
 #exp_dir: experiments/open_set_uncertainty_small_beta
-exp_dir: outputs/experiments/power_temperature_kappa_${default_kappa}
+exp_dir: outputs/experiments/temperature_kappa_${default_kappa}
 use_two_galleries: True
 recompute_template_pooling: False
 metric_pretty_name_path: /app/configs/latex_tables/pretty_names/column_pretty_name_unc.yaml
@@ -83,14 +83,14 @@ open_set_identification_methods:
       _target_: evaluation.distance_functions.open_set_identification.CosineSim
     recognition_method:
       _target_: evaluation.open_set_methods.posterior_prob_based.PosteriorProbability
-      class_model: power
+      class_model: vMF
       kappa: ${default_kappa}
       beta: ${default_beta}
       uncertainty_type: maxprob
       alpha: 0
       logunc: False
       T: 1
-    pretty_name: "power_T-1"
+    pretty_name: "vMF_T-1"
 
 
   - embeddings: scf
@@ -104,14 +104,14 @@ open_set_identification_methods:
       _target_: evaluation.distance_functions.open_set_identification.CosineSim
     recognition_method:
       _target_: evaluation.open_set_methods.posterior_prob_based.PosteriorProbability
-      class_model: power
+      class_model: vMF
       kappa: ${default_kappa}
       beta: ${default_beta}
       uncertainty_type: maxprob
       alpha: 0
       logunc: False
-      T: 0.4
-    pretty_name: "power_T-0.4"
+      T: 7
+    pretty_name: "vMF_T-7"
 
   - embeddings: scf
     template_pooling_strategy:
@@ -124,14 +124,14 @@ open_set_identification_methods:
       _target_: evaluation.distance_functions.open_set_identification.CosineSim
     recognition_method:
       _target_: evaluation.open_set_methods.posterior_prob_based.PosteriorProbability
-      class_model: power
+      class_model: vMF
       kappa: ${default_kappa}
       beta: ${default_beta}
       uncertainty_type: maxprob
       alpha: 0.5
       logunc: False
       T: 1
-    pretty_name: "power_T-1+SFC"
+    pretty_name: "vMF_T-1+SFC"
 
 
   - embeddings: scf
@@ -145,14 +145,14 @@ open_set_identification_methods:
       _target_: evaluation.distance_functions.open_set_identification.CosineSim
     recognition_method:
       _target_: evaluation.open_set_methods.posterior_prob_based.PosteriorProbability
-      class_model: power
+      class_model: vMF
       kappa: ${default_kappa}
       beta: ${default_beta}
       uncertainty_type: maxprob
       alpha: 0.5
       logunc: True
       T: 1
-    pretty_name: "power_T-1-log+SFC"
+    pretty_name: "vMF_T-1-log+SFC"
 
   - embeddings: scf
     template_pooling_strategy:
@@ -165,14 +165,14 @@ open_set_identification_methods:
       _target_: evaluation.distance_functions.open_set_identification.CosineSim
     recognition_method:
       _target_: evaluation.open_set_methods.posterior_prob_based.PosteriorProbability
-      class_model: power
+      class_model: vMF
       kappa: ${default_kappa}
       beta: ${default_beta}
       uncertainty_type: maxprob
       alpha: 0.5
       logunc: False
-      T: 0.4
-    pretty_name: "power_T-0.4+SFC"
+      T: 7
+    pretty_name: "vMF_T-7+SFC"
 
 
   - embeddings: scf
@@ -186,14 +186,14 @@ open_set_identification_methods:
       _target_: evaluation.distance_functions.open_set_identification.CosineSim
     recognition_method:
       _target_: evaluation.open_set_methods.posterior_prob_based.PosteriorProbability
-      class_model: power
+      class_model: vMF
       kappa: ${default_kappa}
       beta: ${default_beta}
       uncertainty_type: maxprob
       alpha: 0.5
       logunc: True
-      T: 0.4
-    pretty_name: "power_T-0.4-log+SFC"
+      T: 7
+    pretty_name: "vMF_T-7-log+SFC"
 
   - embeddings: scf
     template_pooling_strategy:
@@ -206,7 +206,7 @@ open_set_identification_methods:
       _target_: evaluation.distance_functions.open_set_identification.CosineSim
     recognition_method:
       _target_: evaluation.open_set_methods.posterior_prob_based.PosteriorProbability
-      class_model: power
+      class_model: vMF
       kappa: ${default_kappa}
       beta: ${default_beta}
       uncertainty_type: maxprob
