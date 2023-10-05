@@ -51,7 +51,10 @@ def main(cfg):
             recognition_metrics=None,
             uncertainty_metrics=None,
         )
-        used_galleries = ["g1", "g2"]
+
+        used_galleries = ["g1"]
+        if cfg.use_two_galleries:
+            used_galleries += ["g2"]
         galleries_data = [
             tt.get_template_subsets(
                 getattr(tt.test_dataset, f"{g}_templates"),
@@ -117,13 +120,13 @@ def main(cfg):
                     true_id,
                     predict_id,
                     conf_id,
-                    num_bins=10,
+                    num_bins=cfg.num_bins,
                     draw_ece=True,
-                    draw_bin_importance="alpha",
-                    draw_averages=True,
+                    draw_bin_importance=cfg.draw_bin_importance,
+                    draw_averages=cfg.draw_averages,
                     title=title,
                     figsize=(6, 6),
-                    dpi=100,
+                    dpi=300,
                     return_fig=True,
                 )
                 out_file = (

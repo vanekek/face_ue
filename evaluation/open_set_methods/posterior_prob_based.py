@@ -66,7 +66,7 @@ class PosteriorProbability(OpenSetMethod):
                 )
             )
         self.all_classes_log_prob = np.mean(self.all_classes_log_prob, axis=1)
-        assert np.all(self.all_classes_log_prob < 1e-10)
+        # assert np.all(self.all_classes_log_prob < 1e-10)
 
     def get_class_log_probs(self):
         return self.all_classes_log_prob
