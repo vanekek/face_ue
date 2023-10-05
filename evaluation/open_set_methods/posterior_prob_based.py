@@ -13,6 +13,7 @@ class PosteriorProbability(OpenSetMethod):
         alpha: float,
         logunc: bool,
         class_model: str,
+        T: float,
     ) -> None:
         super().__init__()
         self.kappa = kappa
@@ -23,6 +24,7 @@ class PosteriorProbability(OpenSetMethod):
         self.logunc = logunc
         self.class_model = class_model
         self.C = 0.5
+        self.T = T
 
     def setup(self, similarity_matrix: np.ndarray):
         self.similarity_matrix = similarity_matrix
@@ -41,12 +43,12 @@ class PosteriorProbability(OpenSetMethod):
             )
             all_classes_log_prob_vmf = (
                 self.posterior_prob_vmf.compute_all_class_log_probabilities(
-                    self.similarity_matrix
+                    self.similarity_matrix, self.T
                 )
             )
             all_classes_log_prob_power = (
                 self.posterior_prob_power.compute_all_class_log_probabilities(
-                    self.similarity_matrix
+                    self.similarity_matrix, self.T
                 )
             )
             self.all_classes_log_prob = (
@@ -62,13 +64,14 @@ class PosteriorProbability(OpenSetMethod):
             )
             self.all_classes_log_prob = (
                 self.posterior_prob.compute_all_class_log_probabilities(
-                    self.similarity_matrix
+                    self.similarity_matrix, self.T
                 )
             )
         self.all_classes_log_prob = np.mean(self.all_classes_log_prob, axis=1)
         # assert np.all(self.all_classes_log_prob < 1e-10)
 
-    def get_class_log_probs(self):
+    def get_class_log_probs(self, similarity_matrix):
+        self.setup(similarity_matrix)
         return self.all_classes_log_prob
 
     def predict(self):
@@ -177,39 +180,37 @@ class PosteriorProb:
         )
         return (log_prior + log_alpha_zero) / kappa_zero - shift
 
-    def compute_log_z_prob(self, similarities: np.ndarray):
+    def compute_log_z_prob(self, similarities: np.ndarray, T: float):
+        p_c = ((1 - self.beta) / self.K) ** (1 / T)
         if self.class_model == "vMF":
             logit_sum = (
-                np.sum(np.exp(similarities * self.kappa), axis=-1)
-                * (1 - self.beta)
-                / self.K
+                np.sum(np.exp(similarities * self.kappa * (1 / T)), axis=-1) * p_c
             )
         elif self.class_model == "power":
             logit_sum = (
-                np.sum((1 + similarities) ** self.kappa_zero, axis=-1)
-                * (1 - self.beta)
-                / self.K
+                np.sum((1 + similarities) ** (self.kappa_zero * (1 / T)), axis=-1) * p_c
             )
 
-        log_z_prob = self.log_normalizer + np.log(logit_sum + self.alpha * self.beta)
+        log_z_prob = (1 / T) * self.log_normalizer + np.log(
+            logit_sum + (self.alpha * self.beta) ** (1 / T)
+        )
         return log_z_prob
 
-    def compute_all_class_log_probabilities(self, similarities: np.ndarray):
-        log_z_prob = self.compute_log_z_prob(similarities)
+    def compute_all_class_log_probabilities(
+        self, similarities: np.ndarray, T: float = 1
+    ):
+        log_z_prob = self.compute_log_z_prob(similarities, T)
         log_beta = np.log(self.beta)
-        uniform_log_prob = self.log_uniform_dencity + log_beta - log_z_prob
+        uniform_log_prob = (1 / T) * (self.log_uniform_dencity + log_beta) - log_z_prob
 
         # compute gallery classes log prob
         if self.class_model == "vMF":
             pz_c = self.kappa * similarities
         elif self.class_model == "power":
             pz_c = np.log((1 + similarities)) * self.kappa_zero
-        gallery_log_probs = (
-            self.log_normalizer
-            + pz_c
-            + np.log((1 - self.beta) / self.K)
-            - log_z_prob[..., np.newaxis]
-        )
+        gallery_log_probs = (1 / T) * (
+            self.log_normalizer + pz_c + np.log((1 - self.beta) / self.K)
+        ) - log_z_prob[..., np.newaxis]
         return np.concatenate(
             [gallery_log_probs, uniform_log_prob[..., np.newaxis]], axis=-1
         )

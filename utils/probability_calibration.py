@@ -1,3 +1,7 @@
+import warnings
+
+warnings.filterwarnings("ignore")
+
 from pathlib import Path
 import hydra
 from hydra.utils import instantiate
@@ -90,8 +94,8 @@ def main(cfg):
             for method in methods:
                 recognition_method = instantiate(method.recognition_method)
                 # setup osr method and predict
-                recognition_method.setup(similarity)
-                class_log_probs = recognition_method.get_class_log_probs()
+
+                class_log_probs = recognition_method.get_class_log_probs(similarity)
                 gallery_ids_with_imposter_id = np.concatenate([g_unique_ids, [-1]])
                 predict_id = gallery_ids_with_imposter_id[
                     np.argmax(class_log_probs, axis=-1)

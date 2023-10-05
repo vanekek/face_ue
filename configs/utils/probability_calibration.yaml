@@ -5,7 +5,7 @@ hydra:
 exp_dir: outputs/calibration
 use_two_galleries: False
 recompute_template_pooling: False
-num_bins: 20
+num_bins: 30
 draw_bin_importance: alpha
 draw_averages: True
 test_datasets:
@@ -24,24 +24,248 @@ default_kappa: 400
 default_beta: 0.5
 open_set_identification_methods:
 
-  - embeddings: scf
-    template_pooling_strategy:
-      _target_: evaluation.template_pooling_strategies.PoolingSCF
-    use_detector_score: True
-    sampler:
-      _target_: evaluation.samplers.VonMisesFisher
-      num_samples: 0 # set 0 to use mean of distr as one sample
-    distance_function: 
-      _target_: evaluation.distance_functions.open_set_identification.CosineSim
-    recognition_method:
-      _target_: evaluation.open_set_methods.posterior_prob_based.PosteriorProbability
-      class_model: vMF
-      kappa: ${default_kappa}
-      beta: ${default_beta}
-      uncertainty_type: maxprob
-      alpha: 0
-      logunc: True
-    pretty_name: "vMF"
+  # - embeddings: scf
+  #   template_pooling_strategy:
+  #     _target_: evaluation.template_pooling_strategies.PoolingSCF
+  #   use_detector_score: True
+  #   sampler:
+  #     _target_: evaluation.samplers.VonMisesFisher
+  #     num_samples: 0 # set 0 to use mean of distr as one sample
+  #   distance_function: 
+  #     _target_: evaluation.distance_functions.open_set_identification.CosineSim
+  #   recognition_method:
+  #     _target_: evaluation.open_set_methods.posterior_prob_based.PosteriorProbability
+  #     class_model: vMF
+  #     kappa: ${default_kappa}
+  #     beta: ${default_beta}
+  #     uncertainty_type: maxprob
+  #     alpha: 0
+  #     logunc: True
+  #     T: 0.8
+  #   pretty_name: "vMF_T-0.8"
+
+
+  # - embeddings: scf
+  #   template_pooling_strategy:
+  #     _target_: evaluation.template_pooling_strategies.PoolingSCF
+  #   use_detector_score: True
+  #   sampler:
+  #     _target_: evaluation.samplers.VonMisesFisher
+  #     num_samples: 0 # set 0 to use mean of distr as one sample
+  #   distance_function: 
+  #     _target_: evaluation.distance_functions.open_set_identification.CosineSim
+  #   recognition_method:
+  #     _target_: evaluation.open_set_methods.posterior_prob_based.PosteriorProbability
+  #     class_model: vMF
+  #     kappa: ${default_kappa}
+  #     beta: ${default_beta}
+  #     uncertainty_type: maxprob
+  #     alpha: 0
+  #     logunc: True
+  #     T: 1
+  #   pretty_name: "vMF_T-1"
+
+  # - embeddings: scf
+  #   template_pooling_strategy:
+  #     _target_: evaluation.template_pooling_strategies.PoolingSCF
+  #   use_detector_score: True
+  #   sampler:
+  #     _target_: evaluation.samplers.VonMisesFisher
+  #     num_samples: 0 # set 0 to use mean of distr as one sample
+  #   distance_function: 
+  #     _target_: evaluation.distance_functions.open_set_identification.CosineSim
+  #   recognition_method:
+  #     _target_: evaluation.open_set_methods.posterior_prob_based.PosteriorProbability
+  #     class_model: vMF
+  #     kappa: ${default_kappa}
+  #     beta: ${default_beta}
+  #     uncertainty_type: maxprob
+  #     alpha: 0
+  #     logunc: True
+  #     T: 1.5
+  #   pretty_name: "vMF_T-1.5"
+
+  # - embeddings: scf
+  #   template_pooling_strategy:
+  #     _target_: evaluation.template_pooling_strategies.PoolingSCF
+  #   use_detector_score: True
+  #   sampler:
+  #     _target_: evaluation.samplers.VonMisesFisher
+  #     num_samples: 0 # set 0 to use mean of distr as one sample
+  #   distance_function: 
+  #     _target_: evaluation.distance_functions.open_set_identification.CosineSim
+  #   recognition_method:
+  #     _target_: evaluation.open_set_methods.posterior_prob_based.PosteriorProbability
+  #     class_model: vMF
+  #     kappa: ${default_kappa}
+  #     beta: ${default_beta}
+  #     uncertainty_type: maxprob
+  #     alpha: 0
+  #     logunc: True
+  #     T: 2
+  #   pretty_name: "vMF_T-2"
+
+  # - embeddings: scf
+  #   template_pooling_strategy:
+  #     _target_: evaluation.template_pooling_strategies.PoolingSCF
+  #   use_detector_score: True
+  #   sampler:
+  #     _target_: evaluation.samplers.VonMisesFisher
+  #     num_samples: 0 # set 0 to use mean of distr as one sample
+  #   distance_function: 
+  #     _target_: evaluation.distance_functions.open_set_identification.CosineSim
+  #   recognition_method:
+  #     _target_: evaluation.open_set_methods.posterior_prob_based.PosteriorProbability
+  #     class_model: vMF
+  #     kappa: ${default_kappa}
+  #     beta: ${default_beta}
+  #     uncertainty_type: maxprob
+  #     alpha: 0
+  #     logunc: True
+  #     T: 3
+  #   pretty_name: "vMF_T-3"
+
+  # - embeddings: scf
+  #   template_pooling_strategy:
+  #     _target_: evaluation.template_pooling_strategies.PoolingSCF
+  #   use_detector_score: True
+  #   sampler:
+  #     _target_: evaluation.samplers.VonMisesFisher
+  #     num_samples: 0 # set 0 to use mean of distr as one sample
+  #   distance_function: 
+  #     _target_: evaluation.distance_functions.open_set_identification.CosineSim
+  #   recognition_method:
+  #     _target_: evaluation.open_set_methods.posterior_prob_based.PosteriorProbability
+  #     class_model: vMF
+  #     kappa: ${default_kappa}
+  #     beta: ${default_beta}
+  #     uncertainty_type: maxprob
+  #     alpha: 0
+  #     logunc: True
+  #     T: 4
+  #   pretty_name: "vMF_T-4"
+
+  # - embeddings: scf
+  #   template_pooling_strategy:
+  #     _target_: evaluation.template_pooling_strategies.PoolingSCF
+  #   use_detector_score: True
+  #   sampler:
+  #     _target_: evaluation.samplers.VonMisesFisher
+  #     num_samples: 0 # set 0 to use mean of distr as one sample
+  #   distance_function: 
+  #     _target_: evaluation.distance_functions.open_set_identification.CosineSim
+  #   recognition_method:
+  #     _target_: evaluation.open_set_methods.posterior_prob_based.PosteriorProbability
+  #     class_model: vMF
+  #     kappa: ${default_kappa}
+  #     beta: ${default_beta}
+  #     uncertainty_type: maxprob
+  #     alpha: 0
+  #     logunc: True
+  #     T: 5
+  #   pretty_name: "vMF_T-5"
+
+  # - embeddings: scf
+  #   template_pooling_strategy:
+  #     _target_: evaluation.template_pooling_strategies.PoolingSCF
+  #   use_detector_score: True
+  #   sampler:
+  #     _target_: evaluation.samplers.VonMisesFisher
+  #     num_samples: 0 # set 0 to use mean of distr as one sample
+  #   distance_function: 
+  #     _target_: evaluation.distance_functions.open_set_identification.CosineSim
+  #   recognition_method:
+  #     _target_: evaluation.open_set_methods.posterior_prob_based.PosteriorProbability
+  #     class_model: vMF
+  #     kappa: ${default_kappa}
+  #     beta: ${default_beta}
+  #     uncertainty_type: maxprob
+  #     alpha: 0
+  #     logunc: True
+  #     T: 6
+  #   pretty_name: "vMF_T-6"
+
+  # - embeddings: scf
+  #   template_pooling_strategy:
+  #     _target_: evaluation.template_pooling_strategies.PoolingSCF
+  #   use_detector_score: True
+  #   sampler:
+  #     _target_: evaluation.samplers.VonMisesFisher
+  #     num_samples: 0 # set 0 to use mean of distr as one sample
+  #   distance_function: 
+  #     _target_: evaluation.distance_functions.open_set_identification.CosineSim
+  #   recognition_method:
+  #     _target_: evaluation.open_set_methods.posterior_prob_based.PosteriorProbability
+  #     class_model: vMF
+  #     kappa: ${default_kappa}
+  #     beta: ${default_beta}
+  #     uncertainty_type: maxprob
+  #     alpha: 0
+  #     logunc: True
+  #     T: 7
+  #   pretty_name: "vMF_T-7"
+
+
+  # - embeddings: scf
+  #   template_pooling_strategy:
+  #     _target_: evaluation.template_pooling_strategies.PoolingSCF
+  #   use_detector_score: True
+  #   sampler:
+  #     _target_: evaluation.samplers.VonMisesFisher
+  #     num_samples: 0 # set 0 to use mean of distr as one sample
+  #   distance_function: 
+  #     _target_: evaluation.distance_functions.open_set_identification.CosineSim
+  #   recognition_method:
+  #     _target_: evaluation.open_set_methods.posterior_prob_based.PosteriorProbability
+  #     class_model: vMF
+  #     kappa: ${default_kappa}
+  #     beta: ${default_beta}
+  #     uncertainty_type: maxprob
+  #     alpha: 0
+  #     logunc: True
+  #     T: 8
+  #   pretty_name: "vMF_T-8"
+
+  # - embeddings: scf
+  #   template_pooling_strategy:
+  #     _target_: evaluation.template_pooling_strategies.PoolingSCF
+  #   use_detector_score: True
+  #   sampler:
+  #     _target_: evaluation.samplers.VonMisesFisher
+  #     num_samples: 0 # set 0 to use mean of distr as one sample
+  #   distance_function: 
+  #     _target_: evaluation.distance_functions.open_set_identification.CosineSim
+  #   recognition_method:
+  #     _target_: evaluation.open_set_methods.posterior_prob_based.PosteriorProbability
+  #     class_model: vMF
+  #     kappa: ${default_kappa}
+  #     beta: ${default_beta}
+  #     uncertainty_type: maxprob
+  #     alpha: 0
+  #     logunc: True
+  #     T: 9
+  #   pretty_name: "vMF_T-9"
+
+  # - embeddings: scf
+  #   template_pooling_strategy:
+  #     _target_: evaluation.template_pooling_strategies.PoolingSCF
+  #   use_detector_score: True
+  #   sampler:
+  #     _target_: evaluation.samplers.VonMisesFisher
+  #     num_samples: 0 # set 0 to use mean of distr as one sample
+  #   distance_function: 
+  #     _target_: evaluation.distance_functions.open_set_identification.CosineSim
+  #   recognition_method:
+  #     _target_: evaluation.open_set_methods.posterior_prob_based.PosteriorProbability
+  #     class_model: vMF
+  #     kappa: ${default_kappa}
+  #     beta: ${default_beta}
+  #     uncertainty_type: maxprob
+  #     alpha: 0
+  #     logunc: True
+  #     T: 10
+  #   pretty_name: "vMF_T-10"
+
 
   - embeddings: scf
     template_pooling_strategy:
@@ -60,5 +284,28 @@ open_set_identification_methods:
       uncertainty_type: maxprob
       alpha: 0
       logunc: True
-    pretty_name: "Power"
+      T: 1
+    pretty_name: "Power_T-1"
+
+
+  - embeddings: scf
+    template_pooling_strategy:
+      _target_: evaluation.template_pooling_strategies.PoolingSCF
+    use_detector_score: True
+    sampler:
+      _target_: evaluation.samplers.VonMisesFisher
+      num_samples: 0 # set 0 to use mean of distr as one sample
+    distance_function: 
+      _target_: evaluation.distance_functions.open_set_identification.CosineSim
+    recognition_method:
+      _target_: evaluation.open_set_methods.posterior_prob_based.PosteriorProbability
+      class_model: power
+      kappa: ${default_kappa}
+      beta: ${default_beta}
+      uncertainty_type: maxprob
+      alpha: 0
+      logunc: True
+      T: 2
+    pretty_name: "Power_T-2"
+
 
