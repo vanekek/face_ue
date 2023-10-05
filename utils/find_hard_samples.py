@@ -82,7 +82,7 @@ def plot_unc_hist(
 
 
 @hydra.main(
-    config_path=str(Path(__file__).resolve().parents[1] / "configs/hard_samples"),
+    config_path=str(Path(__file__).resolve().parents[1] / "configs/utils"),
     config_name=Path(__file__).stem,
     version_base="1.2",
 )

@@ -26,17 +26,17 @@ class PosteriorProbability(OpenSetMethod):
 
     def setup(self, similarity_matrix: np.ndarray):
         self.similarity_matrix = similarity_matrix
-        if self.class_model == 'vMF_Power':
+        if self.class_model == "vMF_Power":
             self.posterior_prob_vmf = PosteriorProb(
                 kappa=self.kappa,
                 beta=self.beta,
-                class_model='vMF',
+                class_model="vMF",
                 K=similarity_matrix.shape[-1],
             )
             self.posterior_prob_power = PosteriorProb(
                 kappa=self.kappa,
                 beta=self.beta,
-                class_model='power',
+                class_model="power",
                 K=similarity_matrix.shape[-1],
             )
             all_classes_log_prob_vmf = (
@@ -49,7 +49,10 @@ class PosteriorProbability(OpenSetMethod):
                     self.similarity_matrix
                 )
             )
-            self.all_classes_log_prob = self.C*all_classes_log_prob_vmf + (1 - self.C)*all_classes_log_prob_power
+            self.all_classes_log_prob = (
+                self.C * all_classes_log_prob_vmf
+                + (1 - self.C) * all_classes_log_prob_power
+            )
         else:
             self.posterior_prob = PosteriorProb(
                 kappa=self.kappa,
@@ -64,6 +67,9 @@ class PosteriorProbability(OpenSetMethod):
             )
         self.all_classes_log_prob = np.mean(self.all_classes_log_prob, axis=1)
         assert np.all(self.all_classes_log_prob < 1e-10)
+
+    def get_class_log_probs(self):
+        return self.all_classes_log_prob
 
     def predict(self):
         predict_id = np.argmax(self.all_classes_log_prob[:, :-1], axis=-1)
