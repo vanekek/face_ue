@@ -2,7 +2,7 @@ hydra:
   run:
     dir: ${exp_dir}
 
-exp_dir: outputs/calibration/calibration_scf_${default_kappa}
+exp_dir: outputs/calibration/calibration_be_${default_kappa}
 use_two_galleries: False
 recompute_template_pooling: False
 num_bins: 30
@@ -20,7 +20,7 @@ test_datasets:
   #   dataset_name: survFace
   #   dataset_path: /app/datasets/QMUL-SurvFace/Face_Identification_Test_Set
 
-default_kappa: 300
+default_kappa: 400
 default_beta: 0.5
 open_set_identification_methods:
 
@@ -41,51 +41,10 @@ open_set_identification_methods:
         _target_: evaluation.confidence_functions.MaxSimilarity_confidence
       uncertainty_function:
         _target_: evaluation.open_set_methods.uncertainty_functions.BernoulliVariance
-      alpha: 1
+      alpha: 0
       T: 1
-    pretty_name: SCF_T-1
-
-  - embeddings: scf
-    template_pooling_strategy:
-      _target_: evaluation.template_pooling_strategies.PoolingSCF
-    use_detector_score: True
-    sampler:
-      _target_: evaluation.samplers.VonMisesFisher
-      num_samples: 0 # set 0 to use mean of distr as one sample
-    distance_function: 
-      _target_: evaluation.distance_functions.open_set_identification.CosineSim
-    recognition_method:
-      _target_: evaluation.open_set_methods.score_function_based.SimilarityBasedPrediction
-      kappa: ${default_kappa}
-      beta: ${default_beta}
-      acceptance_score: 
-        _target_: evaluation.confidence_functions.MaxSimilarity_confidence
-      uncertainty_function:
-        _target_: evaluation.open_set_methods.uncertainty_functions.BernoulliVariance
-      alpha: 1
-      T: 5
-    pretty_name: SCF_T-5
-
-  - embeddings: scf
-    template_pooling_strategy:
-      _target_: evaluation.template_pooling_strategies.PoolingSCF
-    use_detector_score: True
-    sampler:
-      _target_: evaluation.samplers.VonMisesFisher
-      num_samples: 0 # set 0 to use mean of distr as one sample
-    distance_function: 
-      _target_: evaluation.distance_functions.open_set_identification.CosineSim
-    recognition_method:
-      _target_: evaluation.open_set_methods.score_function_based.SimilarityBasedPrediction
-      kappa: ${default_kappa}
-      beta: ${default_beta}
-      acceptance_score: 
-        _target_: evaluation.confidence_functions.MaxSimilarity_confidence
-      uncertainty_function:
-        _target_: evaluation.open_set_methods.uncertainty_functions.BernoulliVariance
-      alpha: 1
-      T: 6
-    pretty_name: SCF_T-6
+      T_data_unc: 1
+    pretty_name: BE_T-1
 
 
   - embeddings: scf
@@ -105,9 +64,32 @@ open_set_identification_methods:
         _target_: evaluation.confidence_functions.MaxSimilarity_confidence
       uncertainty_function:
         _target_: evaluation.open_set_methods.uncertainty_functions.BernoulliVariance
-      alpha: 1
-      T: 7
-    pretty_name: SCF_T-7
+      alpha: 0
+      T: 28
+      T_data_unc: 1
+    pretty_name: BE_T-28
+
+  - embeddings: scf
+    template_pooling_strategy:
+      _target_: evaluation.template_pooling_strategies.PoolingSCF
+    use_detector_score: True
+    sampler:
+      _target_: evaluation.samplers.VonMisesFisher
+      num_samples: 0 # set 0 to use mean of distr as one sample
+    distance_function: 
+      _target_: evaluation.distance_functions.open_set_identification.CosineSim
+    recognition_method:
+      _target_: evaluation.open_set_methods.score_function_based.SimilarityBasedPrediction
+      kappa: ${default_kappa}
+      beta: ${default_beta}
+      acceptance_score: 
+        _target_: evaluation.confidence_functions.MaxSimilarity_confidence
+      uncertainty_function:
+        _target_: evaluation.open_set_methods.uncertainty_functions.BernoulliVariance
+      alpha: 0
+      T: 32
+      T_data_unc: 1
+    pretty_name: BE_T-32
 
 
   - embeddings: scf
@@ -127,31 +109,10 @@ open_set_identification_methods:
         _target_: evaluation.confidence_functions.MaxSimilarity_confidence
       uncertainty_function:
         _target_: evaluation.open_set_methods.uncertainty_functions.BernoulliVariance
-      alpha: 1
-      T: 8
-    pretty_name: SCF_T-8
-
-
-  - embeddings: scf
-    template_pooling_strategy:
-      _target_: evaluation.template_pooling_strategies.PoolingSCF
-    use_detector_score: True
-    sampler:
-      _target_: evaluation.samplers.VonMisesFisher
-      num_samples: 0 # set 0 to use mean of distr as one sample
-    distance_function: 
-      _target_: evaluation.distance_functions.open_set_identification.CosineSim
-    recognition_method:
-      _target_: evaluation.open_set_methods.score_function_based.SimilarityBasedPrediction
-      kappa: ${default_kappa}
-      beta: ${default_beta}
-      acceptance_score: 
-        _target_: evaluation.confidence_functions.MaxSimilarity_confidence
-      uncertainty_function:
-        _target_: evaluation.open_set_methods.uncertainty_functions.BernoulliVariance
-      alpha: 1
-      T: 9
-    pretty_name: SCF_T-9
+      alpha: 0
+      T: 36
+      T_data_unc: 1
+    pretty_name: BE_T-36
 
   - embeddings: scf
     template_pooling_strategy:
@@ -170,9 +131,10 @@ open_set_identification_methods:
         _target_: evaluation.confidence_functions.MaxSimilarity_confidence
       uncertainty_function:
         _target_: evaluation.open_set_methods.uncertainty_functions.BernoulliVariance
-      alpha: 1
-      T: 10
-    pretty_name: SCF_T-10
+      alpha: 0
+      T: 40
+      T_data_unc: 1
+    pretty_name: BE_T-40
 
   - embeddings: scf
     template_pooling_strategy:
@@ -191,8 +153,7 @@ open_set_identification_methods:
         _target_: evaluation.confidence_functions.MaxSimilarity_confidence
       uncertainty_function:
         _target_: evaluation.open_set_methods.uncertainty_functions.BernoulliVariance
-      alpha: 1
-      T: 11
-    pretty_name: SCF_T-11
-
-
+      alpha: 0
+      T: 44
+      T_data_unc: 1
+    pretty_name: BE_T-44

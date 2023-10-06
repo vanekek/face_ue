@@ -4,7 +4,7 @@ from typing import Any
 
 
 class BernoulliVariance:
-    def __call__(self, similarity: np.ndarray, probe_score: np.ndarray) -> Any:
-        probe_score_norm = (probe_score + 1) / 2
-        unc_score = probe_score_norm * (1 - probe_score_norm)
+    def __call__(self, similarity: np.ndarray, probe_score: np.ndarray, tau) -> Any:
+        s = probe_score
+        unc_score = -(s**2) + 2 * s * tau + 1 - 2 * tau
         return unc_score

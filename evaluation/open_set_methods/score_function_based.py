@@ -12,6 +12,7 @@ class SimilarityBasedPrediction(OpenSetMethod):
         uncertainty_function,
         alpha: float,
         T: float,
+        T_data_unc: float,
     ) -> None:
         super().__init__()
         self.kappa = kappa
@@ -20,6 +21,7 @@ class SimilarityBasedPrediction(OpenSetMethod):
         self.uncertainty_function = uncertainty_function
         self.alpha = alpha
         self.T = T
+        self.T_data_unc = T_data_unc
 
     def setup(self, similarity_matrix: np.ndarray):
         self.similarity_matrix = np.mean(similarity_matrix, axis=1)
@@ -49,13 +51,15 @@ class SimilarityBasedPrediction(OpenSetMethod):
             data_uncertainty = -data_uncertainty[:, 0]
         else:
             raise NotImplemented
-        unc = self.uncertainty_function(self.similarity_matrix, self.probe_score)
+        unc = self.uncertainty_function(
+            self.similarity_matrix, self.probe_score, self.tau
+        )
         unc_norm = (unc - np.min(unc)) / (np.max(unc) - np.min(unc))
 
         data_uncertainty_norm = (data_uncertainty - np.min(data_uncertainty)) / (
             np.max(data_uncertainty) - np.min(data_uncertainty)
         )
-        data_conf_norm = (-data_uncertainty_norm + 1) ** (1 / self.T)
-        conf_norm = -unc_norm + 1
+        data_conf_norm = (-data_uncertainty_norm + 1) ** (1 / self.T_data_unc)
+        conf_norm = (-unc_norm + 1) ** (1 / self.T)
         comb_conf = conf_norm * (1 - self.alpha) + data_conf_norm * self.alpha
         return -comb_conf
