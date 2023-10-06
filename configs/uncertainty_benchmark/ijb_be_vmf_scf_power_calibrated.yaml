@@ -3,7 +3,7 @@ hydra:
     dir: ${exp_dir}
 
 #exp_dir: experiments/open_set_uncertainty_small_beta
-exp_dir: outputs/experiments/scf_product_${default_kappa}
+exp_dir: outputs/experiments/be_scf_calibrated_kappa_${default_kappa}
 use_two_galleries: True
 recompute_template_pooling: False
 metric_pretty_name_path: /app/configs/latex_tables/pretty_names/column_pretty_name_unc.yaml
@@ -49,9 +49,97 @@ open_set_identification_uncertainty_metrics:
 
 
 
-default_kappa: 400
+default_kappa: 500
 default_beta: 0.5
 open_set_identification_methods:
+  - embeddings: scf
+    template_pooling_strategy:
+      _target_: evaluation.template_pooling_strategies.PoolingSCF
+    use_detector_score: True
+    sampler:
+      _target_: evaluation.samplers.VonMisesFisher
+      num_samples: 0 # set 0 to use mean of distr as one sample
+    distance_function: 
+      _target_: evaluation.distance_functions.open_set_identification.CosineSim
+    recognition_method:
+      _target_: evaluation.open_set_methods.posterior_prob_based.PosteriorProbability
+      class_model: vMF
+      kappa: ${default_kappa}
+      beta: ${default_beta}
+      uncertainty_type: maxprob
+      alpha: 1
+      process_unc: prob
+      T: 7
+      T_data_unc: 10
+    pretty_name: "SCF_T-10"
+    
+  - embeddings: scf
+    template_pooling_strategy:
+      _target_: evaluation.template_pooling_strategies.PoolingSCF
+    use_detector_score: True
+    sampler:
+      _target_: evaluation.samplers.VonMisesFisher
+      num_samples: 0 # set 0 to use mean of distr as one sample
+    distance_function: 
+      _target_: evaluation.distance_functions.open_set_identification.CosineSim
+    recognition_method:
+      _target_: evaluation.open_set_methods.score_function_based.SimilarityBasedPrediction
+      kappa: ${default_kappa}
+      beta: ${default_beta}
+      acceptance_score: 
+        _target_: evaluation.confidence_functions.MaxSimilarity_confidence
+      uncertainty_function:
+        _target_: evaluation.open_set_methods.uncertainty_functions.BernoulliVariance
+      alpha: 0
+      T: 44
+      T_data_unc: 1
+    pretty_name: BE_T-44
+
+  - embeddings: scf
+    template_pooling_strategy:
+      _target_: evaluation.template_pooling_strategies.PoolingSCF
+    use_detector_score: True
+    sampler:
+      _target_: evaluation.samplers.VonMisesFisher
+      num_samples: 0 # set 0 to use mean of distr as one sample
+    distance_function: 
+      _target_: evaluation.distance_functions.open_set_identification.CosineSim
+    recognition_method:
+      _target_: evaluation.open_set_methods.score_function_based.SimilarityBasedPrediction
+      kappa: ${default_kappa}
+      beta: ${default_beta}
+      acceptance_score: 
+        _target_: evaluation.confidence_functions.MaxSimilarity_confidence
+      uncertainty_function:
+        _target_: evaluation.open_set_methods.uncertainty_functions.BernoulliVariance
+      alpha: 0.5
+      T: 44
+      T_data_unc: 10
+    pretty_name: BE_T-44-SCF-10
+
+
+  - embeddings: scf
+    template_pooling_strategy:
+      _target_: evaluation.template_pooling_strategies.PoolingSCF
+    use_detector_score: True
+    sampler:
+      _target_: evaluation.samplers.VonMisesFisher
+      num_samples: 0 # set 0 to use mean of distr as one sample
+    distance_function: 
+      _target_: evaluation.distance_functions.open_set_identification.CosineSim
+    recognition_method:
+      _target_: evaluation.open_set_methods.posterior_prob_based.PosteriorProbability
+      class_model: vMF
+      kappa: ${default_kappa}
+      beta: ${default_beta}
+      uncertainty_type: maxprob
+      alpha: 0
+      process_unc: prob
+      T: 7
+      T_data_unc: 1
+    pretty_name: "vMF_T-7"
+
+
 
   - embeddings: scf
     template_pooling_strategy:
@@ -69,12 +157,10 @@ open_set_identification_methods:
       beta: ${default_beta}
       uncertainty_type: maxprob
       alpha: 0.5
-      aggregation: sum
       process_unc: prob
       T: 7
-      T_data_unc: 10
-    pretty_name: "vMF_T-7-SCF_T-10_sum"
-
+      T_data_unc: 1
+    pretty_name: "vMF_T-7-SCF_T-1"
 
   - embeddings: scf
     template_pooling_strategy:
@@ -92,33 +178,10 @@ open_set_identification_methods:
       beta: ${default_beta}
       uncertainty_type: maxprob
       alpha: 0.5
-      aggregation: product
       process_unc: prob
       T: 7
       T_data_unc: 10
-    pretty_name: "vMF_T-7-SCF_T-10_product"
-
-  - embeddings: scf
-    template_pooling_strategy:
-      _target_: evaluation.template_pooling_strategies.PoolingSCF
-    use_detector_score: True
-    sampler:
-      _target_: evaluation.samplers.VonMisesFisher
-      num_samples: 0 # set 0 to use mean of distr as one sample
-    distance_function: 
-      _target_: evaluation.distance_functions.open_set_identification.CosineSim
-    recognition_method:
-      _target_: evaluation.open_set_methods.posterior_prob_based.PosteriorProbability
-      class_model: power
-      kappa: ${default_kappa}
-      beta: ${default_beta}
-      uncertainty_type: maxprob
-      alpha: 0.5
-      aggregation: sum
-      process_unc: prob
-      T: 0.4
-      T_data_unc: 10
-    pretty_name: "power_T-0.4+SFC_T-10_sum"
+    pretty_name: "vMF_T-7-SCF_T-10"
 
 
   - embeddings: scf
@@ -136,10 +199,51 @@ open_set_identification_methods:
       kappa: ${default_kappa}
       beta: ${default_beta}
       uncertainty_type: maxprob
+      alpha: 0
+      process_unc: prob
+      T: 0.4
+      T_data_unc: 1
+    pretty_name: "power_T-0.4"
+
+  - embeddings: scf
+    template_pooling_strategy:
+      _target_: evaluation.template_pooling_strategies.PoolingSCF
+    use_detector_score: True
+    sampler:
+      _target_: evaluation.samplers.VonMisesFisher
+      num_samples: 0 # set 0 to use mean of distr as one sample
+    distance_function: 
+      _target_: evaluation.distance_functions.open_set_identification.CosineSim
+    recognition_method:
+      _target_: evaluation.open_set_methods.posterior_prob_based.PosteriorProbability
+      class_model: power
+      kappa: ${default_kappa}
+      beta: ${default_beta}
+      uncertainty_type: maxprob
       alpha: 0.5
-      aggregation: product
+      process_unc: prob
+      T: 0.4
+      T_data_unc: 1
+    pretty_name: "power_T-0.4+SFC_T-1"
+
+  - embeddings: scf
+    template_pooling_strategy:
+      _target_: evaluation.template_pooling_strategies.PoolingSCF
+    use_detector_score: True
+    sampler:
+      _target_: evaluation.samplers.VonMisesFisher
+      num_samples: 0 # set 0 to use mean of distr as one sample
+    distance_function: 
+      _target_: evaluation.distance_functions.open_set_identification.CosineSim
+    recognition_method:
+      _target_: evaluation.open_set_methods.posterior_prob_based.PosteriorProbability
+      class_model: power
+      kappa: ${default_kappa}
+      beta: ${default_beta}
+      uncertainty_type: maxprob
+      alpha: 0.5
       process_unc: prob
       T: 0.4
       T_data_unc: 10
-    pretty_name: "power_T-0.4+SFC_T-10_product"
+    pretty_name: "power_T-0.4+SFC_T-10"
 

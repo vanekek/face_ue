@@ -12,6 +12,7 @@ class PosteriorProbability(OpenSetMethod):
         beta: float,
         uncertainty_type: str,
         alpha: float,
+        aggregation: str,
         process_unc: str,
         class_model: str,
         T: Union[float, List[float]],
@@ -22,6 +23,7 @@ class PosteriorProbability(OpenSetMethod):
         self.beta = beta
         self.uncertainty_type = uncertainty_type
         self.alpha = alpha
+        self.aggregation = aggregation
         self.all_classes_log_prob = None
         self.process_unc = process_unc
         self.class_model = class_model
@@ -113,7 +115,12 @@ class PosteriorProbability(OpenSetMethod):
         )
         data_conf_norm = (-data_uncertainty_norm + 1) ** (1 / self.T_data_unc)
 
-        comb_conf = conf_norm * (1 - self.alpha) + data_conf_norm * self.alpha
+        if self.aggregation == 'sum':
+            comb_conf = conf_norm * (1 - self.alpha) + data_conf_norm * self.alpha
+        elif self.aggregation == 'product':
+            comb_conf = (conf_norm ** (1 - self.alpha)) * (data_conf_norm ** self.alpha)
+        else:
+            raise ValueError
         return -comb_conf
 
 
