@@ -5,7 +5,7 @@ hydra:
 exp_dir: outputs/calibration/calibration_be_${default_kappa}
 use_two_galleries: False
 recompute_template_pooling: False
-num_bins: 30
+num_bins: 50
 draw_bin_importance: alpha
 draw_averages: True
 test_datasets:
@@ -20,7 +20,7 @@ test_datasets:
   #   dataset_name: survFace
   #   dataset_path: /app/datasets/QMUL-SurvFace/Face_Identification_Test_Set
 
-default_kappa: 400
+default_kappa: 500
 default_beta: 0.5
 open_set_identification_methods:
 
