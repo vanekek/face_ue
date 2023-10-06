@@ -2,7 +2,7 @@ hydra:
   run:
     dir: ${exp_dir}
 
-exp_dir: outputs/calibration_${default_kappa}
+exp_dir: outputs/calibration/power_vmf_calibration_${default_kappa}
 use_two_galleries: False
 recompute_template_pooling: False
 num_bins: 30
@@ -20,7 +20,7 @@ test_datasets:
   #   dataset_name: survFace
   #   dataset_path: /app/datasets/QMUL-SurvFace/Face_Identification_Test_Set
 
-default_kappa: 400
+default_kappa: 300
 default_beta: 0.5
 open_set_identification_methods:
 
@@ -40,7 +40,8 @@ open_set_identification_methods:
       beta: ${default_beta}
       uncertainty_type: maxprob
       alpha: 0
-      logunc: True
+      process_unc: prob
+      T_data_unc: 1
       T: 0.8
     pretty_name: "vMF_T-0.8"
 
@@ -61,7 +62,8 @@ open_set_identification_methods:
       beta: ${default_beta}
       uncertainty_type: maxprob
       alpha: 0
-      logunc: True
+      process_unc: prob
+      T_data_unc: 1
       T: 1
     pretty_name: "vMF_T-1"
 
@@ -81,7 +83,8 @@ open_set_identification_methods:
       beta: ${default_beta}
       uncertainty_type: maxprob
       alpha: 0
-      logunc: True
+      process_unc: prob
+      T_data_unc: 1
       T: 1.5
     pretty_name: "vMF_T-1.5"
 
@@ -101,7 +104,8 @@ open_set_identification_methods:
       beta: ${default_beta}
       uncertainty_type: maxprob
       alpha: 0
-      logunc: True
+      process_unc: prob
+      T_data_unc: 1
       T: 2
     pretty_name: "vMF_T-2"
 
@@ -121,7 +125,8 @@ open_set_identification_methods:
       beta: ${default_beta}
       uncertainty_type: maxprob
       alpha: 0
-      logunc: True
+      process_unc: prob
+      T_data_unc: 1
       T: 3
     pretty_name: "vMF_T-3"
 
@@ -141,7 +146,8 @@ open_set_identification_methods:
       beta: ${default_beta}
       uncertainty_type: maxprob
       alpha: 0
-      logunc: True
+      process_unc: prob
+      T_data_unc: 1
       T: 4
     pretty_name: "vMF_T-4"
 
@@ -161,7 +167,8 @@ open_set_identification_methods:
       beta: ${default_beta}
       uncertainty_type: maxprob
       alpha: 0
-      logunc: True
+      process_unc: prob
+      T_data_unc: 1
       T: 5
     pretty_name: "vMF_T-5"
 
@@ -181,7 +188,8 @@ open_set_identification_methods:
       beta: ${default_beta}
       uncertainty_type: maxprob
       alpha: 0
-      logunc: True
+      process_unc: prob
+      T_data_unc: 1
       T: 6
     pretty_name: "vMF_T-6"
 
@@ -201,7 +209,8 @@ open_set_identification_methods:
       beta: ${default_beta}
       uncertainty_type: maxprob
       alpha: 0
-      logunc: True
+      process_unc: prob
+      T_data_unc: 1
       T: 7
     pretty_name: "vMF_T-7"
 
@@ -222,7 +231,8 @@ open_set_identification_methods:
       beta: ${default_beta}
       uncertainty_type: maxprob
       alpha: 0
-      logunc: True
+      process_unc: prob
+      T_data_unc: 1
       T: 8
     pretty_name: "vMF_T-8"
 
@@ -242,7 +252,8 @@ open_set_identification_methods:
       beta: ${default_beta}
       uncertainty_type: maxprob
       alpha: 0
-      logunc: True
+      process_unc: prob
+      T_data_unc: 1
       T: 9
     pretty_name: "vMF_T-9"
 
@@ -262,7 +273,8 @@ open_set_identification_methods:
       beta: ${default_beta}
       uncertainty_type: maxprob
       alpha: 0
-      logunc: True
+      process_unc: prob
+      T_data_unc: 1
       T: 10
     pretty_name: "vMF_T-10"
 
@@ -282,7 +294,8 @@ open_set_identification_methods:
       beta: ${default_beta}
       uncertainty_type: maxprob
       alpha: 0
-      logunc: True
+      process_unc: prob
+      T_data_unc: 1
       T: 0.1
     pretty_name: "Power_T-0.1"
 
@@ -303,7 +316,8 @@ open_set_identification_methods:
       beta: ${default_beta}
       uncertainty_type: maxprob
       alpha: 0
-      logunc: True
+      process_unc: prob
+      T_data_unc: 1
       T: 0.3
     pretty_name: "Power_T-0.2"
 
@@ -323,7 +337,8 @@ open_set_identification_methods:
       beta: ${default_beta}
       uncertainty_type: maxprob
       alpha: 0
-      logunc: True
+      process_unc: prob
+      T_data_unc: 1
       T: 0.3
     pretty_name: "Power_T-0.3"
 
@@ -343,7 +358,8 @@ open_set_identification_methods:
       beta: ${default_beta}
       uncertainty_type: maxprob
       alpha: 0
-      logunc: True
+      process_unc: prob
+      T_data_unc: 1
       T: 0.4
     pretty_name: "Power_T-0.4"
 
@@ -364,7 +380,8 @@ open_set_identification_methods:
       beta: ${default_beta}
       uncertainty_type: maxprob
       alpha: 0
-      logunc: True
+      process_unc: prob
+      T_data_unc: 1
       T: 0.5
     pretty_name: "Power_T-0.5"
 
@@ -384,7 +401,8 @@ open_set_identification_methods:
       beta: ${default_beta}
       uncertainty_type: maxprob
       alpha: 0
-      logunc: True
+      process_unc: prob
+      T_data_unc: 1
       T: 0.8
     pretty_name: "Power_T-0.8"
 
@@ -405,7 +423,8 @@ open_set_identification_methods:
       beta: ${default_beta}
       uncertainty_type: maxprob
       alpha: 0
-      logunc: True
+      process_unc: prob
+      T_data_unc: 1
       T: 1
     pretty_name: "Power_T-1"
 
@@ -426,7 +445,8 @@ open_set_identification_methods:
       beta: ${default_beta}
       uncertainty_type: maxprob
       alpha: 0
-      logunc: True
+      process_unc: prob
+      T_data_unc: 1
       T: 2
     pretty_name: "Power_T-2"
 
