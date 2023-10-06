@@ -2,6 +2,7 @@ import numpy as np
 from .base_method import OpenSetMethod
 from scipy.special import ive, hyp0f1, loggamma
 from scipy.optimize import fsolve
+from typing import List, Union
 
 
 class PosteriorProbability(OpenSetMethod):
@@ -13,7 +14,7 @@ class PosteriorProbability(OpenSetMethod):
         alpha: float,
         logunc: bool,
         class_model: str,
-        T: float,
+        T: Union[float, List[float]],
     ) -> None:
         super().__init__()
         self.kappa = kappa
@@ -43,18 +44,17 @@ class PosteriorProbability(OpenSetMethod):
             )
             all_classes_log_prob_vmf = (
                 self.posterior_prob_vmf.compute_all_class_log_probabilities(
-                    self.similarity_matrix, self.T
+                    self.similarity_matrix, self.T[0]
                 )
             )
             all_classes_log_prob_power = (
                 self.posterior_prob_power.compute_all_class_log_probabilities(
-                    self.similarity_matrix, self.T
+                    self.similarity_matrix, self.T[1]
                 )
             )
-            self.all_classes_log_prob = (
-                self.C * all_classes_log_prob_vmf
-                + (1 - self.C) * all_classes_log_prob_power
-            )
+            self.all_classes_log_prob = self.C * np.exp(all_classes_log_prob_vmf) + (
+                1 - self.C
+            ) * np.exp(all_classes_log_prob_power)
         else:
             self.posterior_prob = PosteriorProb(
                 kappa=self.kappa,

@@ -93,14 +93,24 @@ def main(cfg):
             )
             for method in methods:
                 recognition_method = instantiate(method.recognition_method)
-                # setup osr method and predict
-
-                class_log_probs = recognition_method.get_class_log_probs(similarity)
                 gallery_ids_with_imposter_id = np.concatenate([g_unique_ids, [-1]])
-                predict_id = gallery_ids_with_imposter_id[
-                    np.argmax(class_log_probs, axis=-1)
-                ]
-                conf_id = np.exp(np.max(class_log_probs, axis=-1))
+                if "SCF" in method.pretty_name:
+                    # here we use scf concentrations as best class prob estimate
+                    recognition_method.setup(similarity)
+                    predict_id, was_rejected = recognition_method.predict()
+                    predict_id[was_rejected] = gallery_ids_with_imposter_id.shape[0] - 1
+                    predict_id = gallery_ids_with_imposter_id[predict_id]
+                    conf_id = -recognition_method.predict_uncertainty(
+                        probe_template_unc
+                    )
+                    # conf_id = conf_id**(1/cfg.T)
+                else:
+                    class_log_probs = recognition_method.get_class_log_probs(similarity)
+
+                    predict_id = gallery_ids_with_imposter_id[
+                        np.argmax(class_log_probs, axis=-1)
+                    ]
+                    conf_id = np.exp(np.max(class_log_probs, axis=-1))
 
                 true_id = np.zeros_like(predict_id)
                 is_seen = np.isin(probe_unique_ids, g_unique_ids)
