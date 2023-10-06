@@ -20,7 +20,7 @@ test_datasets:
   #   dataset_name: survFace
   #   dataset_path: /app/datasets/QMUL-SurvFace/Face_Identification_Test_Set
 
-default_kappa: 400
+default_kappa: 500
 default_beta: 0.5
 open_set_identification_methods:
 

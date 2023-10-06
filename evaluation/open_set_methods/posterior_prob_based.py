@@ -12,9 +12,10 @@ class PosteriorProbability(OpenSetMethod):
         beta: float,
         uncertainty_type: str,
         alpha: float,
-        logunc: bool,
+        process_unc: str,
         class_model: str,
         T: Union[float, List[float]],
+        T_data_unc: float,
     ) -> None:
         super().__init__()
         self.kappa = kappa
@@ -22,10 +23,11 @@ class PosteriorProbability(OpenSetMethod):
         self.uncertainty_type = uncertainty_type
         self.alpha = alpha
         self.all_classes_log_prob = None
-        self.logunc = logunc
+        self.process_unc = process_unc
         self.class_model = class_model
         self.C = 0.5
         self.T = T
+        self.T_data_unc = T_data_unc
 
     def setup(self, similarity_matrix: np.ndarray):
         self.similarity_matrix = similarity_matrix
@@ -89,12 +91,18 @@ class PosteriorProbability(OpenSetMethod):
             )
         else:
             raise ValueError
-
-        if self.logunc:
+        if self.process_unc == "prob":
+            unc = -np.exp(-unc)
+            conf_norm = -unc
+        elif self.process_unc == "log_prob":
+            unc = (unc - np.min(unc)) / (np.max(unc) - np.min(unc))
+            conf_norm = -unc + 1
+        elif self.process_unc == "loglog_prob":
             unc = np.log(unc - np.min(unc) + 1e-16)
-        # normalize and sum with data uncertainty
-        unc_norm = (unc - np.min(unc)) / (np.max(unc) - np.min(unc))
-
+            unc = (unc - np.min(unc)) / (np.max(unc) - np.min(unc))
+            conf_norm = -unc + 1
+        else:
+            raise ValueError
         if data_uncertainty.shape[1] == 1:
             # here data_uncertainty is scf concetration
             data_uncertainty = -data_uncertainty[:, 0]
@@ -103,9 +111,10 @@ class PosteriorProbability(OpenSetMethod):
         data_uncertainty_norm = (data_uncertainty - np.min(data_uncertainty)) / (
             np.max(data_uncertainty) - np.min(data_uncertainty)
         )
+        data_conf_norm = (-data_uncertainty_norm + 1) ** (1 / self.T_data_unc)
 
-        comb_unc = unc_norm * (1 - self.alpha) + data_uncertainty_norm * self.alpha
-        return comb_unc
+        comb_conf = conf_norm * (1 - self.alpha) + data_conf_norm * self.alpha
+        return -comb_conf
 
 
 class PosteriorProb:
