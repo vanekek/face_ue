@@ -1,8 +1,10 @@
 import numpy as np
 from .base_method import OpenSetMethod
 from scipy.special import ive, hyp0f1, loggamma
-from scipy.optimize import fsolve
+from scipy.optimize import fsolve, minimize
 from typing import List, Union
+from torch import nn
+import torch
 
 
 class PosteriorProbability(OpenSetMethod):
@@ -68,10 +70,10 @@ class PosteriorProbability(OpenSetMethod):
             )
             self.all_classes_log_prob = (
                 self.posterior_prob.compute_all_class_log_probabilities(
-                    self.similarity_matrix, self.T
+                    torch.tensor(self.similarity_matrix), self.T
                 )
             )
-        self.all_classes_log_prob = np.mean(self.all_classes_log_prob, axis=1)
+        self.all_classes_log_prob = torch.mean(self.all_classes_log_prob, dim=1).numpy()
         # assert np.all(self.all_classes_log_prob < 1e-10)
 
     def get_class_log_probs(self, similarity_matrix):
@@ -115,10 +117,10 @@ class PosteriorProbability(OpenSetMethod):
         )
         data_conf_norm = (-data_uncertainty_norm + 1) ** (1 / self.T_data_unc)
 
-        if self.aggregation == 'sum':
+        if self.aggregation == "sum":
             comb_conf = conf_norm * (1 - self.alpha) + data_conf_norm * self.alpha
-        elif self.aggregation == 'product':
-            comb_conf = (conf_norm ** (1 - self.alpha)) * (data_conf_norm ** self.alpha)
+        elif self.aggregation == "product":
+            comb_conf = (conf_norm ** (1 - self.alpha)) * (data_conf_norm**self.alpha)
         else:
             raise ValueError
         return -comb_conf
@@ -196,21 +198,33 @@ class PosteriorProb:
         )
         return (log_prior + log_alpha_zero) / kappa_zero - shift
 
-    def compute_log_z_prob(self, similarities: np.ndarray, T: float):
+    def compute_log_z_prob(self, similarities: torch.tensor, T: torch.tensor):
         p_c = ((1 - self.beta) / self.K) ** (1 / T)
         if self.class_model == "vMF":
             logit_sum = (
-                np.sum(np.exp(similarities * self.kappa * (1 / T)), axis=-1) * p_c
+                torch.sum(torch.exp(similarities * self.kappa * (1 / T)), dim=-1) * p_c
             )
         elif self.class_model == "power":
             logit_sum = (
-                np.sum((1 + similarities) ** (self.kappa_zero * (1 / T)), axis=-1) * p_c
+                torch.sum((1 + similarities) ** (self.kappa_zero * (1 / T)), dim=-1)
+                * p_c
             )
 
-        log_z_prob = (1 / T) * self.log_normalizer + np.log(
+        log_z_prob = (1 / T) * self.log_normalizer + torch.log(
             logit_sum + (self.alpha * self.beta) ** (1 / T)
         )
         return log_z_prob
+
+    def compute_nll(
+        self,
+        T: torch.nn.Parameter,
+        similarities: torch.tensor,
+        true_label: torch.tensor,
+    ):
+        class_probs = self.compute_all_class_log_probabilities(similarities, T)[:, 0, :]
+        loss = nn.NLLLoss()
+        loss_value = loss(class_probs, true_label)
+        return loss_value
 
     def compute_all_class_log_probabilities(
         self, similarities: np.ndarray, T: float = 1
@@ -223,10 +237,8 @@ class PosteriorProb:
         if self.class_model == "vMF":
             pz_c = self.kappa * similarities
         elif self.class_model == "power":
-            pz_c = np.log((1 + similarities)) * self.kappa_zero
+            pz_c = torch.log((1 + similarities)) * self.kappa_zero
         gallery_log_probs = (1 / T) * (
             self.log_normalizer + pz_c + np.log((1 - self.beta) / self.K)
         ) - log_z_prob[..., np.newaxis]
-        return np.concatenate(
-            [gallery_log_probs, uniform_log_prob[..., np.newaxis]], axis=-1
-        )
+        return torch.cat([gallery_log_probs, uniform_log_prob[..., np.newaxis]], dim=-1)
