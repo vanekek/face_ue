@@ -118,7 +118,11 @@ class Face_Fecognition_test:
 
     def run_model_test_open_set_identification(self):
         used_galleries = ["g1"]
-        if self.use_two_galleries and self.test_dataset.g2_templates.shape != ():
+        if (
+            self.use_two_galleries
+            and self.test_dataset is not None
+            and self.test_dataset.g2_templates.shape != ()
+        ):
             used_galleries += ["g2"]
 
         galleries_data = [
