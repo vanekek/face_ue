@@ -1,7 +1,6 @@
 from pytorch_lightning.cli import LightningCLI
 import sys
 
-sys.path.append("/app")
 # code based on original repo: https://github.com/MathsShen/SCF
 # main config for training: configs/hydra/train_sphere_face.yaml
 # simple demo classes for your convenience

@@ -5,17 +5,13 @@ from torch.utils.data import DataLoader, Dataset
 from torchvision import transforms
 import mxnet as mx
 import numbers
+from pathlib import Path
+from tqdm import tqdm
 import numpy as np
 import os
 
-import sys
-
-sys.path.append("/app")
-from face_lib.datasets.arcface_ijb import IJB_aligned_images
-
-
 class MXFaceDataset(Dataset):
-    def __init__(self, root_dir, test=False):
+    def __init__(self, root_dir, test=False, num_classes=0):
         """
         ArcFace loader
         https://github.com/deepinsight/insightface/blob/master/recognition/arcface_torch/dataset.py
@@ -40,17 +36,62 @@ class MXFaceDataset(Dataset):
                     transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5]),
                 ]
             )
+
+                # load pictures
         self.root_dir = root_dir
         path_imgrec = os.path.join(root_dir, "train.rec")
         path_imgidx = os.path.join(root_dir, "train.idx")
         self.imgrec = mx.recordio.MXIndexedRecordIO(path_imgidx, path_imgrec, "r")
         s = self.imgrec.read_idx(0)
         header, _ = mx.recordio.unpack(s)
-        if header.flag > 0:
-            self.header0 = (int(header.label[0]), int(header.label[1]))
-            self.imgidx = np.array(range(1, int(header.label[0])))
+
+        self.imgrec = mx.recordio.MXIndexedRecordIO(path_imgidx, path_imgrec, "r")
+        s = self.imgrec.read_idx(0)
+        header, _ = mx.recordio.unpack(s)
+
+        self.imgidx = np.array(range(1, int(header.label[0])))
+
+        # load or create labels
+        labels_path = Path(root_dir) / "labels.npy"
+        if labels_path.is_file():
+            self.labels = np.load(labels_path)
         else:
-            self.imgidx = np.array(list(self.imgrec.keys))
+            print('Listing labels...')
+            labels = []
+            for i in range(len(self.imgidx)):
+                idx = self.imgidx[i]
+                s = self.imgrec.read_idx(idx)
+                header, img = mx.recordio.unpack(s)
+                label = header.label
+                labels.append(int(label))
+            self.labels = np.array(labels)
+            # save labels
+            np.save(labels_path, self.labels)
+
+        if num_classes > 0:
+            seed = 0
+            min_size = 30
+            image_idx_path = Path(root_dir) / f"image_idx_{num_classes}-classes_{seed}-seed_{min_size}-min-class-size.npy"
+            image_label_path = Path(root_dir) / f"image_label_{num_classes}-classes_{seed}-seed_{min_size}-min-class-size.npy"
+            if image_idx_path.is_file():
+                self.imgidx = np.load(image_idx_path)
+            else:
+                print(f'Listing images of {num_classes} random classes...')
+                rng = np.random.default_rng(seed)
+                unique_labels, unique_counts = np.unique(self.labels, return_counts=True)
+                unique_labels_thresh = unique_labels[unique_counts > min_size]
+                selected_classes = rng.choice(unique_labels_thresh, num_classes)
+                imgidx_short = []
+                labels_short = []
+                for selected_class in tqdm(selected_classes):
+                    index = (self.labels == selected_class)
+                    imgidx_short.extend(list(self.imgidx[index]))
+                    labels_short.extend(list(self.labels[index]))
+                self.imgidx = np.array(imgidx_short)
+                self.labels = np.array(labels_short)
+                np.save(image_idx_path, self.imgidx)
+                np.save(image_label_path, self.labels)
+
 
     def __getitem__(self, index):
         idx = self.imgidx[index]
