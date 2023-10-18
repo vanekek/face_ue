@@ -20,7 +20,7 @@ trainer:
   - class_path: face_lib.models.scf.Prediction_writer
     init_args: 
       output_dir: /app/cache/features
-      file_name: scf_embs_ms1m # subset: ${data.init_args.data_predict_subset}
+      file_name: scf_embs_ms1m_3531-classes_0-seed_30-min-class-size
       write_interval: epoch
   max_epochs: 5
   accelerator: gpu

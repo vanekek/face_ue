@@ -17,7 +17,7 @@ class MXFaceDataset(Dataset):
         https://github.com/deepinsight/insightface/blob/master/recognition/arcface_torch/dataset.py
         """
         super(MXFaceDataset, self).__init__()
-
+        self.num_classes = num_classes
         self.test = test
         if self.test:
             self.transform = transforms.Compose(
@@ -72,15 +72,16 @@ class MXFaceDataset(Dataset):
             seed = 0
             min_size = 30
             image_idx_path = Path(root_dir) / f"image_idx_{num_classes}-classes_{seed}-seed_{min_size}-min-class-size.npy"
-            image_label_path = Path(root_dir) / f"image_label_{num_classes}-classes_{seed}-seed_{min_size}-min-class-size.npy"
+            self.image_label_path = Path(root_dir) / f"image_label_{num_classes}-classes_{seed}-seed_{min_size}-min-class-size.npy"
             if image_idx_path.is_file():
                 self.imgidx = np.load(image_idx_path)
+                self.labels = np.load(self.image_label_path)
             else:
                 print(f'Listing images of {num_classes} random classes...')
                 rng = np.random.default_rng(seed)
                 unique_labels, unique_counts = np.unique(self.labels, return_counts=True)
                 unique_labels_thresh = unique_labels[unique_counts > min_size]
-                selected_classes = rng.choice(unique_labels_thresh, num_classes)
+                selected_classes = rng.choice(unique_labels_thresh, num_classes, replace=False)
                 imgidx_short = []
                 labels_short = []
                 for selected_class in tqdm(selected_classes):
@@ -90,8 +91,10 @@ class MXFaceDataset(Dataset):
                 self.imgidx = np.array(imgidx_short)
                 self.labels = np.array(labels_short)
                 np.save(image_idx_path, self.imgidx)
-                np.save(image_label_path, self.labels)
+                np.save(self.image_label_path, self.labels)
+    def create_identification_meta(self, identification_ds_path: Path):
 
+        pass
 
     def __getitem__(self, index):
         idx = self.imgidx[index]
