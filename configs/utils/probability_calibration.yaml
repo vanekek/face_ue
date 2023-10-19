@@ -2,10 +2,10 @@ hydra:
   run:
     dir: ${exp_dir}
 
-exp_dir: outputs/calibration/ms1m_auto_calibration_power_${default_kappa}
+exp_dir: outputs/calibration/ms1m_auto_calibration_scf_${default_kappa}
 use_two_galleries: False
 recompute_template_pooling: False
-num_bins: 30
+num_bins: 10
 draw_bin_importance: alpha
 draw_averages: True
 test_datasets:
@@ -27,9 +27,9 @@ test_datasets:
 
 default_kappa: 400
 default_beta: 0.5
-train_T: False
-iter_num: 30
-lr: 0.1
+train_T: True
+iter_num: 500
+lr: 0.01
 
 open_set_identification_methods:
 
@@ -70,31 +70,54 @@ open_set_identification_methods:
       kappa: ${default_kappa}
       beta: ${default_beta}
       uncertainty_type: maxprob
-      alpha: 0
+      alpha: 1
       aggregation: sum
       process_unc: prob
       T: 1
-      T_data_unc: 1
-    pretty_name: "power-1"
+      T_data_unc: 30
+    pretty_name: "SCF-30"
 
-  - embeddings: scf
-    template_pooling_strategy:
-      _target_: evaluation.template_pooling_strategies.PoolingSCF
-    use_detector_score: True
-    sampler:
-      _target_: evaluation.samplers.VonMisesFisher
-      num_samples: 0 # set 0 to use mean of distr as one sample
-    distance_function: 
-      _target_: evaluation.distance_functions.open_set_identification.CosineSim
-    recognition_method:
-      _target_: evaluation.open_set_methods.posterior_prob_based.PosteriorProbability
-      class_model: power
-      kappa: ${default_kappa}
-      beta: ${default_beta}
-      uncertainty_type: maxprob
-      alpha: 0
-      aggregation: sum
-      process_unc: prob
-      T: 0.288362
-      T_data_unc: 1
-    pretty_name: "power-0.288362"
+  # - embeddings: scf
+  #   template_pooling_strategy:
+  #     _target_: evaluation.template_pooling_strategies.PoolingSCF
+  #   use_detector_score: True
+  #   sampler:
+  #     _target_: evaluation.samplers.VonMisesFisher
+  #     num_samples: 0 # set 0 to use mean of distr as one sample
+  #   distance_function: 
+  #     _target_: evaluation.distance_functions.open_set_identification.CosineSim
+  #   recognition_method:
+  #     _target_: evaluation.open_set_methods.posterior_prob_based.PosteriorProbability
+  #     class_model: power
+  #     kappa: ${default_kappa}
+  #     beta: ${default_beta}
+  #     uncertainty_type: maxprob
+  #     alpha: 1
+  #     aggregation: sum
+  #     process_unc: prob
+  #     T: 1
+  #     T_data_unc: 29.7574
+  #   pretty_name: "SCF-29.75"
+
+  # - embeddings: scf
+  #   template_pooling_strategy:
+  #     _target_: evaluation.template_pooling_strategies.PoolingSCF
+  #   use_detector_score: True
+  #   sampler:
+  #     _target_: evaluation.samplers.VonMisesFisher
+  #     num_samples: 0 # set 0 to use mean of distr as one sample
+  #   distance_function: 
+  #     _target_: evaluation.distance_functions.open_set_identification.CosineSim
+  #   recognition_method:
+  #     _target_: evaluation.open_set_methods.posterior_prob_based.PosteriorProbability
+  #     class_model: power
+  #     kappa: ${default_kappa}
+  #     beta: ${default_beta}
+  #     uncertainty_type: maxprob
+  #     alpha: 1
+  #     aggregation: sum
+  #     process_unc: prob
+  #     T: 1
+  #     T_data_unc: 50
+  #   pretty_name: "SCF-50"
+

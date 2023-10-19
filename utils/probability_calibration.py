@@ -12,9 +12,58 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
-from utils.reliability_diagrams import reliability_diagram
+from utils.reliability_diagrams import reliability_diagram, compute_calibration
 import torch
 from scipy.optimize import fsolve, minimize
+
+
+def train_T(
+    cfg,
+    recognition_method,
+    true_id,
+    is_seen,
+    sim_tensor,
+    probe_unique_ids,
+    g_unique_ids,
+):
+    true_id_class_index = np.zeros_like(true_id)
+    true_id_class_index[~is_seen] = sim_tensor.shape[2]
+
+    true_id_class_index[is_seen] = np.argmax(
+        probe_unique_ids[is_seen, np.newaxis] == g_unique_ids[np.newaxis, :],
+        axis=1,
+    )
+    T = torch.nn.Parameter(torch.tensor(1.0, dtype=torch.float64))
+    optimizer = torch.optim.SGD([T], lr=cfg.lr, momentum=0.5)
+
+    true_id_class_index_tensor = torch.tensor(true_id_class_index, dtype=torch.long)
+    for iter in range(cfg.iter_num):
+        optimizer.zero_grad()
+
+        loss = recognition_method.posterior_prob.compute_nll(
+            T, sim_tensor, true_id_class_index_tensor
+        )
+        loss.backward()
+        optimizer.step()
+        print(
+            f"Iteration {iter}, Loss: {loss.item()}, T: {T.item()}, T_grad: {T.grad.item()}"
+        )
+
+
+def compute_ece(T, conf_id, true_labels, pred_labels, num_bins):
+    min_kappa = 400
+    max_kappa = 2000
+    data_uncertainty_norm = (conf_id - min_kappa) / (max_kappa - min_kappa)
+    confidences = (data_uncertainty_norm) ** (1 / T)
+    return compute_calibration(true_labels, pred_labels, confidences, num_bins)[
+        "expected_calibration_error"
+    ]
+
+
+def train_T_ece(cfg, conf_id, true_labels, pred_labels):
+    res = minimize(compute_ece, 1, (conf_id, true_labels, pred_labels, cfg.num_bins))
+    print(res.x)
+    pass
 
 
 @hydra.main(
@@ -98,6 +147,12 @@ def main(cfg):
                 gallery_ids_with_imposter_id = np.concatenate([g_unique_ids, [-1]])
                 sim_tensor = torch.tensor(similarity)
                 recognition_method.setup(sim_tensor)
+
+                true_id = np.zeros(similarity.shape[0])
+                is_seen = np.isin(probe_unique_ids, g_unique_ids)
+                true_id[is_seen] = probe_unique_ids[is_seen]
+                true_id[~is_seen] = -1
+
                 if "SCF" in method.pretty_name or "BE" in method.pretty_name:
                     # here we use scf concentrations as best class prob estimate
 
@@ -107,7 +162,10 @@ def main(cfg):
                     conf_id = -recognition_method.predict_uncertainty(
                         probe_template_unc
                     )
+                    # assert recognition_method.T_data_unc == 1
 
+                    if cfg.train_T:
+                        train_T_ece(cfg, probe_template_unc[:, 0], true_id, predict_id)
                 else:
                     class_log_probs = recognition_method.get_class_log_probs(similarity)
 
@@ -115,43 +173,17 @@ def main(cfg):
                         np.argmax(class_log_probs, axis=-1)
                     ]
                     conf_id = np.exp(np.max(class_log_probs, axis=-1))
-
-                true_id = np.zeros(similarity.shape[0])
-                is_seen = np.isin(probe_unique_ids, g_unique_ids)
-                true_id[is_seen] = probe_unique_ids[is_seen]
-                true_id[~is_seen] = -1
-
-                if cfg.train_T:
-                    true_id_class_index = np.zeros_like(true_id)
-                    true_id_class_index[~is_seen] = similarity.shape[2]
-                    # seen_probe_ids[:, np.newaxis] == n_similar_classes
-
-                    true_id_class_index[is_seen] = np.argmax(
-                        probe_unique_ids[is_seen, np.newaxis]
-                        == g_unique_ids[np.newaxis, :],
-                        axis=1,
-                    )
-                    # loss = recognition_method.posterior_prob.compute_nll(1, similarity, true_id_class_index)
-
-                    T = torch.nn.Parameter(torch.tensor(1.0, dtype=torch.float64))
-                    optimizer = torch.optim.SGD([T], lr=cfg.lr, momentum=0.5)
-
-                    true_id_class_index_tensor = torch.tensor(
-                        true_id_class_index, dtype=torch.long
-                    )
-                    for iter in range(cfg.iter_num):
-                        optimizer.zero_grad()
-
-                        loss = recognition_method.posterior_prob.compute_nll(
-                            T, sim_tensor, true_id_class_index_tensor
+                    if cfg.train_T:
+                        train_T(
+                            cfg,
+                            recognition_method,
+                            true_id,
+                            is_seen,
+                            sim_tensor,
+                            probe_unique_ids,
+                            g_unique_ids,
                         )
-                        loss.backward()
-                        optimizer.step()
-                        print(
-                            f"Iteration {iter}, Loss: {loss.item()}, T: {T.item()}, T_grad: {T.grad.item()}"
-                        )
-                    # res = minimize(recognition_method.posterior_prob.compute_nll, 1, (similarity, true_id_class_index))
-                    # print(f'Optimal T={res.x}')
+
                 plt.style.use("seaborn")
 
                 plt.rc("font", size=12)

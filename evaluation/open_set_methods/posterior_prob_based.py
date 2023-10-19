@@ -109,13 +109,13 @@ class PosteriorProbability(OpenSetMethod):
             raise ValueError
         if data_uncertainty.shape[1] == 1:
             # here data_uncertainty is scf concetration
-            data_uncertainty = -data_uncertainty[:, 0]
+            data_uncertainty = data_uncertainty[:, 0]
         else:
             raise NotImplemented
-        data_uncertainty_norm = (data_uncertainty - np.min(data_uncertainty)) / (
-            np.max(data_uncertainty) - np.min(data_uncertainty)
-        )
-        data_conf_norm = (-data_uncertainty_norm + 1) ** (1 / self.T_data_unc)
+        min_kappa = 400
+        max_kappa = 2000
+        data_uncertainty_norm = (data_uncertainty - min_kappa) / (max_kappa - min_kappa)
+        data_conf_norm = (data_uncertainty_norm) ** (1 / self.T_data_unc)
 
         if self.aggregation == "sum":
             comb_conf = conf_norm * (1 - self.alpha) + data_conf_norm * self.alpha
