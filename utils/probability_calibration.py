@@ -132,15 +132,14 @@ def main(cfg):
                         axis=1,
                     )
                     # loss = recognition_method.posterior_prob.compute_nll(1, similarity, true_id_class_index)
-                    iter_num = 200
 
                     T = torch.nn.Parameter(torch.tensor(1.0, dtype=torch.float64))
-                    optimizer = torch.optim.SGD([T], lr=5, momentum=0.5)
+                    optimizer = torch.optim.SGD([T], lr=cfg.lr, momentum=0.5)
 
                     true_id_class_index_tensor = torch.tensor(
                         true_id_class_index, dtype=torch.long
                     )
-                    for iter in range(iter_num):
+                    for iter in range(cfg.iter_num):
                         optimizer.zero_grad()
 
                         loss = recognition_method.posterior_prob.compute_nll(

@@ -47,10 +47,6 @@ class MXFaceDataset(Dataset):
         s = self.imgrec.read_idx(0)
         header, _ = mx.recordio.unpack(s)
 
-        self.imgrec = mx.recordio.MXIndexedRecordIO(path_imgidx, path_imgrec, "r")
-        s = self.imgrec.read_idx(0)
-        header, _ = mx.recordio.unpack(s)
-
         self.imgidx = np.array(range(1, int(header.label[0])))
 
         # load or create labels
@@ -91,8 +87,11 @@ class MXFaceDataset(Dataset):
                     self.labels, return_counts=True
                 )
                 unique_labels_thresh = unique_labels[unique_counts > min_size]
-                selected_classes = rng.choice(
-                    unique_labels_thresh, num_classes, replace=False
+                # selected_classes = rng.choice(
+                #     unique_labels_thresh, num_classes, replace=False
+                # )
+                selected_classes = np.sort(
+                    rng.choice(unique_labels_thresh, num_classes, replace=False)
                 )
                 imgidx_short = []
                 labels_short = []
@@ -251,3 +250,10 @@ class UncertaintyDataModule(pl.LightningDataModule):
             shuffle=False,
             num_workers=self.num_workers,
         )
+
+
+if __name__ == "__main__":
+    num_classes = 3531
+    ds = MXFaceDataset("/app/datasets/ms1m/", True, num_classes)
+    gallery_size = 1772
+    ds.create_identification_meta(Path("/app/datasets/ms1m_ident"), gallery_size)
