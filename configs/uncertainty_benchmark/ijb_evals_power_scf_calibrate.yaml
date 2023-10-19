@@ -2,10 +2,12 @@ hydra:
   run:
     dir: ${exp_dir}
 
-exp_dir: outputs/experiments/vmf_new_ds_${default_kappa}
+#exp_dir: experiments/open_set_uncertainty_small_beta
+exp_dir: outputs/experiments/power_new_ds_${default_kappa}
 use_two_galleries: True
 recompute_template_pooling: False
 metric_pretty_name_path: /app/configs/latex_tables/pretty_names/column_pretty_name_unc.yaml
+# test_dataset:
 
 
 test_datasets:
@@ -111,7 +113,7 @@ open_set_identification_methods:
       _target_: evaluation.distance_functions.open_set_identification.CosineSim
     recognition_method:
       _target_: evaluation.open_set_methods.posterior_prob_based.PosteriorProbability
-      class_model: vMF
+      class_model: power
       kappa: ${default_kappa}
       beta: ${default_beta}
       uncertainty_type: maxprob
@@ -120,7 +122,7 @@ open_set_identification_methods:
       process_unc: prob
       T: 1
       T_data_unc: 1
-    pretty_name: "vMF_T-1"
+    pretty_name: "power_T-1"
 
 
 
@@ -136,16 +138,16 @@ open_set_identification_methods:
       _target_: evaluation.distance_functions.open_set_identification.CosineSim
     recognition_method:
       _target_: evaluation.open_set_methods.posterior_prob_based.PosteriorProbability
-      class_model: vMF
+      class_model: power
       kappa: ${default_kappa}
       beta: ${default_beta}
       uncertainty_type: maxprob
       alpha: 0
       aggregation: sum
       process_unc: prob
-      T: 7
+      T: 0.4
       T_data_unc: 1
-    pretty_name: "vMF_T-7"
+    pretty_name: "power_T-0.4"
 
   - embeddings: scf
     template_pooling_strategy:
@@ -158,16 +160,16 @@ open_set_identification_methods:
       _target_: evaluation.distance_functions.open_set_identification.CosineSim
     recognition_method:
       _target_: evaluation.open_set_methods.posterior_prob_based.PosteriorProbability
-      class_model: vMF
+      class_model: power
       kappa: ${default_kappa}
       beta: ${default_beta}
       uncertainty_type: maxprob
       alpha: 0
       aggregation: sum
       process_unc: prob
-      T: 5.3757
+      T: 0.28836
       T_data_unc: 1
-    pretty_name: "vMF_T-5.3757"
+    pretty_name: "power_T-0.28836"
 
 
   - embeddings: scf
@@ -181,16 +183,16 @@ open_set_identification_methods:
       _target_: evaluation.distance_functions.open_set_identification.CosineSim
     recognition_method:
       _target_: evaluation.open_set_methods.posterior_prob_based.PosteriorProbability
-      class_model: vMF
+      class_model: power
       kappa: ${default_kappa}
       beta: ${default_beta}
       uncertainty_type: maxprob
       alpha: 0.5
       aggregation: sum
       process_unc: prob
-      T: 7
+      T: 0.4
       T_data_unc: 10
-    pretty_name: "vMF_T-7-SCF_T-10"
+    pretty_name: "power_T-0.4-SCF_T-10"
 
   - embeddings: scf
     template_pooling_strategy:
@@ -203,7 +205,7 @@ open_set_identification_methods:
       _target_: evaluation.distance_functions.open_set_identification.CosineSim
     recognition_method:
       _target_: evaluation.open_set_methods.posterior_prob_based.PosteriorProbability
-      class_model: vMF
+      class_model: power
       kappa: ${default_kappa}
       beta: ${default_beta}
       uncertainty_type: maxprob
@@ -212,7 +214,7 @@ open_set_identification_methods:
       process_unc: prob
       T: 1
       T_data_unc: 1
-    pretty_name: "vMF_T-1-SCF_T-1"
+    pretty_name: "power_T-1-SCF_T-1"
 
   - embeddings: scf
     template_pooling_strategy:
@@ -225,16 +227,16 @@ open_set_identification_methods:
       _target_: evaluation.distance_functions.open_set_identification.CosineSim
     recognition_method:
       _target_: evaluation.open_set_methods.posterior_prob_based.PosteriorProbability
-      class_model: vMF
+      class_model: power
       kappa: ${default_kappa}
       beta: ${default_beta}
       uncertainty_type: maxprob
       alpha: 0.5
       aggregation: sum
       process_unc: prob
-      T: 5.3757
+      T: 0.28836
       T_data_unc: 10
-    pretty_name: "vMF_T-5.3757-SCF_T-10"
+    pretty_name: "power_T-0.28836-SCF_T-10"
 
   - embeddings: scf
     template_pooling_strategy:
@@ -247,16 +249,16 @@ open_set_identification_methods:
       _target_: evaluation.distance_functions.open_set_identification.CosineSim
     recognition_method:
       _target_: evaluation.open_set_methods.posterior_prob_based.PosteriorProbability
-      class_model: vMF
+      class_model: power
       kappa: ${default_kappa}
       beta: ${default_beta}
       uncertainty_type: maxprob
       alpha: 0.5
       aggregation: sum
       process_unc: prob
-      T: 5.3757
+      T: 0.28836
       T_data_unc: 1
-    pretty_name: "vMF_T-5.3757-SCF_T-1"
+    pretty_name: "power_T-0.28836-SCF_T-1"
 
   - embeddings: scf
     template_pooling_strategy:
@@ -269,13 +271,13 @@ open_set_identification_methods:
       _target_: evaluation.distance_functions.open_set_identification.CosineSim
     recognition_method:
       _target_: evaluation.open_set_methods.posterior_prob_based.PosteriorProbability
-      class_model: vMF
+      class_model: power
       kappa: ${default_kappa}
       beta: ${default_beta}
       uncertainty_type: maxprob
       alpha: 0.5
       aggregation: sum
       process_unc: prob
-      T: 5.3757
+      T: 0.28836
       T_data_unc: 30
-    pretty_name: "vMF_T-5.3757-SCF_T-30"
+    pretty_name: "power_T-0.28836-SCF_T-30"
