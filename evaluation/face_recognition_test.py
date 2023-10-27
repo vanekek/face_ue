@@ -19,7 +19,8 @@ class Face_Fecognition_test:
         distance_function: Abstract1NEval,
         test_dataset: FaceRecogntioniDataset,
         embeddings_path: str,
-        template_pooling_strategy: AbstractTemplatePooling,
+        gallery_template_pooling_strategy: AbstractTemplatePooling,
+        probe_template_pooling_strategy: AbstractTemplatePooling,
         use_detector_score: bool,
         use_two_galleries: bool,
         recompute_template_pooling: bool,
@@ -87,6 +88,8 @@ class Face_Fecognition_test:
                 self.test_dataset.templates,
                 self.test_dataset.medias,
             )
+            # first pool gallery templates
+            # then use them to poll probe templates
             np.savez(
                 pooled_templates_path,
                 template_pooled_emb=self.template_pooled_emb,

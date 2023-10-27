@@ -101,7 +101,12 @@ def main(cfg):
         dataset_name = test_dataset.dataset_name
 
         # instantiate method
-        template_pooling = instantiate(method.template_pooling_strategy)
+        gallery_template_pooling_strategy = instantiate(
+            method.gallery_template_pooling_strategy
+        )
+        probe_template_pooling_strategy = instantiate(
+            method.probe_template_pooling_strategy
+        )
         sampler = instantiate(method.sampler)
         distance_function = instantiate(method.distance_function)
         recognition_method = instantiate(method.recognition_method)
@@ -109,7 +114,11 @@ def main(cfg):
         # create unique method name
         method_name = (
             create_method_name(
-                method, sampler, template_pooling, distance_function, recognition_method
+                method,
+                sampler,
+                gallery_template_pooling_strategy,
+                distance_function,
+                recognition_method,
             )
             + f"_{method.pretty_name}"
         )
@@ -128,7 +137,8 @@ def main(cfg):
             distance_function=distance_function,
             test_dataset=test_dataset,
             embeddings_path=embeddings_path,
-            template_pooling_strategy=template_pooling,
+            gallery_template_pooling_strategy=gallery_template_pooling_strategy,
+            probe_template_pooling_strategy=probe_template_pooling_strategy,
             use_detector_score=method.use_detector_score,
             use_two_galleries=cfg.use_two_galleries,
             recompute_template_pooling=cfg.recompute_template_pooling,
