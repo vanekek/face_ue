@@ -71,12 +71,13 @@ class Face_Fecognition_test:
     def pool_templates(self, cache_dir: str):
         cache_dir = Path(cache_dir)
         cache_dir.mkdir(parents=True, exist_ok=True)
-        class_name = self.template_pooling_strategy.__class__.__name__
-        pooled_templates_path = (
-            cache_dir
-            / f"template_pool_{class_name}_det_score_{str(self.use_detector_score)}_{self.test_dataset.dataset_name}.npz"
-        )
-        if pooled_templates_path.is_file() and self.recompute_template_pooling is False:
+        # class_name = self.template_pooling_strategy.__class__.__name__
+        # pooled_templates_path = (
+        #     cache_dir
+        #     / f"template_pool_{class_name}_det_score_{str(self.use_detector_score)}_{self.test_dataset.dataset_name}.npz"
+        # )
+        pooled_templates_path = 1
+        if self.recompute_template_pooling is False and pooled_templates_path.is_file():
             pooled_data = np.load(pooled_templates_path)
             self.template_pooled_emb = pooled_data["template_pooled_emb"]
             self.template_pooled_unc = pooled_data["template_pooled_unc"]
@@ -137,23 +138,25 @@ class Face_Fecognition_test:
                 )
                 self.gallery_pooled_templates[gallery_name] = {
                     "template_pooled_features": pooled_data[0],
-                    "template_pooled_unc": pooled_data[1],
+                    "template_pooled_data_unc": pooled_data[1],
                     "template_unique_ids": pooled_data[2],
+                    "template_subject_ids_sorted": gallery_subject_ids_sorted,
                 }
 
                 # 2. pool probe templates using 'gallery_name' gallery
-
+                print("Computing similarity...")
                 similarity = self.distance_function(
-                    probe_features,
+                    probe_features[:, np.newaxis, :],
                     probe_kappa,
                     self.gallery_pooled_templates[gallery_name][
                         "template_pooled_features"
                     ],
-                    self.gallery_pooled_templates[gallery_name]["template_pooled_unc"],
+                    self.gallery_pooled_templates[gallery_name][
+                        "template_pooled_data_unc"
+                    ],
                 )
 
                 self.recognition_method.setup(similarity)
-                predicted_id, was_rejected = self.recognition_method.predict()
                 predicted_unc = self.recognition_method.predict_uncertainty(probe_kappa)
                 probe_pooled_data = self.probe_template_pooling_strategy(
                     probe_features,
@@ -167,14 +170,15 @@ class Face_Fecognition_test:
                     "template_pooled_features": probe_pooled_data[0],
                     "template_pooled_data_unc": probe_pooled_data[1],
                     "template_unique_ids": probe_pooled_data[2],
+                    "template_subject_ids_sorted": probe_subject_ids_sorted,
                 }
 
-            np.savez(
-                pooled_templates_path,
-                template_pooled_emb=self.template_pooled_emb,
-                template_pooled_unc=self.template_pooled_unc,
-                template_ids=self.template_ids,
-            )
+            # np.savez(
+            #     pooled_templates_path,
+            #     template_pooled_emb=self.template_pooled_emb,
+            #     template_pooled_unc=self.template_pooled_unc,
+            #     template_ids=self.template_ids,
+            # )
 
     def get_template_subsets(
         self,
@@ -182,29 +186,27 @@ class Face_Fecognition_test:
         choose_templates: np.ndarray,
     ):
         assert subject_ids.shape[0] == choose_templates.shape[0]
-        unique_templates = np.unique(choose_templates)
+        unique_templates, indices = np.unique(choose_templates, return_index=True)
+        unique_subject_ids = subject_ids[indices]
         templates_emb_subset = []
         template_uncertainty_subset = []
         medias_subset = []
-        subject_ids_sorted = []
         for uqt in unique_templates:
-            ind_t = self.template_ids == uqt
+            ind_t = self.test_dataset.templates == uqt
             templates_emb_subset.append(self.image_input_feats[ind_t])
             template_uncertainty_subset.append(self.unc[ind_t])
             medias_subset.append(self.test_dataset.medias[ind_t])
-            subject_ids_sorted.append(subject_ids[ind_t])
         templates_emb_subset = np.concatenate(templates_emb_subset, axis=0)
         template_uncertainty_subset = np.concatenate(
             template_uncertainty_subset, axis=0
         )
         medias_subset = np.concatenate(medias_subset, axis=0)
-        subject_ids_sorted = np.concatenate(subject_ids_sorted, axis=0)
 
         return (
             templates_emb_subset,
             template_uncertainty_subset,
             medias_subset,
-            subject_ids_sorted,
+            unique_subject_ids,
         )
 
     def predict_and_compute_metrics(self):
@@ -219,48 +221,30 @@ class Face_Fecognition_test:
         ):
             used_galleries += ["g2"]
 
-        galleries_data = [
-            self.get_template_subsets(
-                self.template_pooled_emb,
-                self.template_pooled_unc,
-                getattr(self.test_dataset, f"{g}_templates"),
-                getattr(self.test_dataset, f"{g}_ids"),
-            )
-            for g in used_galleries
-        ]
-        (
-            probe_templates_feature,
-            probe_template_unc,
-            probe_unique_ids,
-        ) = self.get_template_subsets(
-            self.template_pooled_emb,
-            self.template_pooled_unc,
-            self.test_dataset.probe_templates,
-            self.test_dataset.probe_ids,
-        )
-
-        # sample probe feature vectors
-        probe_templates_feature = self.sampler(
-            probe_templates_feature,
-            probe_template_unc,
-        )
         metrics = {gallery: {} for gallery in used_galleries}
         unc_metrics = {gallery: {} for gallery in used_galleries}
-        for gallery_name, (g_templates_feature, g_template_unc, g_unique_ids) in zip(
-            used_galleries, galleries_data
-        ):
+
+        for gallery_name in used_galleries:
+            # sample probe feature vectors
+            probe_templates_feature = self.sampler(
+                self.probe_pooled_templates[gallery_name]["template_pooled_features"],
+                self.probe_pooled_templates[gallery_name]["template_pooled_data_unc"],
+            )
+
             similarity = self.distance_function(
                 probe_templates_feature,
-                probe_template_unc,
-                g_templates_feature,
-                g_template_unc,
+                self.probe_pooled_templates[gallery_name]["template_pooled_data_unc"],
+                self.gallery_pooled_templates[gallery_name]["template_pooled_features"],
+                self.gallery_pooled_templates[gallery_name]["template_pooled_data_unc"],
             )
 
             # setup osr method and predict
             self.recognition_method.setup(similarity)
             predicted_id, was_rejected = self.recognition_method.predict()
             predicted_unc = self.recognition_method.predict_uncertainty(
-                probe_template_unc  # need to use data uncertainty only
+                self.probe_pooled_templates[gallery_name][
+                    "template_pooled_data_unc"
+                ]  # need to use data uncertainty only
             )
 
             for metric in self.recognition_metrics[self.task_type]:
@@ -268,8 +252,12 @@ class Face_Fecognition_test:
                     metric(
                         predicted_id=predicted_id,
                         was_rejected=was_rejected,
-                        g_unique_ids=g_unique_ids,
-                        probe_unique_ids=probe_unique_ids,
+                        g_unique_ids=self.gallery_pooled_templates[gallery_name][
+                            "template_subject_ids_sorted"
+                        ],
+                        probe_unique_ids=self.probe_pooled_templates[gallery_name][
+                            "template_subject_ids_sorted"
+                        ],
                     )
                 )
 
@@ -280,8 +268,12 @@ class Face_Fecognition_test:
                     unc_metric(
                         predicted_id=predicted_id,
                         was_rejected=was_rejected,
-                        g_unique_ids=g_unique_ids,
-                        probe_unique_ids=probe_unique_ids,
+                        g_unique_ids=self.gallery_pooled_templates[gallery_name][
+                            "template_subject_ids_sorted"
+                        ],
+                        probe_unique_ids=self.probe_pooled_templates[gallery_name][
+                            "template_subject_ids_sorted"
+                        ],
                         predicted_unc=predicted_unc,
                     )
                 )
