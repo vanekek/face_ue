@@ -112,9 +112,10 @@ class PosteriorProbability(OpenSetMethod):
             data_uncertainty = data_uncertainty[:, 0]
         else:
             raise NotImplemented
-        min_kappa = 400
-        max_kappa = 2000
+        min_kappa = 150
+        max_kappa = 2700
         data_uncertainty_norm = (data_uncertainty - min_kappa) / (max_kappa - min_kappa)
+        assert np.sum(data_uncertainty_norm < 0) == 0
         #data_uncertainty_norm = data_uncertainty
         data_conf_norm = (data_uncertainty_norm) ** (1 / self.T_data_unc)
 
