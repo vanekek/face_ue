@@ -186,8 +186,11 @@ class Face_Fecognition_test:
         choose_templates: np.ndarray,
     ):
         assert subject_ids.shape[0] == choose_templates.shape[0]
+        choose_templates_sort_id = np.argsort(choose_templates)
+        choose_templates = choose_templates[choose_templates_sort_id]
+        subject_ids_sorted = subject_ids[choose_templates_sort_id]
         unique_templates, indices = np.unique(choose_templates, return_index=True)
-        unique_subject_ids = subject_ids[indices]
+        unique_subject_ids = subject_ids_sorted[indices]
         templates_emb_subset = []
         template_uncertainty_subset = []
         medias_subset = []

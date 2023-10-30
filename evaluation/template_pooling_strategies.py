@@ -73,6 +73,7 @@ class PoolingSCF(AbstractTemplatePooling):
         templates: np.ndarray,
         medias: np.ndarray,
     ):
+        templates = np.sort(templates)
         unique_templates, indices = np.unique(
             templates, return_index=True
         )  # unique_templates, indices = np.unique(choose_templates, return_index=True)
@@ -136,6 +137,7 @@ class PoolingProb(AbstractTemplatePooling):
         medias: np.ndarray,
     ):
         # here we aggregate probe templates using conf and also return mean data conf to get pure aggregated scf conf
+        templates = np.sort(templates)
         assert templates.shape[0] == img_feats.shape[0]
         assert templates.shape[0] == conf.shape[0]
         assert templates.shape[0] == data_conf.shape[0]
@@ -146,6 +148,7 @@ class PoolingProb(AbstractTemplatePooling):
         assert conf.shape == data_conf.shape
 
         template_feats = np.zeros((len(unique_templates), img_feats.shape[1]))
+        template_feats_data_conf = np.zeros((len(unique_templates), img_feats.shape[1]))
         templates_conf = np.zeros((len(unique_templates), conf.shape[1]))
         templates_data_conf = np.zeros((len(unique_templates), data_conf.shape[1]))
 
@@ -163,6 +166,7 @@ class PoolingProb(AbstractTemplatePooling):
                 face_medias, return_counts=True
             )
             media_norm_feats = []
+            media_norm_feats_data_conf = []
             conf_in_template = []
             data_conf_in_template = []
 
@@ -170,15 +174,17 @@ class PoolingProb(AbstractTemplatePooling):
                 (ind_m,) = np.where(face_medias == u)
                 if ct == 1:
                     media_norm_feats += [face_norm_feats[ind_m]]
+                    media_norm_feats_data_conf += [face_norm_feats[ind_m]]
                     conf_in_template += [conf_template[ind_m]]
                     data_conf_in_template += [data_conf_template[ind_m]]
                 else:  # image features from the same video will be aggregated into one feature
-                    data_conf_in_template += [
-                        np.mean(data_conf_template[ind_m], 0, keepdims=True)
-                    ]
                     conf_in_template += [
                         np.mean(conf_template[ind_m], 0, keepdims=True)
                     ]
+                    data_conf_in_template += [
+                        np.mean(data_conf_template[ind_m], 0, keepdims=True)
+                    ]
+                    
                     media_norm_feats += [
                         np.sum(
                             face_norm_feats[ind_m] * conf_template[ind_m],
@@ -187,13 +193,26 @@ class PoolingProb(AbstractTemplatePooling):
                         )
                         / np.sum(conf_template[ind_m])
                     ]
+                    media_norm_feats_data_conf += [
+                        np.sum(
+                            face_norm_feats[ind_m] * data_conf_template[ind_m],
+                            axis=0,
+                            keepdims=True,
+                        )
+                        / np.sum(data_conf_template[ind_m])
+                    ]
             media_norm_feats = np.concatenate(media_norm_feats)
+            media_norm_feats_data_conf = np.concatenate(media_norm_feats_data_conf)
             data_conf_in_template = np.concatenate(data_conf_in_template)
             conf_in_template = np.concatenate(conf_in_template)
 
             template_feats[count_template] = np.sum(
                 media_norm_feats * conf_in_template, axis=0
             ) / np.sum(conf_in_template)
+
+            template_feats_data_conf[count_template] = np.sum(
+                media_norm_feats_data_conf * data_conf_in_template, axis=0
+            ) / np.sum(data_conf_in_template)
 
             final_data_conf_in_template = np.mean(data_conf_in_template, axis=0)
 
