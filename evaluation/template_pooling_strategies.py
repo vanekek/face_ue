@@ -184,7 +184,7 @@ class PoolingProb(AbstractTemplatePooling):
                     data_conf_in_template += [
                         np.mean(data_conf_template[ind_m], 0, keepdims=True)
                     ]
-                    
+
                     media_norm_feats += [
                         np.sum(
                             face_norm_feats[ind_m] * conf_template[ind_m],

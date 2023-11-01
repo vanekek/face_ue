@@ -116,7 +116,7 @@ class PosteriorProbability(OpenSetMethod):
         max_kappa = 2700
         data_uncertainty_norm = (data_uncertainty - min_kappa) / (max_kappa - min_kappa)
         assert np.sum(data_uncertainty_norm < 0) == 0
-        #data_uncertainty_norm = data_uncertainty
+        # data_uncertainty_norm = data_uncertainty
         data_conf_norm = (data_uncertainty_norm) ** (1 / self.T_data_unc)
 
         if self.aggregation == "sum":
