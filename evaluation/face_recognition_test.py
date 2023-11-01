@@ -63,7 +63,7 @@ class Face_Fecognition_test:
         )
         # pool templates
 
-        self.pool_templates(cache_dir="/app/cache/template_cache")
+        self.pool_templates(cache_dir="/app/cache/template_cache_new")
 
         assert self.image_input_feats.shape[0] == self.unc.shape[0]
         assert self.image_input_feats.shape[0] == self.test_dataset.medias.shape[0]
@@ -71,11 +71,15 @@ class Face_Fecognition_test:
     def pool_templates(self, cache_dir: str):
         cache_dir = Path(cache_dir)
         cache_dir.mkdir(parents=True, exist_ok=True)
-        # class_name = self.template_pooling_strategy.__class__.__name__
         # pooled_templates_path = (
         #     cache_dir
         #     / f"template_pool_{class_name}_det_score_{str(self.use_detector_score)}_{self.test_dataset.dataset_name}.npz"
         # )
+        template_subsets_path = (
+            cache_dir
+            / f"template_subsets_{self.probe_template_pooling_strategy.__class__.__name__}_{self.test_dataset.dataset_name}"
+        )
+        template_subsets_path.mkdir(parents=True, exist_ok=True)
         pooled_templates_path = 1
         if self.recompute_template_pooling is False and pooled_templates_path.is_file():
             pooled_data = np.load(pooled_templates_path)
@@ -107,15 +111,30 @@ class Face_Fecognition_test:
                 gallery_name: {} for gallery_name in used_galleries
             }
 
-            (
-                probe_features,
-                probe_unc,
-                probe_medias,
-                probe_subject_ids_sorted,
-            ) = self.get_template_subsets(
-                self.test_dataset.probe_ids,
-                self.test_dataset.probe_templates,
-            )
+            if (template_subsets_path / 'probe.npz').is_file():
+                print('Loading...')
+                data = np.load(template_subsets_path / 'probe.npz')
+                probe_features = data['probe_features']
+                probe_unc = data['probe_unc']
+                probe_medias = data['probe_medias']
+                probe_subject_ids_sorted = data['probe_subject_ids_sorted']
+            else:
+                (
+                    probe_features,
+                    probe_unc,
+                    probe_medias,
+                    probe_subject_ids_sorted,
+                ) = self.get_template_subsets(
+                    self.test_dataset.probe_ids,
+                    self.test_dataset.probe_templates,
+                )
+                np.savez(
+                    template_subsets_path / 'probe.npz',
+                    probe_features=probe_features,
+                    probe_unc=probe_unc,
+                    probe_medias=probe_medias,
+                    probe_subject_ids_sorted=probe_subject_ids_sorted,
+                )
             assert probe_unc.shape[1] == 1  # working with scf unc
             probe_kappa = np.exp(probe_unc)
 
@@ -124,12 +143,24 @@ class Face_Fecognition_test:
                     self.test_dataset, f"{gallery_name}_templates"
                 )
                 gallery_subject_ids = getattr(self.test_dataset, f"{gallery_name}_ids")
-                (
-                    gallery_features,
-                    gallery_unc,
-                    gallery_medias,
-                    gallery_subject_ids_sorted,
-                ) = self.get_template_subsets(gallery_subject_ids, gallery_templates)
+                if (template_subsets_path / f'gallery_{gallery_name}.npz').is_file():
+                    print('Loading...')
+                    data = np.load(template_subsets_path / f'gallery_{gallery_name}.npz')
+                else:
+
+                    (
+                        gallery_features,
+                        gallery_unc,
+                        gallery_medias,
+                        gallery_subject_ids_sorted,
+                    ) = self.get_template_subsets(gallery_subject_ids, gallery_templates)
+                    np.savez(
+                        template_subsets_path / f'gallery_{gallery_name}.npz',
+                        gallery_features=gallery_features,
+                        gallery_unc=gallery_unc,
+                        gallery_medias=gallery_medias,
+                        gallery_subject_ids_sorted=gallery_subject_ids_sorted,
+                    )
                 # 1. pool selected gallery templates
                 assert gallery_unc.shape[1] == 1  # working with scf unc
                 kappa = np.exp(gallery_unc)
@@ -144,27 +175,37 @@ class Face_Fecognition_test:
                 }
 
                 # 2. pool probe templates using 'gallery_name' gallery
-                print("Computing similarity...")
-                similarity = self.distance_function(
-                    probe_features[:, np.newaxis, :],
-                    probe_kappa,
-                    self.gallery_pooled_templates[gallery_name][
-                        "template_pooled_features"
-                    ],
-                    self.gallery_pooled_templates[gallery_name][
-                        "template_pooled_data_unc"
-                    ],
-                )
+                if 'PoolingProb' in self.probe_template_pooling_strategy.__class__.__name__:
+                    print("Computing similarity...")
+                    similarity = self.distance_function(
+                        probe_features[:, np.newaxis, :],
+                        probe_kappa,
+                        self.gallery_pooled_templates[gallery_name][
+                            "template_pooled_features"
+                        ],
+                        self.gallery_pooled_templates[gallery_name][
+                            "template_pooled_data_unc"
+                        ],
+                    )
 
-                self.recognition_method.setup(similarity)
-                predicted_unc = self.recognition_method.predict_uncertainty(probe_kappa)
-                probe_pooled_data = self.probe_template_pooling_strategy(
-                    probe_features,
-                    -predicted_unc,
-                    probe_kappa,
-                    self.test_dataset.probe_templates,
-                    probe_medias,
-                )
+                    self.recognition_method.setup(similarity)
+                    predicted_unc = self.recognition_method.predict_uncertainty(probe_kappa)
+                    probe_pooled_data = self.probe_template_pooling_strategy(
+                        probe_features,
+                        -predicted_unc,
+                        probe_kappa,
+                        self.test_dataset.probe_templates,
+                        probe_medias,
+                    )
+                    
+                else:
+                    probe_pooled_data = self.probe_template_pooling_strategy(
+                        probe_features,
+                        probe_kappa,
+                        self.test_dataset.probe_templates,
+                        probe_medias,
+                    )
+
 
                 self.probe_pooled_templates[gallery_name] = {
                     "template_pooled_features": probe_pooled_data[0],

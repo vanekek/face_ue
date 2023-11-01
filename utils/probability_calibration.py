@@ -16,6 +16,14 @@ from utils.reliability_diagrams import reliability_diagram, compute_calibration
 import torch
 from scipy.optimize import fsolve, minimize
 
+def train_T_scipy(cfg,
+    recognition_method,
+    true_id,
+    is_seen,
+    sim_tensor,
+    probe_unique_ids,
+    g_unique_ids,):
+    pass
 
 def train_T(
     cfg,
@@ -74,13 +82,18 @@ def train_T_ece(cfg, conf_id, true_labels, pred_labels):
 def main(cfg):
     methods, method_task_type = init_methods(cfg)
     tasks_names = list(set(method_task_type))
-
+    assert len(methods) == 1
     # instantiate datasets
     test_datasets = instantiate_list(cfg.test_datasets)
     dataset_names = [test_dataset.dataset_name for test_dataset in test_datasets]
 
     # instantiate method
-    template_pooling = instantiate(methods[0].template_pooling_strategy)
+    gallery_template_pooling_strategy = instantiate(
+        methods[0].gallery_template_pooling_strategy
+    )
+    probe_template_pooling_strategy = instantiate(
+        methods[0].probe_template_pooling_strategy
+    )
     sampler = instantiate(methods[0].sampler)
     distance_function = instantiate(methods[0].distance_function)
 
@@ -99,7 +112,8 @@ def main(cfg):
             distance_function=distance_function,
             test_dataset=test_dataset,
             embeddings_path=embeddings_path,
-            template_pooling_strategy=template_pooling,
+            gallery_template_pooling_strategy=gallery_template_pooling_strategy,
+            probe_template_pooling_strategy=probe_template_pooling_strategy,
             use_detector_score=methods[0].use_detector_score,
             use_two_galleries=cfg.use_two_galleries,
             recompute_template_pooling=cfg.recompute_template_pooling,
@@ -110,38 +124,28 @@ def main(cfg):
         used_galleries = ["g1"]
         if cfg.use_two_galleries:
             used_galleries += ["g2"]
-        galleries_data = [
-            tt.get_template_subsets(
-                getattr(tt.test_dataset, f"{g}_templates"),
-                getattr(tt.test_dataset, f"{g}_ids"),
-            )
-            for g in used_galleries
-        ]
-        (
-            probe_templates_feature,
-            probe_template_unc,
-            probe_unique_ids,
-        ) = tt.get_template_subsets(
-            tt.test_dataset.probe_templates, tt.test_dataset.probe_ids
-        )
-        probe_unique_templates = np.unique(
-            tt.test_dataset.probe_templates, return_index=False
-        )
 
-        # sample probe feature vectors
-        probe_templates_feature = tt.sampler(
-            probe_templates_feature,
-            probe_template_unc,
-        )
-        for gallery_name, (g_templates_feature, g_template_unc, g_unique_ids) in zip(
-            used_galleries, galleries_data
-        ):
+        for gallery_name in used_galleries:
+             # sample probe feature vectors
+            probe_templates_feature = tt.sampler(
+                tt.probe_pooled_templates[gallery_name]["template_pooled_features"],
+                tt.probe_pooled_templates[gallery_name]["template_pooled_data_unc"],
+            )
             similarity = tt.distance_function(
                 probe_templates_feature,
-                probe_template_unc,
-                g_templates_feature,
-                g_template_unc,
+                tt.probe_pooled_templates[gallery_name]["template_pooled_data_unc"],
+                tt.gallery_pooled_templates[gallery_name]["template_pooled_features"],
+                tt.gallery_pooled_templates[gallery_name]["template_pooled_data_unc"],
             )
+            g_unique_ids = tt.gallery_pooled_templates[gallery_name][
+                            "template_subject_ids_sorted"
+                        ]
+            probe_unique_ids = tt.probe_pooled_templates[gallery_name][
+                            "template_subject_ids_sorted"
+                        ]
+            probe_template_unc = tt.probe_pooled_templates[gallery_name][
+                    "template_pooled_data_unc"
+                ]
             for method in methods:
                 recognition_method = instantiate(method.recognition_method)
                 gallery_ids_with_imposter_id = np.concatenate([g_unique_ids, [-1]])
