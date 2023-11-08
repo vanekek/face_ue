@@ -2,8 +2,8 @@ hydra:
   run:
     dir: ${exp_dir}
 
-exp_dir: outputs/experiments/vmf_pool_${default_kappa}
-use_two_galleries: True
+exp_dir: outputs/experiments/vmf_pool_hand_temp
+use_two_galleries: False
 recompute_template_pooling: True
 metric_pretty_name_path: /app/configs/latex_tables/pretty_names/column_pretty_name_unc.yaml
 
@@ -53,6 +53,8 @@ open_set_identification_uncertainty_metrics:
 
 default_kappa: 400
 default_beta: 0.5
+
+tau_list: [0.17777777777777778,  0.25555555555555554,  0.33333333333333337,  0.4111111111111111]
 open_set_identification_methods:
 
   - embeddings: scf
@@ -69,7 +71,7 @@ open_set_identification_methods:
     recognition_method:
       _target_: evaluation.open_set_methods.posterior_prob_based.PosteriorProbability
       class_model: vMF
-      kappa: ${default_kappa}
+      kappa: ${tau_list}
       beta: ${default_beta}
       uncertainty_type: maxprob
       alpha: 1
@@ -77,6 +79,7 @@ open_set_identification_methods:
       process_unc: prob
       T: 5.3757
       T_data_unc: 1
+      kappa_is_tau: True
     pretty_name: "SCF pool"
 
   - embeddings: scf
@@ -93,61 +96,13 @@ open_set_identification_methods:
     recognition_method:
       _target_: evaluation.open_set_methods.posterior_prob_based.PosteriorProbability
       class_model: vMF
-      kappa: ${default_kappa}
+      kappa: ${tau_list}
       beta: ${default_beta}
       uncertainty_type: maxprob
       alpha: 0.5
       aggregation: sum
       process_unc: prob
-      T: 5.3757
-      T_data_unc: 20
-    pretty_name: "vmf pool scf 20"
-
-  - embeddings: scf
-    gallery_template_pooling_strategy:
-      _target_: evaluation.template_pooling_strategies.PoolingSCF
-    probe_template_pooling_strategy:
-      _target_: evaluation.template_pooling_strategies.PoolingProb
-    use_detector_score: True
-    sampler:
-      _target_: evaluation.samplers.VonMisesFisher
-      num_samples: 0 # set 0 to use mean of distr as one sample
-    distance_function: 
-      _target_: evaluation.distance_functions.open_set_identification.CosineSim
-    recognition_method:
-      _target_: evaluation.open_set_methods.posterior_prob_based.PosteriorProbability
-      class_model: vMF
-      kappa: ${default_kappa}
-      beta: ${default_beta}
-      uncertainty_type: maxprob
-      alpha: 0.5
-      aggregation: sum
-      process_unc: prob
-      T: 5.3757
-      T_data_unc: 10
-    pretty_name: "vmf pool scf 10"
-
-  - embeddings: scf
-    gallery_template_pooling_strategy:
-      _target_: evaluation.template_pooling_strategies.PoolingSCF
-    probe_template_pooling_strategy:
-      _target_: evaluation.template_pooling_strategies.PoolingProb
-    use_detector_score: True
-    sampler:
-      _target_: evaluation.samplers.VonMisesFisher
-      num_samples: 0 # set 0 to use mean of distr as one sample
-    distance_function: 
-      _target_: evaluation.distance_functions.open_set_identification.CosineSim
-    recognition_method:
-      _target_: evaluation.open_set_methods.posterior_prob_based.PosteriorProbability
-      class_model: vMF
-      kappa: ${default_kappa}
-      beta: ${default_beta}
-      uncertainty_type: maxprob
-      alpha: 0.5
-      aggregation: sum
-      process_unc: prob
-      T: 5.3757
-      T_data_unc: 1
-    pretty_name: "vmf pool scf 1"
-
+      T: [4.1523861263939175, 5.045640877040361, 5.353777068395573,  7.813868086421888]
+      T_data_unc: [1, 1.7260134360147232, 22.79363133781877, 287.3916346890816]
+      kappa_is_tau: True
+    pretty_name: "vmf pool"

@@ -158,6 +158,7 @@ def plot_dir_far_scores(scores, names, y_label: str, marker=""):
 
     plt.xlabel("False Alarm Rate")
     plt.xlim([0.0001, 1])
+    # plt.xlim([0.95, 1])
     plt.xscale("log")
     plt.ylabel(y_label)
     # plt.ylim([0, 1])

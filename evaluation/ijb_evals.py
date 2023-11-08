@@ -2,6 +2,7 @@
 from evaluation.uncertainty_metrics import DisposeBasedOnUnc
 from pathlib import Path
 import hydra
+import omegaconf
 from omegaconf import OmegaConf
 from hydra.utils import instantiate
 import numpy as np
@@ -61,6 +62,42 @@ def init_methods(cfg):
     return methods, method_types
 
 
+def multiply_methods(cfg, methods, method_task_type):
+    assert len(list(set(method_task_type))) == 1  # only osr
+    if "tau_list" not in cfg:
+        return methods, method_task_type
+    new_methods = []
+    for method in methods:
+        assert method.recognition_method.kappa_is_tau
+
+        if type(method.recognition_method.T) != omegaconf.listconfig.ListConfig:
+            method.recognition_method.T = [method.recognition_method.T] * len(
+                method.recognition_method.kappa
+            )
+        if (
+            type(method.recognition_method.T_data_unc)
+            != omegaconf.listconfig.ListConfig
+        ):
+            method.recognition_method.T_data_unc = [
+                method.recognition_method.T_data_unc
+            ] * len(method.recognition_method.kappa)
+        for tau, T, T_data_unc in zip(
+            method.recognition_method.kappa,
+            method.recognition_method.T,
+            method.recognition_method.T_data_unc,
+        ):
+            new_method = method.copy()
+            new_method.recognition_method.kappa = tau
+            new_method.recognition_method.T = T
+            new_method.recognition_method.T_data_unc = T_data_unc
+            new_method.pretty_name = (
+                method.pretty_name
+                + f"_tau-{np.round(tau, 2)}_T-{np.round(T, 2)}_T_data-{np.round(T_data_unc, 2)}"
+            )
+            new_methods.append(new_method)
+    return new_methods, [method_task_type[0]] * len(new_methods)
+
+
 @hydra.main(
     config_path=str(
         Path(__file__).resolve().parents[1] / "configs/uncertainty_benchmark"
@@ -71,6 +108,7 @@ def init_methods(cfg):
 def main(cfg):
     # define methods
     methods, method_task_type = init_methods(cfg)
+    methods, method_task_type = multiply_methods(cfg, methods, method_task_type)
     tasks_names = list(set(method_task_type))
 
     # instantiate metrics
