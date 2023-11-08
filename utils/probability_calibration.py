@@ -15,15 +15,36 @@ import numpy as np
 from utils.reliability_diagrams import reliability_diagram, compute_calibration
 import torch
 from scipy.optimize import fsolve, minimize
+from itertools import product
 
-def train_T_scipy(cfg,
+
+def train_T_scipy(
+    cfg,
     recognition_method,
     true_id,
     is_seen,
     sim_tensor,
     probe_unique_ids,
-    g_unique_ids,):
-    pass
+    g_unique_ids,
+    tau,
+):
+    true_id_class_index = np.zeros_like(true_id)
+    true_id_class_index[~is_seen] = sim_tensor.shape[2]
+
+    true_id_class_index[is_seen] = np.argmax(
+        probe_unique_ids[is_seen, np.newaxis] == g_unique_ids[np.newaxis, :],
+        axis=1,
+    )
+    true_id_class_index_tensor = torch.tensor(true_id_class_index, dtype=torch.long)
+
+    res = minimize(
+        recognition_method.posterior_prob.compute_nll,
+        1,
+        (sim_tensor, true_id_class_index_tensor),
+    )
+    print(f"Optimal T: {res.x} for tau: {tau}")
+    return res.x[0]
+
 
 def train_T(
     cfg,
@@ -126,7 +147,7 @@ def main(cfg):
             used_galleries += ["g2"]
 
         for gallery_name in used_galleries:
-             # sample probe feature vectors
+            # sample probe feature vectors
             probe_templates_feature = tt.sampler(
                 tt.probe_pooled_templates[gallery_name]["template_pooled_features"],
                 tt.probe_pooled_templates[gallery_name]["template_pooled_data_unc"],
@@ -138,16 +159,19 @@ def main(cfg):
                 tt.gallery_pooled_templates[gallery_name]["template_pooled_data_unc"],
             )
             g_unique_ids = tt.gallery_pooled_templates[gallery_name][
-                            "template_subject_ids_sorted"
-                        ]
+                "template_subject_ids_sorted"
+            ]
             probe_unique_ids = tt.probe_pooled_templates[gallery_name][
-                            "template_subject_ids_sorted"
-                        ]
+                "template_subject_ids_sorted"
+            ]
             probe_template_unc = tt.probe_pooled_templates[gallery_name][
-                    "template_pooled_data_unc"
-                ]
-            for method in methods:
+                "template_pooled_data_unc"
+            ]
+            taus = np.linspace(cfg.tau_range[0], cfg.tau_range[1], cfg.tau_range[2])
+
+            for method, tau in product(methods, taus):
                 recognition_method = instantiate(method.recognition_method)
+                recognition_method.kappa = tau
                 gallery_ids_with_imposter_id = np.concatenate([g_unique_ids, [-1]])
                 sim_tensor = torch.tensor(similarity)
                 recognition_method.setup(sim_tensor)
@@ -171,14 +195,10 @@ def main(cfg):
                     if cfg.train_T:
                         train_T_ece(cfg, probe_template_unc[:, 0], true_id, predict_id)
                 else:
-                    class_log_probs = recognition_method.get_class_log_probs(similarity)
-
-                    predict_id = gallery_ids_with_imposter_id[
-                        np.argmax(class_log_probs, axis=-1)
-                    ]
-                    conf_id = np.exp(np.max(class_log_probs, axis=-1))
+                    T = recognition_method.T
                     if cfg.train_T:
-                        train_T(
+                        trainer = train_T_scipy
+                        T = trainer(
                             cfg,
                             recognition_method,
                             true_id,
@@ -186,7 +206,17 @@ def main(cfg):
                             sim_tensor,
                             probe_unique_ids,
                             g_unique_ids,
+                            tau,
                         )
+
+                    recognition_method.kappa = tau
+                    recognition_method.T = T
+                    class_log_probs = recognition_method.get_class_log_probs(similarity)
+
+                    predict_id = gallery_ids_with_imposter_id[
+                        np.argmax(class_log_probs, axis=-1)
+                    ]
+                    conf_id = np.exp(np.max(class_log_probs, axis=-1))
 
                 plt.style.use("seaborn")
 
@@ -199,7 +229,9 @@ def main(cfg):
                 plt.rc("axes", titlesize=16)
                 plt.rc("figure", titlesize=16)
 
-                title = method.pretty_name
+                title = (
+                    method.pretty_name + f"T:{np.round(T, 4)},tau:{np.round(tau, 2)}"
+                )
 
                 fig = reliability_diagram(
                     true_id,

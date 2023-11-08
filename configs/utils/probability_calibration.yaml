@@ -25,6 +25,8 @@ test_datasets:
   #   dataset_name: survFace
   #   dataset_path: /app/datasets/QMUL-SurvFace/Face_Identification_Test_Set
 
+tau_range: [0.1, 0.45, 10]
+
 default_kappa: 400
 default_beta: 0.5
 train_T: True
@@ -55,7 +57,8 @@ open_set_identification_methods:
       process_unc: prob
       T: 5.457409422052744
       T_data_unc: 1
-    pretty_name: "vMF_T-5.457409422052744"
+      kappa_is_tau: True
+    pretty_name: "vMF"
 
   # - embeddings: scf
   #   template_pooling_strategy:

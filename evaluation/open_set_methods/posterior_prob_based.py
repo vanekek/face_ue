@@ -19,6 +19,7 @@ class PosteriorProbability(OpenSetMethod):
         class_model: str,
         T: Union[float, List[float]],
         T_data_unc: float,
+        kappa_is_tau: bool,
     ) -> None:
         super().__init__()
         self.kappa = kappa
@@ -32,6 +33,7 @@ class PosteriorProbability(OpenSetMethod):
         self.C = 0.5
         self.T = T
         self.T_data_unc = T_data_unc
+        self.kappa_is_tau = kappa_is_tau
 
     def setup(self, similarity_matrix: np.ndarray):
         self.similarity_matrix = similarity_matrix
@@ -41,6 +43,7 @@ class PosteriorProbability(OpenSetMethod):
                 beta=self.beta,
                 class_model="vMF",
                 K=similarity_matrix.shape[-1],
+                kappa_is_tau=self.kappa_is_tau,
             )
             self.posterior_prob_power = PosteriorProb(
                 kappa=self.kappa,
@@ -67,6 +70,7 @@ class PosteriorProbability(OpenSetMethod):
                 beta=self.beta,
                 class_model=self.class_model,
                 K=similarity_matrix.shape[-1],
+                kappa_is_tau=self.kappa_is_tau,
             )
             self.all_classes_log_prob = (
                 self.posterior_prob.compute_all_class_log_probabilities(
@@ -130,7 +134,13 @@ class PosteriorProbability(OpenSetMethod):
 
 class PosteriorProb:
     def __init__(
-        self, kappa: float, beta: float, class_model: str, K: int, d: int = 512
+        self,
+        kappa: float,
+        beta: float,
+        class_model: str,
+        K: int,
+        d: int = 512,
+        kappa_is_tau: bool = False,
     ) -> None:
         """
         Performes K+1 class classification, with K being number of gallery classed and
@@ -144,11 +154,23 @@ class PosteriorProb:
         :param kappa: koncentration for von Mises-Fisher (vMF) distribution
         :param beta: prior probability of ood sample, p(K+1)
         """
-        self.kappa = kappa
         self.beta = beta
         self.n = d / 2
         self.K = K
         self.class_model = class_model
+        self.log_prior = np.log(self.beta / ((1 - self.beta) / self.K))
+        if kappa_is_tau:
+            # in this case we need numericaly to find kappa by tau
+            tau = kappa
+
+            self.kappa = fsolve(
+                self.compute_f_kappa, 200, (tau, self.log_prior, self.n)
+            )[0]
+            print(f"Tau {np.round(tau, 2)}, kappa {np.round(self.kappa, 2)}")
+            # print(f'Error {self.compute_f_kappa(self.kappa, tau, self.log_prior, self.n)}')
+        else:
+            self.kappa = kappa
+
         self.log_uniform_dencity = (
             loggamma(self.n, dtype=np.float64) - np.log(2) - self.n * np.log(np.pi)
         )
@@ -159,16 +181,18 @@ class PosteriorProb:
                 np.log(ive(self.n - 1, self.kappa, dtype=np.float64)) + self.kappa
             )
             self.log_normalizer = (
-                (self.n - 1) * np.log(kappa) - self.n * np.log(2 * np.pi) - self.log_iv
+                (self.n - 1) * np.log(self.kappa)
+                - self.n * np.log(2 * np.pi)
+                - self.log_iv
             )
         elif self.class_model == "power":
             log_alpha_vmF = np.log(
                 hyp0f1(self.n, self.kappa**2 / 4, dtype=np.float64)
             )
-            self.log_prior = np.log(self.beta / ((1 - self.beta) / self.K))
-            self.shift = np.log(1 + (self.log_prior + log_alpha_vmF) / self.kappa)
+
+            shift = np.log(1 + (self.log_prior + log_alpha_vmF) / self.kappa)
             self.kappa_zero = fsolve(
-                self.compute_f_kappa_zero, 6, (self.shift, self.log_prior, d)
+                self.compute_f_kappa_zero, 6, (shift, self.log_prior, d)
             )[0]
 
             log_alpha_power = (
@@ -188,6 +212,11 @@ class PosteriorProb:
             )
         else:
             raise ValueError
+
+    @staticmethod
+    def compute_f_kappa(kappa, tau, log_prior, n):
+        log_alpha_vmF = np.log(hyp0f1(n, kappa**2 / 4, dtype=np.float64))
+        return (log_prior + log_alpha_vmF) / kappa - tau
 
     @staticmethod
     def compute_f_kappa_zero(kappa_zero, shift, log_prior, d):
@@ -223,10 +252,12 @@ class PosteriorProb:
         similarities: torch.tensor,
         true_label: torch.tensor,
     ):
+        if type(T) == np.ndarray:
+            T = torch.tensor(T, dtype=torch.float64)
         class_probs = self.compute_all_class_log_probabilities(similarities, T)[:, 0, :]
         loss = nn.NLLLoss()
         loss_value = loss(class_probs, true_label)
-        return loss_value
+        return loss_value.item()
 
     def compute_all_class_log_probabilities(
         self, similarities: np.ndarray, T: float = 1
