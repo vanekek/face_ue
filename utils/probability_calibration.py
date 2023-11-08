@@ -167,14 +167,14 @@ def main(cfg):
             probe_template_unc = tt.probe_pooled_templates[gallery_name][
                 "template_pooled_data_unc"
             ]
-            
 
             true_id = np.zeros(similarity.shape[0])
             is_seen = np.isin(probe_unique_ids, g_unique_ids)
             true_id[is_seen] = probe_unique_ids[is_seen]
             true_id[~is_seen] = -1
-            
+
             taus = np.linspace(cfg.tau_range[0], cfg.tau_range[1], cfg.tau_range[2])
+            temps = []
             for method, tau in product(methods, taus):
                 recognition_method = instantiate(method.recognition_method)
                 recognition_method.kappa = tau
@@ -194,11 +194,13 @@ def main(cfg):
                     # assert recognition_method.T_data_unc == 1
 
                     if cfg.train_T:
-                        T = train_T_ece(cfg, probe_template_unc[:, 0], true_id, predict_id)
+                        T = train_T_ece(
+                            cfg, probe_template_unc[:, 0], true_id, predict_id
+                        )
                         recognition_method.T_data_unc = T
                         conf_id = -recognition_method.predict_uncertainty(
-                        probe_template_unc
-                         )
+                            probe_template_unc
+                        )
                 else:
                     T = recognition_method.T
                     if cfg.train_T:
@@ -222,7 +224,7 @@ def main(cfg):
                         np.argmax(class_log_probs, axis=-1)
                     ]
                     conf_id = np.exp(np.max(class_log_probs, axis=-1))
-
+                temps.append(T)
                 plt.style.use("seaborn")
 
                 plt.rc("font", size=12)
@@ -256,6 +258,11 @@ def main(cfg):
                 )
                 fig.savefig(out_file, dpi=300)
                 plt.close(fig)
+            np.savez(
+                Path(cfg.exp_dir) / f"{method.pretty_name}_learned_temp.npz",
+                taus=taus,
+                temps=temps,
+            )
     print(cfg.exp_dir)
 
 

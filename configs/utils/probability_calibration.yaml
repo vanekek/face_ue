@@ -2,7 +2,7 @@ hydra:
   run:
     dir: ${exp_dir}
 
-exp_dir: outputs/calibration/ms1m_auto_calibration_scf_${default_kappa}
+exp_dir: outputs/calibration/ms1m_auto_temp_for_tau
 use_two_galleries: False
 recompute_template_pooling: True
 num_bins: 15
