@@ -92,7 +92,7 @@ def compute_ece(T, conf_id, true_labels, pred_labels, num_bins):
 def train_T_ece(cfg, conf_id, true_labels, pred_labels):
     res = minimize(compute_ece, 1, (conf_id, true_labels, pred_labels, cfg.num_bins))
     print(res.x)
-    pass
+    return res.x[0]
 
 
 @hydra.main(
@@ -167,19 +167,20 @@ def main(cfg):
             probe_template_unc = tt.probe_pooled_templates[gallery_name][
                 "template_pooled_data_unc"
             ]
-            taus = np.linspace(cfg.tau_range[0], cfg.tau_range[1], cfg.tau_range[2])
+            
 
+            true_id = np.zeros(similarity.shape[0])
+            is_seen = np.isin(probe_unique_ids, g_unique_ids)
+            true_id[is_seen] = probe_unique_ids[is_seen]
+            true_id[~is_seen] = -1
+            
+            taus = np.linspace(cfg.tau_range[0], cfg.tau_range[1], cfg.tau_range[2])
             for method, tau in product(methods, taus):
                 recognition_method = instantiate(method.recognition_method)
                 recognition_method.kappa = tau
                 gallery_ids_with_imposter_id = np.concatenate([g_unique_ids, [-1]])
                 sim_tensor = torch.tensor(similarity)
                 recognition_method.setup(sim_tensor)
-
-                true_id = np.zeros(similarity.shape[0])
-                is_seen = np.isin(probe_unique_ids, g_unique_ids)
-                true_id[is_seen] = probe_unique_ids[is_seen]
-                true_id[~is_seen] = -1
 
                 if "SCF" in method.pretty_name or "BE" in method.pretty_name:
                     # here we use scf concentrations as best class prob estimate
@@ -193,7 +194,11 @@ def main(cfg):
                     # assert recognition_method.T_data_unc == 1
 
                     if cfg.train_T:
-                        train_T_ece(cfg, probe_template_unc[:, 0], true_id, predict_id)
+                        T = train_T_ece(cfg, probe_template_unc[:, 0], true_id, predict_id)
+                        recognition_method.T_data_unc = T
+                        conf_id = -recognition_method.predict_uncertainty(
+                        probe_template_unc
+                         )
                 else:
                     T = recognition_method.T
                     if cfg.train_T:
