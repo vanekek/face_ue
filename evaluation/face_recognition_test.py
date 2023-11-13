@@ -79,10 +79,14 @@ class Face_Fecognition_test:
             cache_dir
             / f"template_subsets_{self.probe_template_pooling_strategy.__class__.__name__}_{self.test_dataset.dataset_name}"
         )
+        template_pool_path = (
+            cache_dir
+            / f"template_pool_{self.probe_template_pooling_strategy.__class__.__name__}_{self.test_dataset.dataset_name}"
+        )
         similarity_matrix_path = template_subsets_path / "sim_matrix"
         similarity_matrix_path.mkdir(parents=True, exist_ok=True)
         template_subsets_path.mkdir(parents=True, exist_ok=True)
-
+        template_pool_path.mkdir(parents=True, exist_ok=True)
         pooled_templates_path = 1
         if self.recompute_template_pooling is False and pooled_templates_path.is_file():
             pooled_data = np.load(pooled_templates_path)
@@ -172,9 +176,24 @@ class Face_Fecognition_test:
                 # 1. pool selected gallery templates
                 assert gallery_unc.shape[1] == 1  # working with scf unc
                 kappa = np.exp(gallery_unc)
-                pooled_data = self.gallery_template_pooling_strategy(
-                    gallery_features, kappa, gallery_templates, gallery_medias
-                )
+                if (template_pool_path / f"gallery_{gallery_name}.npz").is_file():
+                    print("Loading pool")
+                    data = np.load(template_pool_path / f"gallery_{gallery_name}.npz")
+                    pooled_data = (
+                        data["template_pooled_features"],
+                        data["template_pooled_data_unc"],
+                        data["template_unique_ids"],
+                    )
+                else:
+                    pooled_data = self.gallery_template_pooling_strategy(
+                        gallery_features, kappa, gallery_templates, gallery_medias
+                    )
+                    np.savez(
+                        template_pool_path / f"gallery_{gallery_name}.npz",
+                        template_pooled_features=pooled_data[0],
+                        template_pooled_data_unc=pooled_data[1],
+                        template_unique_ids=pooled_data[2],
+                    )
                 self.gallery_pooled_templates[gallery_name] = {
                     "template_pooled_features": pooled_data[0],
                     "template_pooled_data_unc": pooled_data[1],
@@ -224,12 +243,28 @@ class Face_Fecognition_test:
                     )
 
                 else:
-                    probe_pooled_data = self.probe_template_pooling_strategy(
-                        probe_features,
-                        probe_kappa,
-                        self.test_dataset.probe_templates,
-                        probe_medias,
-                    )
+                    # log scf pool as it is not changing
+                    print("Loading pool probe")
+                    if (template_pool_path / f"probe_{gallery_name}.npz").is_file():
+                        data = np.load(template_pool_path / f"probe_{gallery_name}.npz")
+                        probe_pooled_data = (
+                            data["template_pooled_features"],
+                            data["template_pooled_data_unc"],
+                            data["template_unique_ids"],
+                        )
+                    else:
+                        probe_pooled_data = self.probe_template_pooling_strategy(
+                            probe_features,
+                            probe_kappa,
+                            self.test_dataset.probe_templates,
+                            probe_medias,
+                        )
+                        np.savez(
+                            template_pool_path / f"probe_{gallery_name}.npz",
+                            template_pooled_features=probe_pooled_data[0],
+                            template_pooled_data_unc=probe_pooled_data[1],
+                            template_unique_ids=probe_pooled_data[2],
+                        )
 
                 self.probe_pooled_templates[gallery_name] = {
                     "template_pooled_features": probe_pooled_data[0],

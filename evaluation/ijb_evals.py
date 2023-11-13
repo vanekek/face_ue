@@ -271,6 +271,30 @@ def main(cfg):
                 out_table_fractions_dir
                 / f'{str(np.round(frac, 4)).ljust(6, "0")}_frac_rejection.csv'
             )
+        if cfg.create_pool_plot:
+            # create pool plot
+            tables_path = out_dir / "tabels"
+            far_table = pd.read_csv(tables_path / "far_rejection.csv")
+            dir_table = pd.read_csv(tables_path / "dir_rejection.csv")
+
+            scores = [[], []]
+            names = ["SCF", "vMF"]
+            y_label = "DIR"
+
+            for model_name, far_value, dir_value in zip(
+                far_table.models, far_table["0.0"], dir_table["0.0"]
+            ):
+                if "SCF" in model_name:
+                    scores[0].append([far_value, dir_value])
+                else:
+                    scores[1].append([far_value, dir_value])
+            scores[0] = np.array(scores[0]).T
+            scores[1] = np.array(scores[1]).T
+            fig = plot_dir_far_scores(scores, names, y_label, marker=".")
+            fig.savefig(out_dir / f"pool.png", dpi=300)
+
+            plt.close(fig)
+
     print(cfg.exp_dir)
 
 

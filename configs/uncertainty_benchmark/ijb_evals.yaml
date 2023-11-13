@@ -3,10 +3,10 @@ hydra:
     dir: ${exp_dir}
 
 exp_dir: outputs/experiments/vmf_pool_hand_temp
-use_two_galleries: True
+use_two_galleries: False
 recompute_template_pooling: True
 metric_pretty_name_path: /app/configs/latex_tables/pretty_names/column_pretty_name_unc.yaml
-
+create_pool_plot: True
 
 test_datasets:
   # - _target_: evaluation.test_datasets.FaceRecogntioniDataset
@@ -61,7 +61,7 @@ open_set_identification_methods:
     gallery_template_pooling_strategy:
       _target_: evaluation.template_pooling_strategies.PoolingSCF
     probe_template_pooling_strategy:
-      _target_: evaluation.template_pooling_strategies.PoolingProb
+      _target_: evaluation.template_pooling_strategies.PoolingSCF #PoolingProb
     use_detector_score: True
     sampler:
       _target_: evaluation.samplers.VonMisesFisher
@@ -101,6 +101,6 @@ open_set_identification_methods:
       alpha: 0.5
       aggregation: sum
       T: [4.1523861263939175, 5.174875216404014, 5.045640877040361, 5.0146601527869406, 5.353777068395573,  5.353777068395573]
-      T_data_unc: [1, 1, 1, 1, 20, 20] # [1, 1.7260134360147232, 22.79363133781877, 287.3916346890816]
+      T_data_unc: [1, 1, 1, 1, 10, 10] # [1, 1.7260134360147232, 22.79363133781877, 287.3916346890816]
       kappa_is_tau: True
     pretty_name: "vmf pool"
