@@ -2,7 +2,7 @@ hydra:
   run:
     dir: ${exp_dir}
 
-exp_dir: outputs/experiments/power_pool_hand_temp
+exp_dir: outputs/experiments/vmf_pool_hand_temp
 use_two_galleries: False
 recompute_template_pooling: True
 metric_pretty_name_path: /app/configs/latex_tables/pretty_names/column_pretty_name_unc.yaml
@@ -13,13 +13,13 @@ test_datasets:
   #   dataset_name: ms1m
   #   dataset_path: /app/datasets/ms1m_ident
 
-  # - _target_: evaluation.test_datasets.FaceRecogntioniDataset
-  #   dataset_name: lfw
-  #   dataset_path: /app/datasets/lfw_ident
-
   - _target_: evaluation.test_datasets.FaceRecogntioniDataset
-    dataset_name: IJBC
-    dataset_path: /app/datasets/arcface_ijb/IJBC
+    dataset_name: lfw
+    dataset_path: /app/datasets/lfw_ident
+
+  # - _target_: evaluation.test_datasets.FaceRecogntioniDataset
+  #   dataset_name: IJBC
+  #   dataset_path: /app/datasets/arcface_ijb/IJBC
 
   # - _target_: evaluation.test_datasets.FaceRecogntioniDataset
   #   dataset_name: IJBB
@@ -58,7 +58,7 @@ open_set_identification_uncertainty_metrics:
 default_kappa: 400
 default_beta: 0.5
 
-tau_list: [0.217, 0.256, 0.295,  0.333, 0.411] #, 0.5] #, 0.6, 0.7, 0.8]   #  [0.178, 0.217, 0.256, 0.295,  0.333,  0.411]
+tau_list: [0.217, 0.256, 0.295,  0.333, 0.411, 0.5, 0.6, 0.7, 0.8]   #  [0.178, 0.217, 0.256, 0.295,  0.333,  0.411]
 open_set_identification_methods:
 
   - embeddings: scf
@@ -98,13 +98,13 @@ open_set_identification_methods:
       _target_: evaluation.distance_functions.open_set_identification.CosineSim
     recognition_method:
       _target_: evaluation.open_set_methods.posterior_prob_based.PosteriorProbability
-      class_model: power
+      class_model: vMF
       kappa: ${tau_list}
       beta: ${default_beta}
       uncertainty_type: maxprob
       alpha: 0.5
       aggregation: sum
-      T: 0.5 #[1, 1, 1, 1, 1, 1, 1, 1, 1] # [5.17, 5.05, 5.01, 5.35, 5.35] #[4.15, 5.17, 5.05, 5.01, 5.35, 5.35]
-      T_data_unc: 3 #[1, 1, 1, 1, 1, 1, 1, 1, 1]  # [1, 1.7260134360147232, 22.79363133781877, 287.3916346890816]
+      T: [1, 1, 1, 1, 1, 1] # [5.17, 5.05, 5.01, 5.35, 5.35] #[4.15, 5.17, 5.05, 5.01, 5.35, 5.35]
+      T_data_unc: [1, 1, 1, 1, 1, 1]  # [1, 1.7260134360147232, 22.79363133781877, 287.3916346890816]
       kappa_is_tau: True
-    pretty_name: "power pool"
+    pretty_name: "vmf pool"

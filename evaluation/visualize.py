@@ -2,6 +2,8 @@ import os
 import numpy as np
 import pandas as pd
 from sklearn.metrics import roc_curve, auc
+import seaborn as sns
+import matplotlib.pyplot as plt
 
 
 def plot_rejection_scores(scores, y_label, names):
@@ -138,6 +140,30 @@ def plot_cmc_scores(scores, names=None):
     plt.legend(fontsize="x-small")
     plt.tight_layout()
     return fig
+
+
+def draw_score_distr_plot(
+    scores_distr, score_type, model_name, in_data_name, out_data_name
+):
+    sns.set_theme()
+    plt.figure(figsize=(12, 8))
+    sns.distplot(
+        scores_distr[in_data_name],
+        kde=True,
+        norm_hist=True,
+        hist=True,
+        label=in_data_name,
+    )
+    sns.distplot(
+        scores_distr[out_data_name],
+        kde=True,
+        norm_hist=True,
+        hist=True,
+        label=out_data_name,
+    )
+    plt.xlabel(f"Косинусная схожесть")
+
+    plt.legend()
 
 
 def plot_dir_far_scores(scores, names, y_label: str, marker=""):

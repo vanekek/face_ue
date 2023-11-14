@@ -278,7 +278,7 @@ def main(cfg):
             dir_table = pd.read_csv(tables_path / "dir_rejection.csv")
 
             scores = [[], []]
-            names = ["SCF", "vMF"]
+            names = ["SCF", "Prob"]
             y_label = "DIR"
 
             for model_name, far_value, dir_value in zip(
