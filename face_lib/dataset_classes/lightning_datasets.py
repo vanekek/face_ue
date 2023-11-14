@@ -255,5 +255,6 @@ class UncertaintyDataModule(pl.LightningDataModule):
 if __name__ == "__main__":
     num_classes = 3531
     ds = MXFaceDataset("/app/datasets/ms1m/", True, num_classes)
+    t = ds[0]
     gallery_size = 1772
-    ds.create_identification_meta(Path("/app/datasets/ms1m_ident"), gallery_size)
+    # ds.create_identification_meta(Path("/app/datasets/ms1m_ident"), gallery_size)

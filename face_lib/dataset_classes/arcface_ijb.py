@@ -1,9 +1,6 @@
 from torch.utils.data import DataLoader, Dataset
 import cv2
 import numpy as np
-import sys
-
-sys.path.append("/app")
 
 from evaluation.embeddings import face_align_landmark
 from evaluation.data_tools import extract_meta_data
@@ -40,3 +37,9 @@ class IJB_aligned_images(Dataset):
 
     def __len__(self):
         return len(self.img_names)
+
+
+if __name__ == "__main__":
+    ds = IJB_aligned_images("/app/datasets/arcface_ijb/IJBC", "IJBC", norm_image=True)
+    t = ds[0]
+    x = 1

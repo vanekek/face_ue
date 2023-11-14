@@ -13,13 +13,13 @@ test_datasets:
   #   dataset_name: ms1m
   #   dataset_path: /app/datasets/ms1m_ident
 
-  # - _target_: evaluation.test_datasets.FaceRecogntioniDataset
-  #   dataset_name: IJBC
-  #   dataset_path: /app/datasets/arcface_ijb/IJBC
-
   - _target_: evaluation.test_datasets.FaceRecogntioniDataset
-    dataset_name: IJBB
-    dataset_path: /app/datasets/arcface_ijb/IJBB
+    dataset_name: IJBC
+    dataset_path: /app/datasets/arcface_ijb/IJBC
+
+  # - _target_: evaluation.test_datasets.FaceRecogntioniDataset
+  #   dataset_name: IJBB
+  #   dataset_path: /app/datasets/arcface_ijb/IJBB
   # - _target_: evaluation.test_datasets.FaceRecogntioniDataset
   #   dataset_name: survFace
   #   dataset_path: /app/datasets/QMUL-SurvFace/Face_Identification_Test_Set
@@ -54,7 +54,7 @@ open_set_identification_uncertainty_metrics:
 default_kappa: 400
 default_beta: 0.5
 
-tau_list: [0.17777777777777778, 0.21666666666666667,  0.25555555555555554, 0.29444444444444445,  0.33333333333333337,  0.4111111111111111]
+tau_list: [0.217, 0.256, 0.295,  0.333, 0.411]   #  [0.178, 0.217, 0.256, 0.295,  0.333,  0.411]
 open_set_identification_methods:
 
   - embeddings: scf
@@ -100,7 +100,7 @@ open_set_identification_methods:
       uncertainty_type: maxprob
       alpha: 0.5
       aggregation: sum
-      T: [4.1523861263939175, 5.174875216404014, 5.045640877040361, 5.0146601527869406, 5.353777068395573,  5.353777068395573]
-      T_data_unc: [1, 1, 1, 1, 10, 10] # [1, 1.7260134360147232, 22.79363133781877, 287.3916346890816]
+      T: [5.17, 5.05, 5.01, 5.35, 5.35] #[4.15, 5.17, 5.05, 5.01, 5.35, 5.35]
+      T_data_unc: [1, 1, 1, 1, 3]  # [1, 1.7260134360147232, 22.79363133781877, 287.3916346890816]
       kappa_is_tau: True
     pretty_name: "vmf pool"
