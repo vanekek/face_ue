@@ -295,6 +295,7 @@ class PoolingPFEHarmonicMean(AbstractTemplatePooling):
             pfe_template_variance = 1 / np.sum(
                 1 / sigma_sq_in_template, axis=0
             )  # Eqn. (7) https://ieeexplore.ieee.org/document/9008376
+            assert False, "check this aggregation"
             templates_sigma_sq[count_template] = pfe_template_variance
 
         template_norm_feats = normalize(template_feats)
