@@ -180,9 +180,9 @@ def main(cfg):
                 recognition_method.kappa = tau
                 gallery_ids_with_imposter_id = np.concatenate([g_unique_ids, [-1]])
                 sim_tensor = torch.tensor(similarity)
-                recognition_method.setup(sim_tensor)
+                recognition_method.setup(similarity)
 
-                if "SCF" in method.pretty_name or "BE" in method.pretty_name:
+                if "SCF" in method.pretty_name or "Be" in method.pretty_name:
                     # here we use scf concentrations as best class prob estimate
 
                     predict_id, was_rejected = recognition_method.predict()
@@ -197,7 +197,10 @@ def main(cfg):
                         T = train_T_ece(
                             cfg, probe_template_unc[:, 0], true_id, predict_id
                         )
-                        recognition_method.T_data_unc = T
+                        if "SCF" in method.pretty_name:
+                            recognition_method.T_data_unc = T
+                        else:
+                            recognition_method.T = T
                         conf_id = -recognition_method.predict_uncertainty(
                             probe_template_unc
                         )

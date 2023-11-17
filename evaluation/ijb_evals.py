@@ -249,7 +249,7 @@ def main(cfg):
             if isinstance(pretty_name, str):
                 pretty_name = [pretty_name]
             pretty_name = " ".join(pretty_name)
-            fig = plot_rejection_scores(
+            fig, auc_values = plot_rejection_scores(
                 scores=scores,
                 names=model_names,
                 y_label=f"{pretty_name}",
@@ -264,6 +264,14 @@ def main(cfg):
             rejection_df = pd.DataFrame(data_rows, columns=column_names)
             rejection_df.to_csv(
                 out_table_dir / f'{metric_name.split(":")[-1]}_rejection.csv'
+            )
+            # save auc table
+            auc_data_rows = []
+            for model_name, auc in zip(model_names, auc_values):
+                auc_data_rows.append([model_name, auc])
+            auc_df = pd.DataFrame(auc_data_rows, columns=["models", "auc"])
+            auc_df.to_csv(
+                out_table_dir / f'{metric_name.split(":")[-1]}_auc_rejection.csv'
             )
         for frac, data_rows in fraction_data_rows.items():
             frac_rejection_df = pd.DataFrame(data_rows, columns=fraction_column_names)

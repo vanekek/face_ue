@@ -10,6 +10,7 @@ def plot_rejection_scores(scores, y_label, names):
     import matplotlib.pyplot as plt
 
     fig = plt.figure()
+    auc_values = []
     for id, score in enumerate(scores):
         name = names[id]
         if isinstance(score, str) and score.endswith(".npz"):
@@ -19,12 +20,12 @@ def plot_rejection_scores(scores, y_label, names):
         name = name if name is not None else str(id)
 
         # auc_value = auc(rank, cmc)
-        label = (
-            name + f", avg {y_label}={np.round(fractions[-1]*np.mean(metric_value), 4)}"
-        )
+        auc_value = np.round(fractions[-1] * np.mean(metric_value), 4)
+        auc_values.append(auc_value)
+        label = name + f", avg {y_label}={auc_value}"
         plt.plot(fractions, metric_value, lw=1, label=label)
 
-    plt.xlabel("Throwaway rate")
+    plt.xlabel("Filter Out Rate")
     # plt.xlim([0.0001, 1])
     # plt.xscale("log")
     plt.ylabel(y_label)
@@ -33,7 +34,7 @@ def plot_rejection_scores(scores, y_label, names):
     plt.grid(linestyle="--", linewidth=1)
     plt.legend()  # (fontsize="x-small")
     plt.tight_layout()
-    return fig
+    return fig, auc_values
 
 
 def plot_roc_and_calculate_tpr(scores, names=None, label=None):

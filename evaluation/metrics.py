@@ -29,6 +29,32 @@ class F1:
         return result_metrics
 
 
+class F1_classic:
+    @staticmethod
+    def __call__(
+        predicted_id: np.ndarray,
+        was_rejected: np.ndarray,
+        g_unique_ids: np.ndarray,
+        probe_unique_ids: np.ndarray,
+    ) -> dict:
+        # as in Towards Open Set Recognition paper
+        is_seen = np.isin(probe_unique_ids, g_unique_ids)
+        similar_gallery_class = g_unique_ids[predicted_id[is_seen]]
+        tp = np.sum(
+            np.logical_and(
+                probe_unique_ids[is_seen] == similar_gallery_class,
+                was_rejected[is_seen] == False,
+            )
+        )
+        fp = np.sum(was_rejected[~is_seen] == False)
+        precision = tp / (tp + fp)
+        recall = tp / np.sum(is_seen)
+        result_metrics = {
+            "osr_metric:f1_class": (2 * precision * recall) / (precision + recall)
+        }
+        return result_metrics
+
+
 class FrrFarIdent:
     @staticmethod
     def __call__(

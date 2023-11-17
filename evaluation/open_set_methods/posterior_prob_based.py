@@ -36,6 +36,7 @@ class PosteriorProbability(OpenSetMethod):
     def setup(self, similarity_matrix: np.ndarray):
         self.similarity_matrix = similarity_matrix
         if self.class_model == "vMF_Power":
+            raise ValueError
             self.posterior_prob_vmf = PosteriorProb(
                 kappa=self.kappa,
                 beta=self.beta,
