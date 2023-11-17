@@ -1,0 +1,58 @@
+exp_dir: experiments/paper/filter_curve
+use_two_galleries: false
+recompute_template_pooling: true
+metric_pretty_name_path: /app/configs/latex_tables/pretty_names/column_pretty_name_unc.yaml
+create_pool_plot: false
+test_datasets:
+- _target_: evaluation.test_datasets.FaceRecogntioniDataset
+  dataset_name: IJBC
+  dataset_path: /app/datasets/arcface_ijb/IJBC
+open_set_identification_metrics:
+- _target_: evaluation.metrics.DirFar
+fractions:
+- 0
+- 0.3
+- 15
+open_set_identification_uncertainty_metrics:
+- _target_: evaluation.uncertainty_metrics.DisposeBasedOnUnc
+  fractions: ${fractions}
+  metric_to_monitor:
+    _target_: evaluation.metrics.FrrFarIdent
+- _target_: evaluation.uncertainty_metrics.DisposeBasedOnUnc
+  fractions: ${fractions}
+  metric_to_monitor:
+    _target_: evaluation.metrics.DirFar
+- _target_: evaluation.uncertainty_metrics.DisposeBasedOnUnc
+  fractions: ${fractions}
+  metric_to_monitor:
+    _target_: evaluation.metrics.F1_classic
+default_beta: 0.5
+tau_list:
+- 0.3316050800917002
+- 0.3544668614198186
+- 0.41305037376834797
+- 0.4344078641808415
+open_set_identification_methods:
+- embeddings: scf
+  gallery_template_pooling_strategy:
+    _target_: evaluation.template_pooling_strategies.PoolingSCF
+  probe_template_pooling_strategy:
+    _target_: evaluation.template_pooling_strategies.PoolingSCF
+  use_detector_score: true
+  sampler:
+    _target_: evaluation.samplers.VonMisesFisher
+    num_samples: 0
+  distance_function:
+    _target_: evaluation.distance_functions.open_set_identification.CosineSim
+  recognition_method:
+    _target_: evaluation.open_set_methods.posterior_prob_based.PosteriorProbability
+    class_model: vMF
+    kappa: ${tau_list}
+    beta: ${default_beta}
+    uncertainty_type: maxprob
+    alpha: 1
+    aggregation: sum
+    T: 5.3757
+    T_data_unc: 1
+    kappa_is_tau: true
+  pretty_name: SCF

@@ -1,3 +1,0 @@
-,models,false_accept_num,false_reject_num,false_ident_num,false_ident-reject_num,error_sum,dir,far,f1_class
-0,SCF_tau-0.33_T-5.38_T_data-1,789,36,16,89,930,0.9834254143646409,0.09684546458819197,0.9473445815875893
-1,vMF_tau-0.33_T-5.38_T_data-1,283,38,20,154,495,0.9775661375661375,0.03928373126041088,0.9739075430920878

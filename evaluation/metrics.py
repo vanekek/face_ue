@@ -186,13 +186,14 @@ class TarFar:
 
 class DetectionAndIdentificationRate:
     def __init__(
-        self, top_n_ranks: List[int], far_range: List[int], display_fars: List[float]
+        self, top_n_ranks: List[int], far_range: List[int], display_fars: List[float] = None
     ) -> None:
         self.top_n_ranks = top_n_ranks
-        self.fars = [
-            10**ii for ii in np.arange(far_range[0], far_range[1], 4.0 / far_range[2])
-        ] + [1]
-        self.display_fars = display_fars
+        self.fars = far_range
+        # self.fars = [
+        #     10**ii for ii in np.arange(far_range[0], far_range[1], 4.0 / far_range[2])
+        # ] + [1]
+        self.display_fars = far_range# display_fars
 
     def __call__(
         self,
@@ -255,6 +256,7 @@ class DetectionAndIdentificationRate:
                     thresh = neg_score_sorted[
                         max(int((neg_score_sorted.shape[0]) * far) - 1, 0)
                     ]
+                print(f'FAR-{far}_thresh:{thresh}')
                 # compute DI rate at given operating threshold τ
                 recall = (
                     np.sum(np.logical_and(correct_pos, pos_score > thresh))
