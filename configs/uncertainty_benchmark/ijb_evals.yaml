@@ -63,28 +63,46 @@ open_set_identification_uncertainty_metrics:
 
 
 default_beta: 0.5
+tau_to_far:
+  IJBC:
+    0.3316050800917002: 0.1
+    0.3544668614198186: 0.05
+    0.41305037376834797: 0.01
+    0.4344078641808415: 0.005
+  IJBB:
+    0.3122234142166135: 0.1
+    0.3433289481793866: 0.05
+    0.4491698259631683: 0.01
+    0.7189225782977178: 0.005
+  lfw:
+    0.29610780254648883:  0.1
+    0.3151530824027877 : 0.05
+    0.3576923759220011 : 0.01
+    0.3759362888911925 : 0.005
 
-# IJB-C
+
+# IJBC
+
 tau_list: 
-  - 0.3316050800917002 # far 0.1
-  - 0.3544668614198186 # far 0.05
-  - 0.41305037376834797 # far 0.01
-  - 0.4344078641808415 # far 0.05
-
+ - 0.3316050800917002 # far 0.1
+#  - 0.3544668614198186 # far 0.05
+#  - 0.41305037376834797 # far 0.01
+#  - 0.4344078641808415 # far 0.005
 
 # IJB-B
+
 # tau_list: 
 #   - 0.3122234142166135 # far 0.1
 #   - 0.3433289481793866 # far 0.05
 #   - 0.4491698259631683 # far 0.01
-#   - 0.7189225782977178 # far 0.05
+#   - 0.7189225782977178 # far 0.005
 
 # LFW
 # tau_list: 
 #   - 0.29610780254648883 # far 0.1
 #   - 0.3151530824027877 # far 0.05
 #   - 0.3576923759220011 # far 0.01
-#   - 0.3759362888911925 # far 0.05
+#   - 0.3759362888911925 # far 0.005
 
 open_set_identification_methods:
   - embeddings: scf
@@ -136,78 +154,54 @@ open_set_identification_methods:
   #   pretty_name: "vMF"
 
 
-  # - embeddings: scf
-  #   gallery_template_pooling_strategy:
-  #     _target_: evaluation.template_pooling_strategies.PoolingSCF
-  #   probe_template_pooling_strategy:
-  #     _target_: evaluation.template_pooling_strategies.PoolingSCF #PoolingProb
-  #   use_detector_score: True
-  #   sampler:
-  #     _target_: evaluation.samplers.VonMisesFisher
-  #     num_samples: 0 # set 0 to use mean of distr as one sample
-  #   distance_function: 
-  #     _target_: evaluation.distance_functions.open_set_identification.CosineSim
-  #   recognition_method:
-  #     _target_: evaluation.open_set_methods.posterior_prob_based.PosteriorProbability
-  #     class_model: power
-  #     kappa: ${tau_list}
-  #     beta: ${default_beta}
-  #     uncertainty_type: maxprob
-  #     alpha: 0
-  #     aggregation: sum
-  #     T: 0.28836
-  #     T_data_unc: 1
-  #     kappa_is_tau: True
-  #   pretty_name: "Power"
+  - embeddings: scf
+    gallery_template_pooling_strategy:
+      _target_: evaluation.template_pooling_strategies.PoolingSCF
+    probe_template_pooling_strategy:
+      _target_: evaluation.template_pooling_strategies.PoolingSCF #PoolingProb
+    use_detector_score: True
+    sampler:
+      _target_: evaluation.samplers.VonMisesFisher
+      num_samples: 0 # set 0 to use mean of distr as one sample
+    distance_function: 
+      _target_: evaluation.distance_functions.open_set_identification.CosineSim
+    recognition_method:
+      _target_: evaluation.open_set_methods.posterior_prob_based.PosteriorProbability
+      class_model: power
+      kappa: ${tau_list}
+      beta: ${default_beta}
+      uncertainty_type: maxprob
+      alpha: 0
+      aggregation: sum
+      T: 0.28836
+      T_data_unc: 1
+      kappa_is_tau: True
+    pretty_name: "Power"
 
-  # - embeddings: scf
-  #   gallery_template_pooling_strategy:
-  #     _target_: evaluation.template_pooling_strategies.PoolingSCF
-  #   probe_template_pooling_strategy:
-  #     _target_: evaluation.template_pooling_strategies.PoolingSCF #PoolingProb
-  #   use_detector_score: True
-  #   sampler:
-  #     _target_: evaluation.samplers.VonMisesFisher
-  #     num_samples: 0 # set 0 to use mean of distr as one sample
-  #   distance_function: 
-  #     _target_: evaluation.distance_functions.open_set_identification.CosineSim
-  #   recognition_method:
-  #     _target_: evaluation.open_set_methods.posterior_prob_based.PosteriorProbability
-  #     class_model: power
-  #     kappa: ${tau_list}
-  #     beta: ${default_beta}
-  #     uncertainty_type: maxprob
-  #     alpha: 0.5
-  #     aggregation: sum
-  #     T: 0.28836
-  #     T_data_unc: 30
-  #     kappa_is_tau: True
-  #   pretty_name: "Power + SCF"
-
-  # - embeddings: scf
-  #   gallery_template_pooling_strategy:
-  #     _target_: evaluation.template_pooling_strategies.PoolingSCF
-  #   probe_template_pooling_strategy:
-  #     _target_: evaluation.template_pooling_strategies.PoolingSCF
-  #   use_detector_score: True
-  #   sampler:
-  #     _target_: evaluation.samplers.VonMisesFisher
-  #     num_samples: 0 # set 0 to use mean of distr as one sample
-  #   distance_function: 
-  #     _target_: evaluation.distance_functions.open_set_identification.CosineSim
-  #   recognition_method:
-  #     _target_: evaluation.open_set_methods.score_function_based.SimilarityBasedPrediction
-  #     kappa: ${tau_list}
-  #     beta: ${default_beta}
-  #     acceptance_score: 
-  #       _target_: evaluation.confidence_functions.MaxSimilarity_confidence
-  #     uncertainty_function:
-  #       _target_: evaluation.open_set_methods.uncertainty_functions.BernoulliVariance
-  #     alpha: 0
-  #     T: 22.79
-  #     T_data_unc: 1
-  #     kappa_is_tau: True
-  #   pretty_name: Be
+  - embeddings: scf
+    gallery_template_pooling_strategy:
+      _target_: evaluation.template_pooling_strategies.PoolingSCF
+    probe_template_pooling_strategy:
+      _target_: evaluation.template_pooling_strategies.PoolingSCF
+    use_detector_score: True
+    sampler:
+      _target_: evaluation.samplers.VonMisesFisher
+      num_samples: 0 # set 0 to use mean of distr as one sample
+    distance_function: 
+      _target_: evaluation.distance_functions.open_set_identification.CosineSim
+    recognition_method:
+      _target_: evaluation.open_set_methods.score_function_based.SimilarityBasedPrediction
+      kappa: ${tau_list}
+      beta: ${default_beta}
+      acceptance_score: 
+        _target_: evaluation.confidence_functions.MaxSimilarity_confidence
+      uncertainty_function:
+        _target_: evaluation.open_set_methods.uncertainty_functions.BernoulliVariance
+      alpha: 0
+      T: 22.79
+      T_data_unc: 1
+      kappa_is_tau: True
+    pretty_name: Be
 
 
   # - embeddings: scf
@@ -235,28 +229,54 @@ open_set_identification_methods:
   #   pretty_name: "vMF + SCF"
 
 
-  # - embeddings: scf
-  #   gallery_template_pooling_strategy:
-  #     _target_: evaluation.template_pooling_strategies.PoolingSCF
-  #   probe_template_pooling_strategy:
-  #     _target_: evaluation.template_pooling_strategies.PoolingSCF
-  #   use_detector_score: True
-  #   sampler:
-  #     _target_: evaluation.samplers.VonMisesFisher
-  #     num_samples: 0 # set 0 to use mean of distr as one sample
-  #   distance_function: 
-  #     _target_: evaluation.distance_functions.open_set_identification.CosineSim
-  #   recognition_method:
-  #     _target_: evaluation.open_set_methods.score_function_based.SimilarityBasedPrediction
-  #     kappa: ${tau_list}
-  #     beta: ${default_beta}
-  #     acceptance_score: 
-  #       _target_: evaluation.confidence_functions.MaxSimilarity_confidence
-  #     uncertainty_function:
-  #       _target_: evaluation.open_set_methods.uncertainty_functions.BernoulliVariance
-  #     alpha: 0.5
-  #     T: 22.79
-  #     T_data_unc: 30
-  #     kappa_is_tau: True
-  #   pretty_name: Be + SCF
+
+  - embeddings: scf
+    gallery_template_pooling_strategy:
+      _target_: evaluation.template_pooling_strategies.PoolingSCF
+    probe_template_pooling_strategy:
+      _target_: evaluation.template_pooling_strategies.PoolingSCF #PoolingProb
+    use_detector_score: True
+    sampler:
+      _target_: evaluation.samplers.VonMisesFisher
+      num_samples: 0 # set 0 to use mean of distr as one sample
+    distance_function: 
+      _target_: evaluation.distance_functions.open_set_identification.CosineSim
+    recognition_method:
+      _target_: evaluation.open_set_methods.posterior_prob_based.PosteriorProbability
+      class_model: power
+      kappa: ${tau_list}
+      beta: ${default_beta}
+      uncertainty_type: maxprob
+      alpha: 0.5
+      aggregation: sum
+      T: 0.28836
+      T_data_unc: 30
+      kappa_is_tau: True
+    pretty_name: "Power + SCF"
+
+
+  - embeddings: scf
+    gallery_template_pooling_strategy:
+      _target_: evaluation.template_pooling_strategies.PoolingSCF
+    probe_template_pooling_strategy:
+      _target_: evaluation.template_pooling_strategies.PoolingSCF
+    use_detector_score: True
+    sampler:
+      _target_: evaluation.samplers.VonMisesFisher
+      num_samples: 0 # set 0 to use mean of distr as one sample
+    distance_function: 
+      _target_: evaluation.distance_functions.open_set_identification.CosineSim
+    recognition_method:
+      _target_: evaluation.open_set_methods.score_function_based.SimilarityBasedPrediction
+      kappa: ${tau_list}
+      beta: ${default_beta}
+      acceptance_score: 
+        _target_: evaluation.confidence_functions.MaxSimilarity_confidence
+      uncertainty_function:
+        _target_: evaluation.open_set_methods.uncertainty_functions.BernoulliVariance
+      alpha: 0.5
+      T: 22.79
+      T_data_unc: 30
+      kappa_is_tau: True
+    pretty_name: Be + SCF
 

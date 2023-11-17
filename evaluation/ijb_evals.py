@@ -92,7 +92,7 @@ def multiply_methods(cfg, methods, method_task_type):
             new_method.recognition_method.T_data_unc = T_data_unc
             new_method.pretty_name = (
                 method.pretty_name
-                + f"_tau-{np.round(tau, 2)}_T-{np.round(T, 2)}_T_data-{np.round(T_data_unc, 2)}"
+                #+ f"_tau-{np.round(tau, 2)}_T-{np.round(T, 2)}_T_data-{np.round(T_data_unc, 2)}"
             )
             new_methods.append(new_method)
     return new_methods, [method_task_type[0]] * len(new_methods)
@@ -158,7 +158,7 @@ def main(cfg):
                 distance_function,
                 recognition_method,
             )
-            + f"_{method.pretty_name}"
+            + f"_{method.pretty_name}" + f'far:{cfg.tau_to_far[dataset_name][method.recognition_method.kappa]}'
         )
         print(method_name)
         pretty_names[task_type][method_name] = method.pretty_name
@@ -235,12 +235,14 @@ def main(cfg):
                 fraction_data_rows[frac].append(frac_data_rows)
         for metric_name in metric_names:
             model_names = []
+            method_names = []
             scores = []
             data_rows = []
             for method_name, metrics in metric_values[(task_type, dataset_name)][
                 "uncertainty"
             ].items():
                 model_names.append(pretty_names[task_type][method_name])
+                method_names.append(method_name)
                 scores.append((metrics["fractions"], metrics[metric_name]))
                 data_rows.append(
                     [pretty_names[task_type][method_name], *metrics[metric_name]]
@@ -267,9 +269,9 @@ def main(cfg):
             )
             # save auc table
             auc_data_rows = []
-            for model_name, auc in zip(model_names, auc_values):
-                auc_data_rows.append([model_name, auc])
-            auc_df = pd.DataFrame(auc_data_rows, columns=["models", "auc"])
+            for model_pretty_name, method_name, auc in zip(model_names, method_names, auc_values):
+                auc_data_rows.append([model_pretty_name, auc, method_name.split('_')[-1].split(':')[-1]])
+            auc_df = pd.DataFrame(auc_data_rows, columns=["models", "auc", "far"])
             auc_df.to_csv(
                 out_table_dir / f'{metric_name.split(":")[-1]}_auc_rejection.csv'
             )
