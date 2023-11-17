@@ -92,7 +92,7 @@ def multiply_methods(cfg, methods, method_task_type):
             new_method.recognition_method.T_data_unc = T_data_unc
             new_method.pretty_name = (
                 method.pretty_name
-                #+ f"_tau-{np.round(tau, 2)}_T-{np.round(T, 2)}_T_data-{np.round(T_data_unc, 2)}"
+                # + f"_tau-{np.round(tau, 2)}_T-{np.round(T, 2)}_T_data-{np.round(T_data_unc, 2)}"
             )
             new_methods.append(new_method)
     return new_methods, [method_task_type[0]] * len(new_methods)
@@ -158,7 +158,8 @@ def main(cfg):
                 distance_function,
                 recognition_method,
             )
-            + f"_{method.pretty_name}" + f'far:{cfg.tau_to_far[dataset_name][method.recognition_method.kappa]}'
+            + f"_{method.pretty_name}"
+            + f"far:{cfg.tau_to_far[dataset_name][method.recognition_method.kappa]}"
         )
         print(method_name)
         pretty_names[task_type][method_name] = method.pretty_name
@@ -269,11 +270,32 @@ def main(cfg):
             )
             # save auc table
             auc_data_rows = []
-            for model_pretty_name, method_name, auc in zip(model_names, method_names, auc_values):
-                auc_data_rows.append([model_pretty_name, auc, method_name.split('_')[-1].split(':')[-1]])
+            for model_pretty_name, method_name, auc in zip(
+                model_names, method_names, auc_values
+            ):
+                auc_data_rows.append(
+                    [model_pretty_name, auc, method_name.split("_")[-1].split(":")[-1]]
+                )
             auc_df = pd.DataFrame(auc_data_rows, columns=["models", "auc", "far"])
             auc_df.to_csv(
                 out_table_dir / f'{metric_name.split(":")[-1]}_auc_rejection.csv'
+            )
+            # save trans auc table
+            new_auc_df_lines = []
+            new_auc_df_columns = ["models"] + list(auc_df.columns[3:-1])
+            aucs = []
+            model_names = []
+            for far, df in auc_df.groupby("far"):
+                new_auc_df_columns.append(f"FAR={far}")
+                aucs.append(list(df["auc"]))
+                model_names = list(df["models"])
+            aucs = np.array(aucs).T
+            aucs = list(aucs)
+            for model_name, auc in zip(model_names, aucs):
+                new_auc_df_lines.append([model_name, *auc.tolist()])
+            new_auc_df = pd.DataFrame(new_auc_df_lines, columns=new_auc_df_columns)
+            new_auc_df.to_csv(
+                out_table_dir / f'{metric_name.split(":")[-1]}_aucs_pretty.csv'
             )
         for frac, data_rows in fraction_data_rows.items():
             frac_rejection_df = pd.DataFrame(data_rows, columns=fraction_column_names)

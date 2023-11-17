@@ -12,7 +12,7 @@ def compute_best_values(table, metric_order):
     newdf = table.select_dtypes(include=numerics)
     best_values = {}
     for column_name in newdf.columns:
-        if metric_order[column_name] == "high":
+        if column_name not in metric_order or metric_order[column_name] == "high":
             sorted_values = np.sort(table[column_name].values)[::-1]
         elif metric_order[column_name] == "low":
             sorted_values = np.sort(table[column_name].values)
@@ -30,9 +30,9 @@ def create_table_head(result_latex_code, caption, table_lable, cfg):
     else:
         result_latex_code += "\\begin{table}\n"
     if cfg.use_scriptsize:
-        result_latex_code += "\\scriptsize\n"
-    result_latex_code += "\\caption{" + caption + "}\n"
-    result_latex_code += "\\label{" + table_lable + "}\n"
+        result_latex_code += "\\footnotesize\n"
+    # result_latex_code += "\\caption{" + caption + "}\n"
+    # result_latex_code += "\\label{" + table_lable + "}\n"
     if cfg.use_adjustbox:
         result_latex_code += "\\begin{adjustbox}{width=0.5\\textwidth}\n"
     result_latex_code += (
@@ -97,11 +97,13 @@ def create_table_body(result_latex_code, cfg):
     return result_latex_code
 
 
-def create_table_tail(result_latex_code, cfg):
+def create_table_tail(result_latex_code, caption, table_lable, cfg):
     result_latex_code += "\\bottomrule\n"
     result_latex_code += "\\end{tabular}\n"
     if cfg.use_adjustbox:
         result_latex_code += "\\end{adjustbox}\n"
+    result_latex_code += "\\caption{" + caption + "}\n"
+    result_latex_code += "\\label{" + table_lable + "}\n"
     result_latex_code += "\\end{table}\n"
 
     return result_latex_code
@@ -132,7 +134,9 @@ def run(cfg):
 
     result_latex_code = create_table_body(result_latex_code, cfg)
 
-    result_latex_code = create_table_tail(result_latex_code, cfg)
+    result_latex_code = create_table_tail(
+        result_latex_code, caption, cfg.table_lable, cfg
+    )
 
     # save result
     with open(Path(cfg.exp_dir) / "table.tex", "w") as fd:

@@ -364,7 +364,6 @@ class Face_Fecognition_test:
                     )
                 )
 
-
             # compute thresh by fars
             # probe_unique_ids = self.probe_pooled_templates[gallery_name][
             #                 "template_subject_ids_sorted"
@@ -381,7 +380,7 @@ class Face_Fecognition_test:
             #             max(int((neg_score_sorted.shape[0]) * far) - 1, 0)
             #         ]
             #     print(f'FAR-{far}_thresh:{thresh}')
-            
+
             # compute uncertainty metrics
             for unc_metric in self.uncertainty_metrics[self.task_type]:
                 unc_metrics[gallery_name].update(

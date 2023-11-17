@@ -14,39 +14,47 @@ defaults:
 # dataset: survFace
 dataset: IJBC
 #task: open_set_identification
-task: unc
+task: filter
 #task: verification
 #task: closed_set_identification
 # CHANGE
-metric_table_path: outputs/experiments/new_pipeline_logsum/${dataset}/open_set_identification/tabels/fractions/0.1000_frac_rejection.csv
+metric_table_path: /app/experiments/paper/filter_table/${dataset}/open_set_identification/tabels/f1_class_aucs_pretty.csv
 
 caption: >
-  Metrics on dataset {dataset_name}  after 0.1 of test dataset is thrown away.
+  Area under $F_1$ filtering curve on {dataset_name}.
   
-fix_table: True
-table_lable: "tab:${task}_${dataset}_unc_metrics"
-round_num: 3
-use_scriptsize: False
+fix_table: False
+table_lable: "tab:${task}_${dataset}"
+round_num: 4
+use_scriptsize: True
 use_adjustbox: False
 
 used_columns: []
 used_columns_dict:
-  unc:
+  filter:
+    lfw:
+      [
+        "models",
+        #"FAR=0.005",
+        "FAR=0.01",
+        "FAR=0.05",
+        "FAR=0.1",
+      ]
     IJBB:
       [
         "models",
-        "false_ident_num",
-        "dir",
-        "far",
-        "f1",
+        #"FAR=0.005",
+        "FAR=0.01",
+        "FAR=0.05",
+        "FAR=0.1",
       ]
     IJBC:
       [
         "models",
-        "false_ident_num",
-        "dir",
-        "far",
-        "f1",
+        #"FAR=0.005",
+        "FAR=0.01",
+        "FAR=0.05",
+        "FAR=0.1",
       ]
     survFace:
       [

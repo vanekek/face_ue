@@ -68,7 +68,7 @@ open_set_identification_methods:
     T: 5.3757
     T_data_unc: 1
     kappa_is_tau: true
-  pretty_name: SCF
+  pretty_name: $u_{SCF}$
 - embeddings: scf
   gallery_template_pooling_strategy:
     _target_: evaluation.template_pooling_strategies.PoolingSCF
@@ -91,7 +91,7 @@ open_set_identification_methods:
     T: 0.28836
     T_data_unc: 1
     kappa_is_tau: true
-  pretty_name: Power
+  pretty_name: $u_{power}$
 - embeddings: scf
   gallery_template_pooling_strategy:
     _target_: evaluation.template_pooling_strategies.PoolingSCF
@@ -115,7 +115,7 @@ open_set_identification_methods:
     T: 22.79
     T_data_unc: 1
     kappa_is_tau: true
-  pretty_name: Be
+  pretty_name: $u_{baseline}$
 - embeddings: scf
   gallery_template_pooling_strategy:
     _target_: evaluation.template_pooling_strategies.PoolingSCF
@@ -138,7 +138,7 @@ open_set_identification_methods:
     T: 0.28836
     T_data_unc: 30
     kappa_is_tau: true
-  pretty_name: Power + SCF
+  pretty_name: $u_{power} + u_{SCF}$
 - embeddings: scf
   gallery_template_pooling_strategy:
     _target_: evaluation.template_pooling_strategies.PoolingSCF
@@ -162,4 +162,4 @@ open_set_identification_methods:
     T: 22.79
     T_data_unc: 30
     kappa_is_tau: true
-  pretty_name: Be + SCF
+  pretty_name: $u_{baseline} + u_{SCF}$
