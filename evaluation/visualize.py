@@ -180,7 +180,7 @@ def plot_dir_far_scores(scores, names, y_label: str, marker=""):
         name = name if name is not None else str(id)
 
         auc_value = auc(fars, tpirs)
-        label = "[%s (AUC = %0.4f%%)]" % (name, auc_value * 100)
+        label = "%s, AUC = %0.4f%%" % (name, auc_value * 100)
         plt.plot(fars, tpirs, lw=1, label=label, marker=marker, markersize=2)
 
     plt.xlabel("False Alarm Rate")

@@ -150,7 +150,20 @@ def main(cfg):
         recognition_method = instantiate(method.recognition_method)
 
         # create unique method name
-        method_name = (
+        if cfg.create_pool_plot is False:
+            method_name = (
+                create_method_name(
+                    method,
+                    sampler,
+                    gallery_template_pooling_strategy,
+                    distance_function,
+                    recognition_method,
+                )
+                + f"_{method.pretty_name}"
+                + f"far:{cfg.tau_to_far[dataset_name][method.recognition_method.kappa]}"
+            )
+        else:
+            method_name = (
             create_method_name(
                 method,
                 sampler,
@@ -158,9 +171,7 @@ def main(cfg):
                 distance_function,
                 recognition_method,
             )
-            + f"_{method.pretty_name}"
-            + f"far:{cfg.tau_to_far[dataset_name][method.recognition_method.kappa]}"
-        )
+            + f"_{method.pretty_name}" + f"tau-{method.recognition_method.kappa}")
         print(method_name)
         pretty_names[task_type][method_name] = method.pretty_name
         embeddings_path = (
@@ -309,19 +320,22 @@ def main(cfg):
             far_table = pd.read_csv(tables_path / "far_rejection.csv")
             dir_table = pd.read_csv(tables_path / "dir_rejection.csv")
 
-            scores = [[], []]
-            names = ["SCF", "Prob"]
-            y_label = "DIR"
-
+            y_label = "Detection $&$ Identification rate"
+            model_to_points = {}
             for model_name, far_value, dir_value in zip(
                 far_table.models, far_table["0.0"], dir_table["0.0"]
             ):
-                if "SCF" in model_name:
-                    scores[0].append([far_value, dir_value])
+                if model_name in model_to_points:
+                    model_to_points[model_name].append([far_value, dir_value])
                 else:
-                    scores[1].append([far_value, dir_value])
-            scores[0] = np.array(scores[0]).T
-            scores[1] = np.array(scores[1]).T
+                    model_to_points[model_name] = [[far_value, dir_value]]
+            names = []
+            scores = []
+            for model_name, points in model_to_points.items():
+                names.append(model_name)
+                scores.append(np.array(points).T)
+            scores = np.array(scores)
+
             fig = plot_dir_far_scores(scores, names, y_label, marker=".")
             fig.savefig(out_dir / f"pool.png", dpi=300)
 

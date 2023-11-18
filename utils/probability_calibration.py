@@ -103,7 +103,7 @@ def train_T_ece(cfg, conf_id, true_labels, pred_labels):
 def main(cfg):
     methods, method_task_type = init_methods(cfg)
     tasks_names = list(set(method_task_type))
-    assert len(methods) == 1
+    # assert len(methods) == 1
     # instantiate datasets
     test_datasets = instantiate_list(cfg.test_datasets)
     dataset_names = [test_dataset.dataset_name for test_dataset in test_datasets]
