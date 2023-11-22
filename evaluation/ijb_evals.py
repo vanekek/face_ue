@@ -164,14 +164,16 @@ def main(cfg):
             )
         else:
             method_name = (
-            create_method_name(
-                method,
-                sampler,
-                gallery_template_pooling_strategy,
-                distance_function,
-                recognition_method,
+                create_method_name(
+                    method,
+                    sampler,
+                    gallery_template_pooling_strategy,
+                    distance_function,
+                    recognition_method,
+                )
+                + f"_{method.pretty_name}"
+                + f"tau-{method.recognition_method.kappa}"
             )
-            + f"_{method.pretty_name}" + f"tau-{method.recognition_method.kappa}")
         print(method_name)
         pretty_names[task_type][method_name] = method.pretty_name
         embeddings_path = (
