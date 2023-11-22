@@ -83,6 +83,7 @@ class Face_Fecognition_test:
             cache_dir
             / f"template_pool_{self.probe_template_pooling_strategy.__class__.__name__}_{self.test_dataset.dataset_name}"
         )
+        force_recompute = True
         similarity_matrix_path = template_subsets_path / "sim_matrix"
         similarity_matrix_path.mkdir(parents=True, exist_ok=True)
         template_subsets_path.mkdir(parents=True, exist_ok=True)
