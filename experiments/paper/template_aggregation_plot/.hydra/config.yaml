@@ -53,7 +53,7 @@ tau_list:
 open_set_identification_methods:
 - embeddings: scf
   gallery_template_pooling_strategy:
-    _target_: evaluation.template_pooling_strategies.PoolingDefault
+    _target_: evaluation.template_pooling_strategies.PoolingSCF
   probe_template_pooling_strategy:
     _target_: evaluation.template_pooling_strategies.PoolingDefault
   use_detector_score: true
@@ -76,7 +76,7 @@ open_set_identification_methods:
   pretty_name: $Average$
 - embeddings: scf
   gallery_template_pooling_strategy:
-    _target_: evaluation.template_pooling_strategies.PoolingDefault
+    _target_: evaluation.template_pooling_strategies.PoolingSCF
   probe_template_pooling_strategy:
     _target_: evaluation.template_pooling_strategies.PoolingSCF
   use_detector_score: true

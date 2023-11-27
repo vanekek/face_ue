@@ -128,6 +128,7 @@ def main(cfg):
         (task, dataset_name): {"recognition": {}, "uncertainty": {}}
         for task, dataset_name in product(tasks_names, dataset_names)
     }
+    unc_values = {dataset_name: {} for dataset_name in dataset_names}
 
     # create pretty name map
     pretty_names = {task: {} for task in tasks_names}
@@ -201,6 +202,7 @@ def main(cfg):
         (
             recognition_metric_values,
             uncertainty_metric_values,
+            predicted_unc,
         ) = tt.predict_and_compute_metrics()
         metric_values[(task_type, dataset_name)]["recognition"][
             method_name
@@ -208,6 +210,7 @@ def main(cfg):
         metric_values[(task_type, dataset_name)]["uncertainty"][
             method_name
         ] = uncertainty_metric_values
+        unc_values[dataset_name][method_name] = predicted_unc
 
     # create plots and tables
     # load metric name converter
@@ -218,6 +221,13 @@ def main(cfg):
         out_table_dir = out_dir / "tabels"
         out_table_fractions_dir = out_table_dir / "fractions"
         out_table_fractions_dir.mkdir(exist_ok=True, parents=True)
+        # save unc distributions
+        data_to_save = {}
+        for model_name in unc_values[dataset_name]:
+            data_to_save[pretty_names[task_type][model_name]] = unc_values[
+                dataset_name
+            ][model_name]
+            np.savez(out_dir / "unc_distr.npz", **data_to_save)
         # create rejection plots
         metric_names = []
         model_names = []

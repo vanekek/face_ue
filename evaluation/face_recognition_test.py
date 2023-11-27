@@ -422,7 +422,7 @@ class Face_Fecognition_test:
             result_metrics = metrics[used_galleries[0]]
             result_unc_metrics = unc_metrics[used_galleries[0]]
 
-        return result_metrics, result_unc_metrics
+        return result_metrics, result_unc_metrics, predicted_unc
 
     def run_model_test_verification(
         self,
