@@ -46,3 +46,4 @@ dependencies:
     - matplotlib~=3.3.4
     - seaborn~=0.11.1
     - scikit-learn-intelex
+    - "black[jupyter]"
