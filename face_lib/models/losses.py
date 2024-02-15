@@ -3,6 +3,7 @@ import torch.nn as nn
 from torch.autograd import Variable
 import torch.nn.functional as F
 import math
+import scipy
 
 from face_lib.models import FaceModule
 from face_lib.models.scf_ive import ive
@@ -31,6 +32,38 @@ class KLDiracVMF(nn.Module):
         l1 = -kappa * cos_theta
         l2 = -(d / 2 - 1) * torch.log(1e-6 + kappa)
         l3 = log_iv_kappa * 1.0
+
+        losses = l1 + l2 + l3 + (d / 2) * math.log(2 * math.pi) + d * math.log(r)
+
+        return (
+            losses,
+            l1,
+            l2,
+            l3,
+        )
+
+
+class KLDiracPS(nn.Module):
+    def __init__(self, z_dim: int):
+        super().__init__()
+        self.z_dim = z_dim
+        #self.radius = radius
+
+    def forward(self, mu, kappa, wc):
+        # mu and wc: (B, dim)
+        # kappa: (B, 1)
+
+        B = mu.size(0)
+        d = self.z_dim
+
+        alpha = (d - 1)/2 + kappa
+        beta = (d - 1)/2
+
+        cos_theta = torch.sum(mu * wc, dim=1, keepdim=True)  # slow?
+
+        l1 = (alpha + beta)*torch.log(2) + beta*torch.log(torch.pi)
+        l2 = torch.log(scipy.special.gamma(alpha)) - torch.log(scipy.special.gamma(alpha + beta))
+        l3 = -kappa*(torch.log(1 + cos_theta))
 
         losses = l1 + l2 + l3 + (d / 2) * math.log(2 * math.pi) + d * math.log(r)
 
